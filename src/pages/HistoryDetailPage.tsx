@@ -266,40 +266,41 @@ export default function HistoryDetailPage() {
             </div>
           </div>
         </div>
-      </div>
 
-      {/* Action Buttons - Fixed Bottom */}
-      <div className="fixed bottom-20 left-0 right-0 p-4 bg-card border-t border-card-border safe-area-bottom">
-        <div className="flex gap-2">
-          <button
-            onClick={handleEdit}
-            className="flex-1 flex items-center justify-center gap-2 bg-card border-2 border-primary text-primary py-3.5 rounded-xl font-semibold hover:bg-primary/5 transition-colors touch-target active:scale-[0.98]"
-          >
-            <Edit className="w-5 h-5" />
-            Sửa
-          </button>
-          <button
-            onClick={handleExport}
-            disabled={isExporting}
-            className="flex-1 flex items-center justify-center gap-2 bg-primary text-white py-3.5 rounded-xl font-semibold hover:bg-primary/90 disabled:opacity-50 transition-colors touch-target active:scale-[0.98]"
-          >
-            {isExporting ? (
-              <>
-                <Loader2 className="w-5 h-5 animate-spin" />
-                Đang xuất...
-              </>
-            ) : (
-              <>
-                <Download className="w-5 h-5" />
-                Xuất
-              </>
-            )}
-          </button>
+        {/* Action Buttons */}
+        <div className="bg-card rounded-xl border border-card-border p-4 shadow-card animate-fade-in">
+          <div className="flex gap-3 mb-3">
+            <button
+              onClick={handleEdit}
+              className="flex-1 flex items-center justify-center gap-2 bg-card border border-card-border text-text-primary py-3.5 rounded-xl font-semibold hover:bg-surface transition-colors touch-target active:scale-[0.98]"
+            >
+              <Edit className="w-5 h-5" />
+              Sửa
+            </button>
+            <button
+              onClick={handleExport}
+              disabled={isExporting}
+              className="flex-1 flex items-center justify-center gap-2 bg-primary text-white py-3.5 rounded-xl font-semibold hover:bg-primary/90 disabled:opacity-50 transition-colors touch-target active:scale-[0.98]"
+            >
+              {isExporting ? (
+                <>
+                  <Loader2 className="w-5 h-5 animate-spin" />
+                  Đang xuất...
+                </>
+              ) : (
+                <>
+                  <Download className="w-5 h-5" />
+                  Xuất
+                </>
+              )}
+            </button>
+          </div>
           <button
             onClick={handleDelete}
-            className="w-14 flex items-center justify-center bg-error/10 border-2 border-error text-error py-3.5 rounded-xl font-semibold hover:bg-error/15 transition-colors touch-target active:scale-[0.98]"
+            className="w-full flex items-center justify-center gap-2 bg-error/10 text-error py-3 rounded-xl font-medium hover:bg-error/15 transition-colors touch-target"
           >
-            <Trash2 className="w-5 h-5" />
+            <Trash2 className="w-4 h-4" />
+            <span>Xóa scan</span>
           </button>
         </div>
       </div>

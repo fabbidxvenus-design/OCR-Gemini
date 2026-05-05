@@ -12,7 +12,7 @@ export default function Layout({ children, title, showBottomNav = true }: Layout
   return (
     <div className="min-h-screen bg-surface flex flex-col">
       <Header title={title} />
-      <main className="flex-1 pt-14 pb-16 overflow-y-auto">
+      <main className="flex-1 pb-16 overflow-y-auto">
         {children}
       </main>
       {showBottomNav && <BottomNav />}
