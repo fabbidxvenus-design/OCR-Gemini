@@ -15,7 +15,7 @@ import ImagePreview from '@/components/camera/ImagePreview';
 import Spinner from '@/components/ui/Spinner';
 import ErrorMessage from '@/components/ui/ErrorMessage';
 import { processOCR } from '@/lib/gemini';
-import { compressImage } from '@/lib/compression';
+import { compressImageForOCR } from '@/lib/compression';
 import { createScan } from '@/hooks/useScans';
 
 function CameraPage() {
@@ -49,12 +49,11 @@ function CameraPage() {
     if (!capturedImage) return;
 
     setIsProcessing(true);
-    setProgress('Đang nén ảnh...');
     setError(null);
 
     try {
-      // Compress image
-      const compressedBlob = await compressImage(capturedImage.blob);
+      // Optimize compression for speed
+      const compressedBlob = await compressImageForOCR(capturedImage.blob);
       setProgress('Đang xử lý OCR...');
 
       // Process OCR
@@ -75,7 +74,7 @@ function CameraPage() {
       // Navigate to result page
       setTimeout(() => {
         navigate(`/ocr-result/${scanId}`);
-      }, 500);
+      }, 300);
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Đã xảy ra lỗi không mong muốn';
       setError(errorMessage);

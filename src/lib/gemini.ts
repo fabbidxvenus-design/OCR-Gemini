@@ -1,8 +1,20 @@
 import type { OCRResponse, TokenUsage } from '@/db/schema';
 
 const API_KEY = import.meta.env.VITE_OPENROUTER_API_KEY as string;
+const OPENROUTER_MODEL = import.meta.env.VITE_OPENROUTER_MODEL as string | undefined;
 const API_URL = 'https://openrouter.ai/api/v1/chat/completions';
-const MODEL = 'google/gemini-2.0-flash-exp:free';
+const MODEL = OPENROUTER_MODEL || 'google/gemini-2.5-flash-lite';
+
+const MODEL_PRICING_USD_PER_TOKEN: Record<string, { input: number; output: number }> = {
+  'google/gemini-2.5-flash-lite': {
+    input: 0.0000001,
+    output: 0.0000004,
+  },
+  'google/gemini-2.5-flash': {
+    input: 0.0000003,
+    output: 0.0000025,
+  },
+};
 
 interface OpenRouterResponse {
   choices?: Array<{
@@ -18,6 +30,13 @@ interface OpenRouterResponse {
   };
 }
 
+interface OpenRouterErrorResponse {
+  error?: {
+    message?: string;
+    code?: number | string;
+  };
+}
+
 // Vietnamese OCR prompt
 const OCR_PROMPT = `Bạn là một chuyên gia OCR chuyên đọc hóa đơn và nhãn dán tiếng Việt.
 
@@ -25,7 +44,7 @@ Nhiệm vụ: Trích xuất thông tin từ hình ảnh hóa đơn và trả v�
 
 Hãy trích xuất:
 1. title: Tiêu đề hóa đơn (VD: "INVOICE #12345", "HÓA ĐƠN GTGT")
-2. fields: Mảng các trường thông tin, mỗi trường có field (tên trường) và value (giá trị), confidence (high/medium/low)
+2. fields: Mảng các trường thông tin, mỗi trường có field (tên trường), value (giá trị), confidence (high/medium/low)
 3. sizes: Bảng size với size (tên size) và quantity (số lượng)
 4. raw_text: Văn bản gốc từ OCR
 5. notes: Mảng các ghi chú đặc biệt
@@ -35,7 +54,7 @@ Quy tắc:
 - Nếu không đọc được, đặt giá trị là empty array hoặc empty string
 - Confidence: high (>90%), medium (70-90%), low (<70%)
 - Trích xuất tất cả thông tin size từ bảng size trên hóa đơn
-- Ghi chú: ghi lại các điểm bất thường ( VD: thiếu thông tin, mờ, lệch)
+- Ghi chú: ghi lại các điểm bất thường (VD: thiếu thông tin, mờ, lệch)
 
 Ví dụ output:
 {
@@ -48,7 +67,7 @@ Ví dụ output:
     {"size": "M", "quantity": 10},
     {"size": "L", "quantity": 15}
   ],
-  "raw_text": "INVOICE #12345\nSố hóa đơn: 12345",
+  "raw_text": "INVOICE #12345\\nSố hóa đơn: 12345",
   "notes": ["Hóa đơn rõ ràng, không có bất thường"]
 }`;
 
@@ -145,13 +164,25 @@ export async function processOCR(imageBlob: Blob): Promise<{
     });
 
     if (!res.ok) {
-      let errorMessage = `API Error ${res.status}`;
+      let openRouterMessage: string;
+      try {
+        const errorBody = (await res.json()) as OpenRouterErrorResponse;
+        openRouterMessage = errorBody.error?.message || '';
+      } catch {
+        openRouterMessage = await res.text().catch(() => '');
+      }
+
+      let errorMessage = openRouterMessage
+        ? `OpenRouter API Error ${res.status}: ${openRouterMessage}`
+        : `OpenRouter API Error ${res.status}`;
 
       // Parse error for common issues
       if (res.status === 429) {
         errorMessage = 'Đã hết quota API. Vui lòng đợi hoặc nâng cấp plan.';
       } else if (res.status === 401) {
         errorMessage = 'API key không hợp lệ. Vui lòng kiểm tra lại VITE_OPENROUTER_API_KEY.';
+      } else if (res.status === 404 && openRouterMessage) {
+        errorMessage = `Model OpenRouter không khả dụng (${MODEL}): ${openRouterMessage}`;
       } else if (res.status === 503) {
         errorMessage = 'Dịch vụ tạm thời quá tải. Đang thử lại...';
       }
@@ -173,8 +204,10 @@ export async function processOCR(imageBlob: Blob): Promise<{
   const inputTokens = response.usage?.prompt_tokens || 0;
   const outputTokens = response.usage?.completion_tokens || 0;
 
-  // OpenRouter pricing for Gemini 2.0 Flash Exp (free)
-  const cost = 0; // Free model
+  const pricing = MODEL_PRICING_USD_PER_TOKEN[MODEL];
+  const cost = pricing
+    ? inputTokens * pricing.input + outputTokens * pricing.output
+    : 0;
 
   return {
     structured: {
