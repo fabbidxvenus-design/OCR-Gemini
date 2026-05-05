@@ -2,8 +2,7 @@ import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import Layout from '@/components/layout/Layout';
 import { useScan, deleteScan } from '@/hooks/useScans';
-import { useExport } from '@/hooks/useExport';
-import { Edit, Download, Trash2, ChevronDown, Loader2, FileText, AlertTriangle } from 'lucide-react';
+import { Edit, Trash2, ChevronDown, FileText, AlertTriangle } from 'lucide-react';
 
 interface ExpandedSections {
   fields: boolean;
@@ -16,7 +15,6 @@ export default function HistoryDetailPage() {
   const { scanId } = useParams<{ scanId: string }>();
   const navigate = useNavigate();
   const scan = useScan(scanId);
-  const { isExporting, exportScan } = useExport();
 
   const [expandedSections, setExpandedSections] = useState<ExpandedSections>({
     fields: true,
@@ -44,11 +42,6 @@ export default function HistoryDetailPage() {
 
   const handleEdit = () => {
     navigate(`/edit/${scanId}`);
-  };
-
-  const handleExport = async () => {
-    if (!scan) return;
-    await exportScan(scan);
   };
 
   const handleDelete = async () => {
@@ -269,35 +262,16 @@ export default function HistoryDetailPage() {
 
         {/* Action Buttons */}
         <div className="bg-card rounded-xl border border-card-border p-4 shadow-card animate-fade-in">
-          <div className="flex gap-3 mb-3">
-            <button
-              onClick={handleEdit}
-              className="flex-1 flex items-center justify-center gap-2 bg-card border border-card-border text-text-primary py-3.5 rounded-xl font-semibold hover:bg-surface transition-colors touch-target active:scale-[0.98]"
-            >
-              <Edit className="w-5 h-5" />
-              Sửa
-            </button>
-            <button
-              onClick={handleExport}
-              disabled={isExporting}
-              className="flex-1 flex items-center justify-center gap-2 bg-primary text-white py-3.5 rounded-xl font-semibold hover:bg-primary/90 disabled:opacity-50 transition-colors touch-target active:scale-[0.98]"
-            >
-              {isExporting ? (
-                <>
-                  <Loader2 className="w-5 h-5 animate-spin" />
-                  Đang xuất...
-                </>
-              ) : (
-                <>
-                  <Download className="w-5 h-5" />
-                  Xuất
-                </>
-              )}
-            </button>
-          </div>
+          <button
+            onClick={handleEdit}
+            className="w-full flex items-center justify-center gap-2 bg-card border border-card-border text-text-primary py-3.5 rounded-xl font-semibold hover:bg-surface transition-colors touch-target active:scale-[0.98]"
+          >
+            <Edit className="w-5 h-5" />
+            Sửa
+          </button>
           <button
             onClick={handleDelete}
-            className="w-full flex items-center justify-center gap-2 bg-error/10 text-error py-3 rounded-xl font-medium hover:bg-error/15 transition-colors touch-target"
+            className="w-full flex items-center justify-center gap-2 bg-error/10 text-error py-3 mt-3 rounded-xl font-medium hover:bg-error/15 transition-colors touch-target"
           >
             <Trash2 className="w-4 h-4" />
             <span>Xóa scan</span>

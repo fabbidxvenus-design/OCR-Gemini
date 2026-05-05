@@ -2,10 +2,9 @@ import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import Layout from '@/components/layout/Layout';
 import { useScan } from '@/hooks/useScans';
-import { useExport } from '@/hooks/useExport';
 import { useShare } from '@/hooks/useShare';
 import Toast from '@/components/ui/Toast';
-import { Edit, Download, Copy, Share2, ChevronDown, Loader2, FileText } from 'lucide-react';
+import { Edit, Copy, Share2, ChevronDown, FileText } from 'lucide-react';
 
 interface ExpandedSections {
   fields: boolean;
@@ -18,7 +17,6 @@ export default function OCRResultPage() {
   const { scanId } = useParams<{ scanId: string }>();
   const navigate = useNavigate();
   const scan = useScan(scanId);
-  const { isExporting, error: exportError, exportScan } = useExport();
   const { isSharing, isCopying, shareOCR, copyOCR } = useShare();
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
 
@@ -50,10 +48,6 @@ export default function OCRResultPage() {
     navigate(`/edit/${scanId}`);
   };
 
-  const handleExport = async () => {
-    await exportScan(scan);
-  };
-
   const handleCopy = async () => {
     try {
       await copyOCR(scan.ocrStructured);
@@ -83,13 +77,6 @@ export default function OCRResultPage() {
   return (
     <Layout title="Kết quả OCR">
       <div className="p-4 space-y-3 pb-36">
-        {/* Export Error */}
-        {exportError && (
-          <div className="bg-error/10 border border-error/20 rounded-xl p-4">
-            <p className="text-sm text-error">{exportError}</p>
-          </div>
-        )}
-
         {/* Title Card */}
         {title && (
           <div className="bg-card rounded-xl border border-card-border p-4 shadow-card animate-fade-in">
@@ -236,54 +223,30 @@ export default function OCRResultPage() {
 
       {/* Action Buttons - Fixed Bottom */}
       <div className="fixed bottom-20 left-0 right-0 p-4 bg-card border-t border-card-border safe-area-bottom">
-        <div className="space-y-2">
-          {/* Primary Actions */}
-          <div className="flex gap-2">
-            <button
-              onClick={handleEdit}
-              className="flex-1 flex items-center justify-center gap-2 bg-card border-2 border-card-border text-text-primary py-3.5 rounded-xl font-semibold hover:bg-surface transition-colors touch-target active:scale-[0.98]"
-            >
-              <Edit className="w-5 h-5" />
-              Sửa
-            </button>
-            <button
-              onClick={handleExport}
-              disabled={isExporting}
-              className="flex-1 flex items-center justify-center gap-2 bg-primary text-white py-3.5 rounded-xl font-semibold hover:bg-primary/90 disabled:opacity-50 transition-colors touch-target active:scale-[0.98]"
-            >
-              {isExporting ? (
-                <>
-                  <Loader2 className="w-5 h-5 animate-spin" />
-                  Đang xuất...
-                </>
-              ) : (
-                <>
-                  <Download className="w-5 h-5" />
-                  Xuất Excel
-                </>
-              )}
-            </button>
-          </div>
-
-          {/* Secondary Actions */}
-          <div className="flex gap-2">
-            <button
-              onClick={handleCopy}
-              disabled={isCopying}
-              className="flex-1 flex items-center justify-center gap-2 bg-surface text-text-primary py-3 rounded-xl font-medium hover:bg-card-border/50 disabled:opacity-50 transition-colors touch-target"
-            >
-              <Copy className="w-4 h-4" />
-              <span className="text-sm">Sao chép</span>
-            </button>
-            <button
-              onClick={handleShare}
-              disabled={isSharing}
-              className="flex-1 flex items-center justify-center gap-2 bg-surface text-text-primary py-3 rounded-xl font-medium hover:bg-card-border/50 disabled:opacity-50 transition-colors touch-target"
-            >
-              <Share2 className="w-4 h-4" />
-              <span className="text-sm">Chia sẻ</span>
-            </button>
-          </div>
+        <div className="flex gap-2">
+          <button
+            onClick={handleEdit}
+            className="flex-1 flex items-center justify-center gap-2 bg-card border border-card-border text-text-primary py-3.5 rounded-xl font-semibold hover:bg-surface transition-colors touch-target active:scale-[0.98]"
+          >
+            <Edit className="w-5 h-5" />
+            Sửa
+          </button>
+          <button
+            onClick={handleCopy}
+            disabled={isCopying}
+            className="flex-1 flex items-center justify-center gap-2 bg-surface text-text-primary py-3.5 rounded-xl font-medium hover:bg-card-border/50 disabled:opacity-50 transition-colors touch-target"
+          >
+            <Copy className="w-5 h-5" />
+            Sao chép
+          </button>
+          <button
+            onClick={handleShare}
+            disabled={isSharing}
+            className="flex-1 flex items-center justify-center gap-2 bg-primary text-white py-3.5 rounded-xl font-semibold hover:bg-primary/90 disabled:opacity-50 transition-colors touch-target active:scale-[0.98]"
+          >
+            <Share2 className="w-5 h-5" />
+            Chia sẻ
+          </button>
         </div>
       </div>
 

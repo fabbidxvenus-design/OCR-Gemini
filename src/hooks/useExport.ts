@@ -1,11 +1,12 @@
 import { useState } from 'react';
-import { exportToExcel } from '@/lib/excel';
+import { exportToExcel, exportMultipleToExcel } from '@/lib/excel';
 import type { ScanRecord } from '@/db/schema';
 
 interface UseExportReturn {
   isExporting: boolean;
   error: string | null;
   exportScan: (scan: ScanRecord) => Promise<void>;
+  exportMultiple: (scans: ScanRecord[]) => Promise<void>;
 }
 
 export function useExport(): UseExportReturn {
@@ -26,9 +27,26 @@ export function useExport(): UseExportReturn {
     }
   };
 
+  const exportMultiple = async (scans: ScanRecord[]) => {
+    if (scans.length === 0) return;
+
+    setIsExporting(true);
+    setError(null);
+
+    try {
+      await exportMultipleToExcel(scans);
+    } catch (err) {
+      console.error('[Export] Error:', err);
+      setError('Không thể xuất file Excel. Vui lòng thử lại.');
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
   return {
     isExporting,
     error,
     exportScan,
+    exportMultiple,
   };
 }
