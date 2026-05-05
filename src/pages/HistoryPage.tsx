@@ -149,9 +149,6 @@ export default function HistoryPage() {
               <button onClick={deselectAll} className="text-text-secondary hover:underline">
                 Bỏ chọn
               </button>
-              <button onClick={deselectAll} className="text-text-secondary hover:underline">
-                Bỏ chọn
-              </button>
             </div>
           </div>
         )}
