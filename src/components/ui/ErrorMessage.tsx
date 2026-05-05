@@ -1,0 +1,36 @@
+import { AlertTriangle, RefreshCw } from 'lucide-react';
+
+interface ErrorMessageProps {
+  title?: string;
+  message: string;
+  onRetry?: () => void;
+  className?: string;
+}
+
+export default function ErrorMessage({
+  title,
+  message,
+  onRetry,
+  className = ''
+}: ErrorMessageProps) {
+  return (
+    <div className={`flex flex-col items-center justify-center p-6 text-center ${className}`}>
+      <div className="w-12 h-12 rounded-full bg-error/10 flex items-center justify-center mb-4">
+        <AlertTriangle className="w-6 h-6 text-error" />
+      </div>
+      {title && (
+        <h3 className="text-lg font-semibold text-gray-900 mb-2">{title}</h3>
+      )}
+      <p className="text-neutral text-sm mb-4">{message}</p>
+      {onRetry && (
+        <button
+          onClick={onRetry}
+          className="flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-lg font-medium hover:bg-primary/90 transition-colors"
+        >
+          <RefreshCw className="w-4 h-4" />
+          Thử lại
+        </button>
+      )}
+    </div>
+  );
+}
