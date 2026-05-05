@@ -1,7 +1,7 @@
 import { useState, useMemo } from 'react';
 import Layout from '@/components/layout/Layout';
 import { useScans } from '@/hooks/useScans';
-import { TrendingUp, DollarSign, Target, Calendar } from 'lucide-react';
+import { TrendingUp, DollarSign, Calendar } from 'lucide-react';
 
 type DateRange = '7d' | '30d' | '90d' | 'all';
 
@@ -57,35 +57,11 @@ export default function AnalyticsPage() {
           icon: <DollarSign className="w-6 h-6" />,
           color: 'text-success',
         },
-        {
-          label: 'Độ tin cậy TB',
-          value: 'N/A',
-          icon: <Target className="w-6 h-6" />,
-          color: 'text-warning',
-        },
       ];
     }
 
     const totalScans = filteredScans.length;
     const totalCost = filteredScans.reduce((sum, scan) => sum + scan.tokenUsage.cost, 0);
-
-    // Calculate average confidence
-    let totalConfidence = 0;
-    let confidenceCount = 0;
-
-    filteredScans.forEach((scan) => {
-      if (scan.ocrStructured?.fields) {
-        scan.ocrStructured.fields.forEach((field) => {
-          const confidenceValue =
-            field.confidence === 'high' ? 1 : field.confidence === 'medium' ? 0.7 : 0.4;
-          totalConfidence += confidenceValue;
-          confidenceCount++;
-        });
-      }
-    });
-
-    const avgConfidence = confidenceCount > 0 ? totalConfidence / confidenceCount : 0;
-    const avgConfidencePercent = Math.round(avgConfidence * 100);
 
     return [
       {
@@ -99,12 +75,6 @@ export default function AnalyticsPage() {
         value: `$${totalCost.toFixed(4)}`,
         icon: <DollarSign className="w-6 h-6" />,
         color: 'text-success',
-      },
-      {
-        label: 'Độ tin cậy TB',
-        value: `${avgConfidencePercent}%`,
-        icon: <Target className="w-6 h-6" />,
-        color: 'text-warning',
       },
     ];
   }, [filteredScans]);
