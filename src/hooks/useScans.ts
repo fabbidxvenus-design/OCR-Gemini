@@ -36,18 +36,20 @@ export function useSearchScans(query: string): ScanRecord[] | undefined {
       const lowerQuery = query.toLowerCase();
 
       return allScans.filter((scan) => {
+        const title = scan.ocrStructured?.title;
+        const fields = scan.ocrStructured?.fields;
+        const rawText = scan.ocrStructured?.raw_text;
+
         // Search in title
-        if (scan.ocrStructured.title?.toLowerCase().includes(lowerQuery)) {
+        if (title && title.toString().toLowerCase().includes(lowerQuery)) {
           return true;
         }
-        // Search in fields
-        if (scan.ocrStructured.fields?.some(
-          (f) => f.value.toLowerCase().includes(lowerQuery)
-        )) {
+        // Search in fields (safely handle null/undefined values)
+        if (fields?.some((f) => f.value != null && f.value.toString().toLowerCase().includes(lowerQuery))) {
           return true;
         }
         // Search in raw text
-        if (scan.ocrStructured.raw_text?.toLowerCase().includes(lowerQuery)) {
+        if (rawText && rawText.toString().toLowerCase().includes(lowerQuery)) {
           return true;
         }
         return false;
