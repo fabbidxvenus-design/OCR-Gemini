@@ -1,11 +1,10 @@
 import { NavLink } from 'react-router-dom';
-import { Camera, History, BarChart3, FileText } from 'lucide-react';
+import { Camera, History, BarChart3 } from 'lucide-react';
 
 const navItems = [
   { to: '/camera', icon: Camera, label: 'Chụp ảnh' },
   { to: '/history', icon: History, label: 'Lịch sử' },
   { to: '/analytics', icon: BarChart3, label: 'Thống kê' },
-  { to: '/result', icon: FileText, label: 'Kết quả' },
 ];
 
 export default function BottomNav() {

@@ -3,8 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import Layout from '@/components/layout/Layout';
 import { useScan, deleteScan } from '@/hooks/useScans';
 import { useExport } from '@/hooks/useExport';
-import ConfidenceBadge from '@/components/ocr/ConfidenceBadge';
-import { Edit, Download, Trash2, ChevronDown, ChevronUp } from 'lucide-react';
+import { Edit, Download, Trash2, ChevronDown, Loader2, FileText, AlertTriangle } from 'lucide-react';
 
 interface ExpandedSections {
   fields: boolean;
@@ -76,9 +75,9 @@ export default function HistoryDetailPage() {
 
   return (
     <Layout title="Chi tiết scan">
-      <div className="p-4 space-y-4 pb-32">
+      <div className="p-4 space-y-3 pb-44">
         {/* Image Preview */}
-        <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+        <div className="bg-card rounded-xl border border-card-border overflow-hidden shadow-card animate-fade-in">
           <img
             src={scan.imageDataUrl}
             alt="Scan"
@@ -86,118 +85,130 @@ export default function HistoryDetailPage() {
           />
         </div>
 
-        {/* Title */}
+        {/* Title Card */}
         {title && (
-          <div className="bg-white rounded-lg border border-gray-200 p-4">
-            <h2 className="text-xl font-bold text-gray-900">
-              {title}
-            </h2>
+          <div className="bg-card rounded-xl border border-card-border p-4 shadow-card animate-fade-in">
+            <div className="flex items-start gap-3">
+              <div className="w-10 h-10 bg-primary/10 rounded-xl flex items-center justify-center flex-shrink-0">
+                <FileText className="w-5 h-5 text-primary" />
+              </div>
+              <div>
+                <h2 className="text-lg font-semibold text-text-primary">{title}</h2>
+                <p className="text-xs text-text-secondary mt-1">
+                  {new Date(scan.timestamp).toLocaleDateString('vi-VN', {
+                    day: '2-digit',
+                    month: '2-digit',
+                    year: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                  })}
+                </p>
+              </div>
+            </div>
           </div>
         )}
 
         {/* Edited Badge */}
         {scan.edited && (
-          <div className="bg-warning/10 border border-warning/20 rounded-lg p-3">
-            <p className="text-sm text-warning font-medium">
-              ⚠️ Scan này đã được chỉnh sửa
-            </p>
+          <div className="bg-warning/10 border border-warning/20 rounded-xl p-3 animate-fade-in">
+            <div className="flex items-center gap-2">
+              <AlertTriangle className="w-4 h-4 text-warning" />
+              <p className="text-sm text-warning font-medium">
+                Scan này đã được chỉnh sửa
+              </p>
+            </div>
           </div>
         )}
 
         {/* Structured Fields */}
-        <div className="bg-white rounded-lg border border-gray-200">
+        <div className="bg-card rounded-xl border border-card-border shadow-card overflow-hidden animate-fade-in">
           <button
             onClick={() => toggleSection('fields')}
             className="w-full flex items-center justify-between p-4 text-left"
           >
-            <h3 className="font-semibold text-gray-900">
-              Thông tin ({fields.length})
-            </h3>
-            {expandedSections.fields ? (
-              <ChevronUp className="w-5 h-5 text-neutral" />
-            ) : (
-              <ChevronDown className="w-5 h-5 text-neutral" />
-            )}
+            <span className="text-xs font-semibold text-text-secondary uppercase tracking-wide">
+              Thông tin
+            </span>
+            <span className="text-xs text-text-secondary bg-surface px-2 py-1 rounded-md">
+              {fields.length}
+            </span>
           </button>
 
           {expandedSections.fields && (
-            <div className="border-t border-gray-200 p-4 space-y-3">
+            <div className="border-t border-card-border">
               {fields.length > 0 ? (
-                fields.map((field, index) => (
-                  <div key={index} className="flex items-start justify-between gap-2">
-                    <div className="flex-1">
-                      <p className="text-sm text-neutral">{field.field}</p>
-                      <p className="text-base font-medium text-gray-900">{field.value}</p>
+                <div className="divide-y divide-card-border">
+                  {fields.map((field, index) => (
+                    <div key={index} className="px-4 py-3 flex items-start justify-between">
+                      <div className="flex-1 min-w-0">
+                        <p className="text-xs text-text-secondary">{field.field}</p>
+                        <p className="text-base font-medium text-text-primary mt-0.5 break-words">{field.value}</p>
+                      </div>
                     </div>
-                    <ConfidenceBadge confidence={field.confidence || 'low'} />
-                  </div>
-                ))
+                  ))}
+                </div>
               ) : (
-                <p className="text-sm text-neutral">Không có thông tin</p>
+                <div className="px-4 py-6 text-center">
+                  <p className="text-sm text-text-secondary">Không có thông tin</p>
+                </div>
               )}
             </div>
           )}
         </div>
 
         {/* Size Table */}
-        <div className="bg-white rounded-lg border border-gray-200">
-          <button
-            onClick={() => toggleSection('sizes')}
-            className="w-full flex items-center justify-between p-4 text-left"
-          >
-            <h3 className="font-semibold text-gray-900">
-              Bảng size ({sizes.length})
-            </h3>
-            {expandedSections.sizes ? (
-              <ChevronUp className="w-5 h-5 text-neutral" />
-            ) : (
-              <ChevronDown className="w-5 h-5 text-neutral" />
-            )}
-          </button>
+        {sizes.length > 0 && (
+          <div className="bg-card rounded-xl border border-card-border shadow-card overflow-hidden animate-fade-in">
+            <button
+              onClick={() => toggleSection('sizes')}
+              className="w-full flex items-center justify-between p-4 text-left"
+            >
+              <span className="text-xs font-semibold text-text-secondary uppercase tracking-wide">
+                Bảng size
+              </span>
+              <span className="text-xs text-text-secondary bg-surface px-2 py-1 rounded-md">
+                {sizes.length}
+              </span>
+            </button>
 
-          {expandedSections.sizes && (
-            <div className="border-t border-gray-200 p-4">
-              {sizes.length > 0 ? (
+            {expandedSections.sizes && (
+              <div className="border-t border-card-border overflow-hidden">
                 <table className="w-full">
-                  <thead>
-                    <tr className="border-b border-gray-200">
-                      <th className="text-left py-2 text-sm font-semibold text-gray-900">Size</th>
-                      <th className="text-right py-2 text-sm font-semibold text-gray-900">Số lượng</th>
+                  <thead className="bg-surface">
+                    <tr>
+                      <th className="text-left py-2.5 px-4 text-xs font-semibold text-text-secondary uppercase tracking-wide">Size</th>
+                      <th className="text-right py-2.5 px-4 text-xs font-semibold text-text-secondary uppercase tracking-wide">Số lượng</th>
                     </tr>
                   </thead>
-                  <tbody>
+                  <tbody className="divide-y divide-card-border">
                     {sizes.map((size, index) => (
-                      <tr key={index} className="border-b border-gray-100 last:border-0">
-                        <td className="py-2 text-base text-gray-900">{size.size}</td>
-                        <td className="py-2 text-base text-gray-900 text-right">{size.quantity}</td>
+                      <tr key={index}>
+                        <td className="py-3 px-4 text-base text-text-primary font-medium">{size.size}</td>
+                        <td className="py-3 px-4 text-base text-text-primary text-right">{size.quantity}</td>
                       </tr>
                     ))}
                   </tbody>
                 </table>
-              ) : (
-                <p className="text-sm text-neutral">Không có bảng size</p>
-              )}
-            </div>
-          )}
-        </div>
+              </div>
+            )}
+          </div>
+        )}
 
         {/* Raw Text */}
-        <div className="bg-white rounded-lg border border-gray-200">
+        <div className="bg-card rounded-xl border border-card-border shadow-card overflow-hidden animate-fade-in">
           <button
             onClick={() => toggleSection('rawText')}
             className="w-full flex items-center justify-between p-4 text-left"
           >
-            <h3 className="font-semibold text-gray-900">Văn bản gốc</h3>
-            {expandedSections.rawText ? (
-              <ChevronUp className="w-5 h-5 text-neutral" />
-            ) : (
-              <ChevronDown className="w-5 h-5 text-neutral" />
-            )}
+            <span className="text-xs font-semibold text-text-secondary uppercase tracking-wide">
+              Văn bản gốc
+            </span>
+            <ChevronDown className={`w-4 h-4 text-text-secondary transition-transform ${expandedSections.rawText ? 'rotate-180' : ''}`} />
           </button>
 
           {expandedSections.rawText && (
-            <div className="border-t border-gray-200 p-4">
-              <pre className="text-sm text-gray-900 whitespace-pre-wrap font-mono">
+            <div className="border-t border-card-border p-4">
+              <pre className="text-sm text-text-primary whitespace-pre-wrap font-mono leading-relaxed">
                 {rawText || 'Không có văn bản'}
               </pre>
             </div>
@@ -206,25 +217,23 @@ export default function HistoryDetailPage() {
 
         {/* Notes */}
         {notes.length > 0 && (
-          <div className="bg-white rounded-lg border border-gray-200">
+          <div className="bg-card rounded-xl border border-card-border shadow-card overflow-hidden animate-fade-in">
             <button
               onClick={() => toggleSection('notes')}
               className="w-full flex items-center justify-between p-4 text-left"
             >
-              <h3 className="font-semibold text-gray-900">
-                Ghi chú ({notes.length})
-              </h3>
-              {expandedSections.notes ? (
-                <ChevronUp className="w-5 h-5 text-neutral" />
-              ) : (
-                <ChevronDown className="w-5 h-5 text-neutral" />
-              )}
+              <span className="text-xs font-semibold text-text-secondary uppercase tracking-wide">
+                Ghi chú
+              </span>
+              <span className="text-xs text-text-secondary bg-surface px-2 py-1 rounded-md">
+                {notes.length}
+              </span>
             </button>
 
             {expandedSections.notes && (
-              <div className="border-t border-gray-200 p-4 space-y-2">
+              <div className="border-t border-card-border p-4 space-y-2">
                 {notes.map((note, index) => (
-                  <p key={index} className="text-sm text-neutral">• {note}</p>
+                  <p key={index} className="text-sm text-text-secondary leading-relaxed">• {note}</p>
                 ))}
               </div>
             )}
@@ -232,56 +241,66 @@ export default function HistoryDetailPage() {
         )}
 
         {/* Metadata */}
-        <div className="bg-white rounded-lg border border-gray-200 p-4">
-          <h3 className="font-semibold text-gray-900 mb-3">Thông tin scan</h3>
-          <div className="space-y-2 text-sm">
+        <div className="bg-card rounded-xl border border-card-border p-4 shadow-card animate-fade-in">
+          <h3 className="text-xs font-semibold text-text-secondary uppercase tracking-wide mb-3">
+            Thông tin scan
+          </h3>
+          <div className="space-y-2.5">
             <div className="flex justify-between">
-              <span className="text-neutral">Thời gian:</span>
-              <span className="text-gray-900">
+              <span className="text-sm text-text-secondary">Thời gian:</span>
+              <span className="text-sm font-medium text-text-primary">
                 {new Date(scan.timestamp).toLocaleString('vi-VN')}
               </span>
             </div>
             <div className="flex justify-between">
-              <span className="text-neutral">Token sử dụng:</span>
-              <span className="text-gray-900">
+              <span className="text-sm text-text-secondary">Token sử dụng:</span>
+              <span className="text-sm font-medium text-text-primary">
                 {scan.tokenUsage.input + scan.tokenUsage.output}
               </span>
             </div>
             <div className="flex justify-between">
-              <span className="text-neutral">Chi phí:</span>
-              <span className="text-gray-900">
+              <span className="text-sm text-text-secondary">Chi phí:</span>
+              <span className="text-sm font-medium text-text-primary">
                 ${scan.tokenUsage.cost.toFixed(6)}
               </span>
             </div>
           </div>
         </div>
+      </div>
 
-        {/* Action Buttons */}
-        <div className="fixed bottom-20 left-0 right-0 p-4 bg-white border-t border-gray-200">
-          <div className="grid grid-cols-3 gap-2">
-            <button
-              onClick={handleEdit}
-              className="flex flex-col items-center justify-center gap-1 bg-white border-2 border-primary text-primary py-3 px-2 rounded-lg font-medium hover:bg-primary/5 transition-colors touch-target"
-            >
-              <Edit className="w-5 h-5" />
-              <span className="text-xs">Sửa</span>
-            </button>
-            <button
-              onClick={handleExport}
-              disabled={isExporting}
-              className="flex flex-col items-center justify-center gap-1 bg-primary text-white py-3 px-2 rounded-lg font-medium hover:bg-primary/90 disabled:opacity-50 transition-colors touch-target"
-            >
-              <Download className="w-5 h-5" />
-              <span className="text-xs">Xuất</span>
-            </button>
-            <button
-              onClick={handleDelete}
-              className="flex flex-col items-center justify-center gap-1 bg-white border-2 border-error text-error py-3 px-2 rounded-lg font-medium hover:bg-error/5 transition-colors touch-target"
-            >
-              <Trash2 className="w-5 h-5" />
-              <span className="text-xs">Xóa</span>
-            </button>
-          </div>
+      {/* Action Buttons - Fixed Bottom */}
+      <div className="fixed bottom-20 left-0 right-0 p-4 bg-card border-t border-card-border safe-area-bottom">
+        <div className="flex gap-2">
+          <button
+            onClick={handleEdit}
+            className="flex-1 flex items-center justify-center gap-2 bg-card border-2 border-primary text-primary py-3.5 rounded-xl font-semibold hover:bg-primary/5 transition-colors touch-target active:scale-[0.98]"
+          >
+            <Edit className="w-5 h-5" />
+            Sửa
+          </button>
+          <button
+            onClick={handleExport}
+            disabled={isExporting}
+            className="flex-1 flex items-center justify-center gap-2 bg-primary text-white py-3.5 rounded-xl font-semibold hover:bg-primary/90 disabled:opacity-50 transition-colors touch-target active:scale-[0.98]"
+          >
+            {isExporting ? (
+              <>
+                <Loader2 className="w-5 h-5 animate-spin" />
+                Đang xuất...
+              </>
+            ) : (
+              <>
+                <Download className="w-5 h-5" />
+                Xuất
+              </>
+            )}
+          </button>
+          <button
+            onClick={handleDelete}
+            className="w-14 flex items-center justify-center bg-error/10 border-2 border-error text-error py-3.5 rounded-xl font-semibold hover:bg-error/15 transition-colors touch-target active:scale-[0.98]"
+          >
+            <Trash2 className="w-5 h-5" />
+          </button>
         </div>
       </div>
     </Layout>

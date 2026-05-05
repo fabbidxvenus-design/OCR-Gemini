@@ -37,39 +37,10 @@ interface OpenRouterErrorResponse {
   };
 }
 
-// Vietnamese OCR prompt
-const OCR_PROMPT = `Bạn là một chuyên gia OCR chuyên đọc hóa đơn và nhãn dán tiếng Việt.
-
-Nhiệm vụ: Trích xuất thông tin từ hình ảnh hóa đơn và trả về JSON.
-
-Hãy trích xuất:
-1. title: Tiêu đề hóa đơn (VD: "INVOICE #12345", "HÓA ĐƠN GTGT")
-2. fields: Mảng các trường thông tin, mỗi trường có field (tên trường), value (giá trị), confidence (high/medium/low)
-3. sizes: Bảng size với size (tên size) và quantity (số lượng)
-4. raw_text: Văn bản gốc từ OCR
-5. notes: Mảng các ghi chú đặc biệt
-
-Quy tắc:
-- Trả về JSON hợp lệ, không có text khác
-- Nếu không đọc được, đặt giá trị là empty array hoặc empty string
-- Confidence: high (>90%), medium (70-90%), low (<70%)
-- Trích xuất tất cả thông tin size từ bảng size trên hóa đơn
-- Ghi chú: ghi lại các điểm bất thường (VD: thiếu thông tin, mờ, lệch)
-
-Ví dụ output:
-{
-  "title": "INVOICE #12345",
-  "fields": [
-    {"field": "Số hóa đơn", "value": "12345", "confidence": "high"},
-    {"field": "Ngày", "value": "2024-01-15", "confidence": "high"}
-  ],
-  "sizes": [
-    {"size": "M", "quantity": 10},
-    {"size": "L", "quantity": 15}
-  ],
-  "raw_text": "INVOICE #12345\\nSố hóa đơn: 12345",
-  "notes": ["Hóa đơn rõ ràng, không có bất thường"]
-}`;
+// Simplified OCR prompt for faster processing
+const OCR_PROMPT = `OCR hóa đơn/nhãn dán tiếng Việt. Trả về JSON:
+{"title":"","fields":[{"field":"","value":"","conf":"high/medium/low"}],"sizes":[{"size":"","qty":0}],"raw":"","notes":[]}
+Đọc tất cả thông tin. conf: high(>90%), medium(70-90%), low(<70%).`;
 
 async function retryWithBackoff<T>(
   fn: () => Promise<T>,
