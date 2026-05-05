@@ -133,14 +133,21 @@ export default function HistoryPage() {
         </div>
 
         {/* Selection Controls */}
-        {isSelectMode && selectedIds.size > 0 && (
+        {isSelectMode && (
           <div className="px-4 py-2 bg-surface border-b border-gray-200 flex items-center justify-between text-sm">
             <span className="text-text-secondary">
-              Đã chọn: <span className="font-semibold text-text-primary">{selectedIds.size}</span> items
+              {selectedIds.size > 0 ? (
+                <>Đã chọn: <span className="font-semibold text-text-primary">{selectedIds.size}</span> items</>
+              ) : (
+                <span className="text-text-secondary">Chọn các scan để xuất</span>
+              )}
             </span>
             <div className="flex gap-3">
               <button onClick={selectAll} className="text-primary hover:underline">
                 Chọn tất cả
+              </button>
+              <button onClick={deselectAll} className="text-text-secondary hover:underline">
+                Bỏ chọn
               </button>
               <button onClick={deselectAll} className="text-text-secondary hover:underline">
                 Bỏ chọn
