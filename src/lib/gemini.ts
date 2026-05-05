@@ -1,21 +1,20 @@
 import type { OCRResponse, TokenUsage } from '@/db/schema';
 
-const API_KEY = import.meta.env.VITE_GEMINI_API_KEY as string;
-const API_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent';
+const API_KEY = import.meta.env.VITE_OPENROUTER_API_KEY as string;
+const API_URL = 'https://openrouter.ai/api/v1/chat/completions';
+const MODEL = 'google/gemini-2.0-flash-exp:free';
 
-interface GeminiResponse {
-  candidates?: Array<{
-    content?: {
-      parts?: Array<{
-        text?: string;
-      }>;
+interface OpenRouterResponse {
+  choices?: Array<{
+    message?: {
+      content?: string;
     };
-    finishReason?: string;
+    finish_reason?: string;
   }>;
-  usageMetadata?: {
-    promptTokenCount?: number;
-    candidatesTokenCount?: number;
-    totalTokenCount?: number;
+  usage?: {
+    prompt_tokens?: number;
+    completion_tokens?: number;
+    total_tokens?: number;
   };
 }
 
@@ -61,10 +60,10 @@ async function retryWithBackoff<T>(
     try {
       return await fn();
     } catch (error) {
-      if (error instanceof Error && error.message.includes('503')) {
-        // Service unavailable - wait with exponential backoff
+      if (error instanceof Error && (error.message.includes('503') || error.message.includes('429'))) {
+        // Service unavailable or rate limit - wait with exponential backoff
         const delay = Math.pow(2, attempt) * 1000;
-        console.log(`[Gemini] Retry ${attempt + 1}/${maxRetries} after ${delay}ms`);
+        console.log(`[OpenRouter] Retry ${attempt + 1}/${maxRetries} after ${delay}ms`);
         await new Promise((resolve) => setTimeout(resolve, delay));
       } else {
         throw error;
@@ -109,76 +108,73 @@ export async function processOCR(imageBlob: Blob): Promise<{
   reader.readAsDataURL(imageBlob);
 
   const base64Data = await base64Promise;
-  const base64Content = base64Data.split(',')[1];
 
   const requestBody = {
-    contents: [
+    model: MODEL,
+    messages: [
       {
-        parts: [
+        role: 'user',
+        content: [
           {
-            inlineData: {
-              mimeType: 'image/jpeg',
-              data: base64Content,
-            },
+            type: 'image_url',
+            image_url: {
+              url: base64Data
+            }
           },
           {
-            text: OCR_PROMPT,
-          },
-        ],
-      },
+            type: 'text',
+            text: OCR_PROMPT
+          }
+        ]
+      }
     ],
-    generationConfig: {
-      temperature: 0.1,
-      topK: 32,
-      topP: 0.95,
-      maxOutputTokens: 2048,
-    },
+    temperature: 0.1,
+    max_tokens: 2048
   };
 
   const response = await retryWithBackoff(async () => {
-    const res = await fetch(`${API_URL}?key=${API_KEY}`, {
+    const res = await fetch(API_URL, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
+        'Authorization': `Bearer ${API_KEY}`,
+        'HTTP-Referer': 'https://ocr-gemini-amber.vercel.app',
+        'X-Title': 'OCR Gemini Mobile Web'
       },
       body: JSON.stringify(requestBody),
     });
 
     if (!res.ok) {
-      const errorText = await res.text();
       let errorMessage = `API Error ${res.status}`;
 
-      // Parse error for quota exceeded
+      // Parse error for common issues
       if (res.status === 429) {
-        try {
-          const errorData = JSON.parse(errorText);
-          if (errorData.error?.message?.includes('quota')) {
-            errorMessage = 'Đã hết quota API. Vui lòng đợi hoặc sử dụng API key khác.';
-          }
-        } catch {
-          errorMessage = 'Đã hết quota API. Vui lòng thử lại sau.';
-        }
+        errorMessage = 'Đã hết quota API. Vui lòng đợi hoặc nâng cấp plan.';
+      } else if (res.status === 401) {
+        errorMessage = 'API key không hợp lệ. Vui lòng kiểm tra lại VITE_OPENROUTER_API_KEY.';
+      } else if (res.status === 503) {
+        errorMessage = 'Dịch vụ tạm thời quá tải. Đang thử lại...';
       }
 
       throw new Error(errorMessage);
     }
 
-    return res.json() as Promise<GeminiResponse>;
+    return res.json() as Promise<OpenRouterResponse>;
   });
 
   // Extract response text
-  const responseText = response.candidates?.[0]?.content?.parts?.[0]?.text || '';
+  const responseText = response.choices?.[0]?.message?.content || '';
   const raw_text = responseText;
 
   // Parse JSON from response
   const ocrStructured = extractJSON(responseText);
 
-  // Calculate token usage (estimate from Gemini response)
-  const inputTokens = response.usageMetadata?.promptTokenCount || 0;
-  const outputTokens = response.usageMetadata?.candidatesTokenCount || 0;
+  // Calculate token usage
+  const inputTokens = response.usage?.prompt_tokens || 0;
+  const outputTokens = response.usage?.completion_tokens || 0;
 
-  // Gemini 2.5 Flash Lite pricing (approximate)
-  const cost = (inputTokens * 0.00001875 + outputTokens * 0.000075) / 1000;
+  // OpenRouter pricing for Gemini 2.0 Flash Exp (free)
+  const cost = 0; // Free model
 
   return {
     structured: {
