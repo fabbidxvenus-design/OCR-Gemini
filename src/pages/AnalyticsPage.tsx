@@ -1,7 +1,7 @@
 import { useState, useMemo } from 'react';
 import Layout from '@/components/layout/Layout';
 import { useScans } from '@/hooks/useScans';
-import { TrendingUp, DollarSign, Calendar } from 'lucide-react';
+import { TrendingUp, DollarSign, Calendar, Key, CreditCard } from 'lucide-react';
 
 type DateRange = '7d' | '30d' | '90d' | 'all';
 
@@ -63,6 +63,12 @@ export default function AnalyticsPage() {
     const totalScans = filteredScans.length;
     const totalCost = filteredScans.reduce((sum, scan) => sum + scan.tokenUsage.cost, 0);
 
+    const key1Scans = filteredScans.filter(s => s.apiKeyIndex === 1).length;
+    const key2Scans = filteredScans.filter(s => s.apiKeyIndex === 2).length;
+
+    const key1Cost = filteredScans.filter(s => s.apiKeyIndex === 1).reduce((sum, s) => sum + s.tokenUsage.cost, 0);
+    const key2Cost = filteredScans.filter(s => s.apiKeyIndex === 2).reduce((sum, s) => sum + s.tokenUsage.cost, 0);
+
     return [
       {
         label: 'Tổng số scan',
@@ -75,6 +81,18 @@ export default function AnalyticsPage() {
         value: `$${totalCost.toFixed(4)}`,
         icon: <DollarSign className="w-6 h-6" />,
         color: 'text-success',
+      },
+      {
+        label: 'API Key 1 (Lượt/Phí)',
+        value: `${key1Scans} / $${key1Cost.toFixed(4)}`,
+        icon: <Key className="w-6 h-6" />,
+        color: 'text-blue-500',
+      },
+      {
+        label: 'API Key 2 (Lượt/Phí)',
+        value: `${key2Scans} / $${key2Cost.toFixed(4)}`,
+        icon: <CreditCard className="w-6 h-6" />,
+        color: 'text-purple-500',
       },
     ];
   }, [filteredScans]);

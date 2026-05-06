@@ -67,6 +67,7 @@ function CameraPage() {
         ocrStructured: ocrResult.structured,
         edited: false,
         tokenUsage: ocrResult.tokenUsage,
+        apiKeyIndex: ocrResult.apiKeyIndex,
       });
 
       setProgress('Hoàn tất!');

@@ -14,6 +14,7 @@ export interface ScanRecord {
   ocrStructured: OCRResponse;
   edited: boolean;
   tokenUsage: TokenUsage;
+  apiKeyIndex: number; // 1 or 2 - which API key was used
 }
 
 export interface OCRResponse {
