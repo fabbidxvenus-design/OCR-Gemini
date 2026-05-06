@@ -84,24 +84,6 @@ export async function getApiKeyUsageStats(): Promise<{ key1Count: number; key2Co
   };
 }
 
-// Get API key usage statistics
-export async function getApiKeyUsageStats(): Promise<{ key1Count: number; key2Count: number; key1Cost: number; key2Cost: number }> {
-  const scans = await db.scans.toArray();
-
-  const key1Scans = scans.filter(s => s.apiKeyIndex === 1);
-  const key2Scans = scans.filter(s => s.apiKeyIndex === 2);
-
-  const key1Cost = key1Scans.reduce((sum, s) => sum + (s.tokenUsage?.cost || 0), 0);
-  const key2Cost = key2Scans.reduce((sum, s) => sum + (s.tokenUsage?.cost || 0), 0);
-
-  return {
-    key1Count: key1Scans.length,
-    key2Count: key2Scans.length,
-    key1Cost,
-    key2Cost,
-  };
-}
-
 // Update a scan
 export async function updateScan(scanId: string, updates: Partial<ScanRecord>): Promise<void> {
   await db.scans.update(scanId, updates);
