@@ -19,7 +19,7 @@ export default function Header({ title }: HeaderProps) {
     <header className="sticky top-0 z-50 bg-card border-b border-card-border safe-area-top">
       <div className="flex items-center justify-between h-14 px-4">
         <h1 className="text-lg font-semibold text-text-primary">
-          {title || 'OCR Gemini'}
+          {title || 'OCR App'}
         </h1>
         <button
           onClick={handleLogout}

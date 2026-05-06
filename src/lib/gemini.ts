@@ -96,7 +96,7 @@ async function makeApiRequest(
       'Content-Type': 'application/json',
       'Authorization': `Bearer ${apiKey}`,
       'HTTP-Referer': 'https://ocr-gemini-amber.vercel.app',
-      'X-Title': 'OCR Gemini Mobile Web'
+      'X-Title': 'OCR App'
     },
     body: JSON.stringify(requestBody),
   });

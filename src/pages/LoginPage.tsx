@@ -100,7 +100,7 @@ export default function LoginPage() {
             <Camera className="w-10 h-10 text-white" />
           </div>
           <h1 className="text-3xl font-bold text-text-primary mb-2">
-            OCR Gemini
+            OCR App
           </h1>
           <p className="text-text-secondary text-sm">
             Quét hóa đơn bằng AI
