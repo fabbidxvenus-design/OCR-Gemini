@@ -2,7 +2,8 @@ import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import Layout from '@/components/layout/Layout';
 import { useScan, deleteScan } from '@/hooks/useScans';
-import { Edit, Trash2, ChevronDown, FileText, AlertTriangle } from 'lucide-react';
+import { useExport } from '@/hooks/useExport';
+import { Edit, Trash2, ChevronDown, FileText, AlertTriangle, Download, Loader2 } from 'lucide-react';
 
 interface ExpandedSections {
   fields: boolean;
@@ -15,6 +16,7 @@ export default function HistoryDetailPage() {
   const { scanId } = useParams<{ scanId: string }>();
   const navigate = useNavigate();
   const scan = useScan(scanId);
+  const { isExporting, exportScan } = useExport();
 
   const [expandedSections, setExpandedSections] = useState<ExpandedSections>({
     fields: true,
@@ -42,6 +44,12 @@ export default function HistoryDetailPage() {
 
   const handleEdit = () => {
     navigate(`/edit/${scanId}`);
+  };
+
+  const handleExport = async () => {
+    if (scan) {
+      await exportScan(scan);
+    }
   };
 
   const handleDelete = async () => {
@@ -263,8 +271,25 @@ export default function HistoryDetailPage() {
         {/* Action Buttons */}
         <div className="bg-card rounded-xl border border-card-border p-4 shadow-card animate-fade-in">
           <button
+            onClick={handleExport}
+            disabled={isExporting}
+            className="w-full flex items-center justify-center gap-2 bg-primary text-white py-3.5 rounded-xl font-semibold hover:bg-primary/90 transition-colors touch-target active:scale-[0.98] disabled:opacity-70"
+          >
+            {isExporting ? (
+              <>
+                <Loader2 className="w-5 h-5 animate-spin" />
+                Đang xuất...
+              </>
+            ) : (
+              <>
+                <Download className="w-5 h-5" />
+                Xuất Excel
+              </>
+            )}
+          </button>
+          <button
             onClick={handleEdit}
-            className="w-full flex items-center justify-center gap-2 bg-card border border-card-border text-text-primary py-3.5 rounded-xl font-semibold hover:bg-surface transition-colors touch-target active:scale-[0.98]"
+            className="w-full flex items-center justify-center gap-2 bg-card border border-card-border text-text-primary py-3.5 mt-3 rounded-xl font-semibold hover:bg-surface transition-colors touch-target active:scale-[0.98]"
           >
             <Edit className="w-5 h-5" />
             Sửa
