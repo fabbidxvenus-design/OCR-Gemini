@@ -1,6 +1,74 @@
 import ExcelJS from 'exceljs';
 import type { ScanRecord } from '@/db/schema';
 
+// Helper to trigger download (works on desktop)
+function triggerDownload(blob: Blob, filename: string) {
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = filename;
+  link.style.display = 'none';
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
+// Helper to share file using Web Share API (best for mobile)
+async function shareFile(blob: Blob, filename: string): Promise<boolean> {
+  // Check if Web Share API with file support is available
+  if (navigator.share && 'canShare' in navigator) {
+    const file = new File([blob], filename, {
+      type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    });
+
+    if (navigator.canShare({ files: [file] })) {
+      try {
+        await navigator.share({
+          files: [file],
+          title: 'OCR Export',
+          text: `Exported from OCR App`,
+        });
+        return true;
+      } catch (err) {
+        // User cancelled or error
+        if ((err as Error).name !== 'AbortError') {
+          console.log('[Share] Share cancelled or failed:', err);
+        }
+      }
+    }
+  }
+  return false;
+}
+
+// Helper to save file using File System Access API
+async function saveFileWithPicker(blob: Blob, filename: string): Promise<boolean> {
+  if ('showSaveFilePicker' in window) {
+    try {
+      const handle = await (window as unknown as { showSaveFilePicker: (options: { suggestedName: string; types: Array<{ description: string; accept: Record<string, string[]> }> }) => Promise<FileSystemFileHandle> }).showSaveFilePicker({
+        suggestedName: filename,
+        types: [
+          {
+            description: 'Excel Files',
+            accept: {
+              'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': ['.xlsx'],
+            },
+          },
+        ],
+      });
+
+      const writable = await handle.createWritable();
+      await writable.write(blob);
+      await writable.close();
+      return true;
+    } catch {
+      // User cancelled or not supported
+      return false;
+    }
+  }
+  return false;
+}
+
 export async function exportToExcel(scan: ScanRecord): Promise<void> {
   const workbook = new ExcelJS.Workbook();
 
@@ -11,15 +79,13 @@ export async function exportToExcel(scan: ScanRecord): Promise<void> {
     { width: 40 },
   ];
 
-  // Title
   if (scan.ocrStructured?.title) {
     summarySheet.addRow(['Title', scan.ocrStructured.title]);
     summarySheet.getRow(1).font = { bold: true };
   }
 
-  // Structured fields
   if (scan.ocrStructured?.fields && scan.ocrStructured.fields.length > 0) {
-    summarySheet.addRow([]); // Empty row
+    summarySheet.addRow([]);
     summarySheet.addRow(['Field', 'Value']);
     summarySheet.getRow(summarySheet.rowCount).font = { bold: true };
 
@@ -60,14 +126,12 @@ export async function exportToExcel(scan: ScanRecord): Promise<void> {
   const imageSheet = workbook.addWorksheet('Image');
 
   try {
-    // Convert blob to base64
     const base64 = scan.imageDataUrl.split(',')[1];
     const imageId = workbook.addImage({
       base64,
       extension: 'jpeg',
     });
 
-    // Add image to sheet (A1, scaled to fit)
     imageSheet.addImage(imageId, {
       tl: { col: 0, row: 0 },
       ext: { width: 600, height: 800 },
@@ -97,28 +161,36 @@ export async function exportToExcel(scan: ScanRecord): Promise<void> {
   const timestamp = new Date().toISOString().replace(/[-:]/g, '').split('.')[0].replace('T', '_');
   const filename = `OCR_${timestamp}.xlsx`;
 
-  // Generate buffer and download
+  // Generate buffer
   const buffer = await workbook.xlsx.writeBuffer();
   const blob = new Blob([buffer], {
     type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
   });
 
-  // Trigger download
-  const url = URL.createObjectURL(blob);
-  const link = document.createElement('a');
-  link.href = url;
-  link.download = filename;
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
-  URL.revokeObjectURL(url);
+  // Try different methods for mobile compatibility
+  // Priority: Share > File Picker > Fallback download
 
-  console.log('[Excel] Export successful:', filename);
+  // 1. Try Web Share API (iOS/Android with file support)
+  const shared = await shareFile(blob, filename);
+  if (shared) {
+    console.log('[Excel] Export successful via share:', filename);
+    return;
+  }
+
+  // 2. Try File System Access API (Chrome desktop/Android)
+  const saved = await saveFileWithPicker(blob, filename);
+  if (saved) {
+    console.log('[Excel] Export successful via file picker:', filename);
+    return;
+  }
+
+  // 3. Fallback: trigger download (works on most browsers)
+  triggerDownload(blob, filename);
+  console.log('[Excel] Export successful via download:', filename);
 }
 
 /**
  * Export multiple scans to a single Excel file
- * Each scan gets its own section with Summary, Sizes, and Raw text sheets
  */
 export async function exportMultipleToExcel(scans: ScanRecord[]): Promise<void> {
   const workbook = new ExcelJS.Workbook();
@@ -183,20 +255,25 @@ export async function exportMultipleToExcel(scans: ScanRecord[]): Promise<void> 
   const timestamp = new Date().toISOString().replace(/[-:]/g, '').split('.')[0].replace('T', '_');
   const filename = `OCR_${scans.length}scans_${timestamp}.xlsx`;
 
-  // Generate buffer and download
+  // Generate buffer
   const buffer = await workbook.xlsx.writeBuffer();
   const blob = new Blob([buffer], {
     type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
   });
 
-  const url = URL.createObjectURL(blob);
-  const link = document.createElement('a');
-  link.href = url;
-  link.download = filename;
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
-  URL.revokeObjectURL(url);
+  // Try different methods for mobile compatibility
+  const shared = await shareFile(blob, filename);
+  if (shared) {
+    console.log('[Excel] Multi-export successful via share:', filename);
+    return;
+  }
 
-  console.log('[Excel] Multi-export successful:', filename, `(${scans.length} scans)`);
+  const saved = await saveFileWithPicker(blob, filename);
+  if (saved) {
+    console.log('[Excel] Multi-export successful via file picker:', filename);
+    return;
+  }
+
+  triggerDownload(blob, filename);
+  console.log('[Excel] Multi-export successful via download:', filename);
 }
