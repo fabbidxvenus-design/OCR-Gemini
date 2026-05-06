@@ -2,48 +2,69 @@ import ExcelJS from 'exceljs';
 import type { ScanRecord } from '@/db/schema';
 
 // Helper to trigger download (works on desktop)
-function triggerDownload(blob: Blob, filename: string) {
+function triggerDownload(blob: Blob, filename: string): void {
+  console.log('[Download] Attempting download:', filename, blob.size, 'bytes');
+
   const url = URL.createObjectURL(blob);
   const link = document.createElement('a');
   link.href = url;
   link.download = filename;
   link.style.display = 'none';
   document.body.appendChild(link);
+
+  // Force click for mobile browsers
   link.click();
+
   document.body.removeChild(link);
   setTimeout(() => URL.revokeObjectURL(url), 1000);
+  console.log('[Download] Download triggered');
 }
 
 // Helper to share file using Web Share API (best for mobile)
 async function shareFile(blob: Blob, filename: string): Promise<boolean> {
+  console.log('[Share] Attempting to share file:', filename, blob.size, 'bytes');
+
   // Check if Web Share API with file support is available
-  if (navigator.share && 'canShare' in navigator) {
+  if (navigator.share) {
+    console.log('[Share] navigator.share exists');
+
     const file = new File([blob], filename, {
       type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
     });
 
-    if (navigator.canShare({ files: [file] })) {
+    if ('canShare' in navigator && navigator.canShare({ files: [file] })) {
+      console.log('[Share] navigator.canShare returns true');
       try {
         await navigator.share({
           files: [file],
           title: 'OCR Export',
           text: `Exported from OCR App`,
         });
+        console.log('[Share] Share API success');
         return true;
       } catch (err) {
         // User cancelled or error
         if ((err as Error).name !== 'AbortError') {
-          console.log('[Share] Share cancelled or failed:', err);
+          console.error('[Share] Share failed:', err);
+          alert(`Lỗi chia sẻ: ${(err as Error).message}`);
+        } else {
+          console.log('[Share] Share cancelled by user');
         }
       }
+    } else {
+      console.log('[Share] navigator.canShare not available or returns false');
     }
+  } else {
+    console.log('[Share] navigator.share not supported');
   }
   return false;
 }
 
 // Helper to save file using File System Access API
 async function saveFileWithPicker(blob: Blob, filename: string): Promise<boolean> {
+  console.log('[Picker] Attempting file picker:', filename);
   if ('showSaveFilePicker' in window) {
+    console.log('[Picker] showSaveFilePicker exists');
     try {
       const handle = await (window as unknown as { showSaveFilePicker: (options: { suggestedName: string; types: Array<{ description: string; accept: Record<string, string[]> }> }) => Promise<FileSystemFileHandle> }).showSaveFilePicker({
         suggestedName: filename,
@@ -60,16 +81,22 @@ async function saveFileWithPicker(blob: Blob, filename: string): Promise<boolean
       const writable = await handle.createWritable();
       await writable.write(blob);
       await writable.close();
+      console.log('[Picker] File picker success');
       return true;
-    } catch {
-      // User cancelled or not supported
+    } catch (err) {
+      console.log('[Picker] File picker cancelled or failed:', err);
       return false;
     }
   }
+  console.log('[Picker] showSaveFilePicker not supported');
   return false;
 }
 
 export async function exportToExcel(scan: ScanRecord): Promise<void> {
+  console.log('[Excel] exportToExcel called');
+  console.log('[Excel] Scan title:', scan.ocrStructured?.title);
+  console.log('[Excel] Image data URL length:', scan.imageDataUrl?.length);
+
   const workbook = new ExcelJS.Workbook();
 
   // Sheet 1: Summary
@@ -193,6 +220,8 @@ export async function exportToExcel(scan: ScanRecord): Promise<void> {
  * Export multiple scans to a single Excel file
  */
 export async function exportMultipleToExcel(scans: ScanRecord[]): Promise<void> {
+  console.log('[Excel] exportMultipleToExcel called, scans:', scans.length);
+
   const workbook = new ExcelJS.Workbook();
 
   scans.forEach((scan, index) => {
