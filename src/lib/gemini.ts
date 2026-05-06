@@ -3,9 +3,13 @@ import type { OCRResponse, TokenUsage } from '@/db/schema';
 const API_KEY = import.meta.env.VITE_OPENROUTER_API_KEY as string;
 const OPENROUTER_MODEL = import.meta.env.VITE_OPENROUTER_MODEL as string | undefined;
 const API_URL = 'https://openrouter.ai/api/v1/chat/completions';
-const MODEL = OPENROUTER_MODEL || 'google/gemini-2.5-flash-lite';
+const MODEL = OPENROUTER_MODEL || 'google/gemma-4-31b-it';
 
 const MODEL_PRICING_USD_PER_TOKEN: Record<string, { input: number; output: number }> = {
+  'google/gemma-4-31b-it': {
+    input: 0.00000005, // Ước tính cho Gemma 4
+    output: 0.0000002,
+  },
   'google/gemini-2.5-flash-lite': {
     input: 0.0000001,
     output: 0.0000004,
