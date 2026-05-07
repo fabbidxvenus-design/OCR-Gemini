@@ -1,13 +1,15 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import Layout from '@/components/layout/Layout';
 import { useScan } from '@/hooks/useScans';
 import { useShare } from '@/hooks/useShare';
 import Toast from '@/components/ui/Toast';
-import { Edit, Copy, Share2, ChevronDown, FileText } from 'lucide-react';
+import { Edit, Copy, Share2, ChevronDown, ChevronUp, FileText } from 'lucide-react';
+import { categorizeFields } from '@/lib/fieldCategories';
 
 interface ExpandedSections {
-  fields: boolean;
+  mainFields: boolean;
+  otherFields: boolean;
   sizes: boolean;
   rawText: boolean;
   notes: boolean;
@@ -21,11 +23,22 @@ export default function OCRResultPage() {
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
 
   const [expandedSections, setExpandedSections] = useState<ExpandedSections>({
-    fields: true,
+    mainFields: true,
+    otherFields: false,
     sizes: true,
     rawText: false,
     notes: false,
   });
+
+  // Categorize fields into main and other
+  const categorizedFields = useMemo(() => {
+    const fields = scan?.ocrStructured?.fields || [];
+    const withCategories = categorizeFields(fields);
+    return {
+      main: withCategories.filter(f => f.category === 'main'),
+      other: withCategories.filter(f => f.category === 'other'),
+    };
+  }, [scan]);
 
   if (!scan) {
     return (
@@ -68,7 +81,6 @@ export default function OCRResultPage() {
     }
   };
 
-  const fields = scan.ocrStructured?.fields || [];
   const sizes = scan.ocrStructured?.sizes || [];
   const notes = scan.ocrStructured?.notes || [];
   const rawText = scan.ocrStructured?.raw_text || '';
@@ -100,41 +112,71 @@ export default function OCRResultPage() {
           </div>
         )}
 
-        {/* Structured Fields */}
-        <div className="bg-card rounded-xl border border-card-border shadow-card overflow-hidden animate-fade-in">
-          <button
-            onClick={() => toggleSection('fields')}
-            className="w-full flex items-center justify-between p-4 text-left"
-          >
-            <span className="text-xs font-semibold text-text-secondary uppercase tracking-wide">
-              Thông tin
-            </span>
-            <span className="text-xs text-text-secondary bg-surface px-2 py-1 rounded-md">
-              {fields.length}
-            </span>
-          </button>
+        {/* Main Fields */}
+        {categorizedFields.main.length > 0 && (
+          <div className="bg-card rounded-xl border border-card-border shadow-card overflow-hidden animate-fade-in">
+            <button
+              onClick={() => toggleSection('mainFields')}
+              className="w-full flex items-center justify-between p-4 text-left"
+            >
+              <span className="text-xs font-semibold text-text-secondary uppercase tracking-wide">
+                Thông tin chính
+              </span>
+              <span className="text-xs text-text-secondary bg-surface px-2 py-1 rounded-md">
+                {categorizedFields.main.length}
+              </span>
+            </button>
 
-          {expandedSections.fields && (
-            <div className="border-t border-card-border">
-              {fields.length > 0 ? (
+            {expandedSections.mainFields && (
+              <div className="border-t border-card-border">
                 <div className="divide-y divide-card-border">
-                  {fields.map((field, index) => (
-                    <div key={index} className="px-4 py-3 flex items-start justify-between">
+                  {categorizedFields.main.map((field, index) => (
+                    <div key={index} className="px-4 py-3.5 flex items-start justify-between">
                       <div className="flex-1 min-w-0">
-                        <p className="text-xs text-text-secondary">{field.field}</p>
-                        <p className="text-base font-medium text-text-primary mt-0.5 break-words">{field.value}</p>
+                        <p className="text-xs text-text-secondary font-medium">{field.field}</p>
+                        <p className="text-base font-semibold text-text-primary mt-1 break-words">{field.value}</p>
                       </div>
                     </div>
                   ))}
                 </div>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Other Fields */}
+        {categorizedFields.other.length > 0 && (
+          <div className="bg-card rounded-xl border border-card-border shadow-card overflow-hidden animate-fade-in">
+            <button
+              onClick={() => toggleSection('otherFields')}
+              className="w-full flex items-center justify-between p-4 text-left"
+            >
+              <span className="text-xs font-semibold text-text-secondary uppercase tracking-wide">
+                Thông tin khác ({categorizedFields.other.length})
+              </span>
+              {expandedSections.otherFields ? (
+                <ChevronUp className="w-4 h-4 text-text-secondary" />
               ) : (
-                <div className="px-4 py-6 text-center">
-                  <p className="text-sm text-text-secondary">Không có thông tin</p>
-                </div>
+                <ChevronDown className="w-4 h-4 text-text-secondary" />
               )}
-            </div>
-          )}
-        </div>
+            </button>
+
+            {expandedSections.otherFields && (
+              <div className="border-t border-card-border">
+                <div className="divide-y divide-card-border">
+                  {categorizedFields.other.map((field, index) => (
+                    <div key={index} className="px-4 py-2.5 flex items-start justify-between">
+                      <div className="flex-1 min-w-0">
+                        <p className="text-xs text-text-secondary">{field.field}</p>
+                        <p className="text-sm text-text-primary mt-0.5 break-words">{field.value}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
 
         {/* Size Table */}
         {sizes.length > 0 && (

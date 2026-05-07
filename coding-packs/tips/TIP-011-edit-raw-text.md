@@ -1,17 +1,68 @@
-import { useEffect, useState, useMemo } from 'react';
+# TIP-011: Edit Raw Text + Size Table
+
+## HEADER
+- **TIP-ID**: TIP-011
+- **Project**: OCR Gemini Mobile Web POC
+- **Module**: Editing
+- **Priority**: P0
+- **Depends on**: TIP-009, TIP-004
+- **Estimated**: 4 hours
+
+---
+
+## CONTEXT
+
+- **Working directory**: `D:\scripts\ocr_gemini\ocr-mobile-web\`
+- **Tech stack**: React 18 + TypeScript 5 + Tailwind CSS 3
+- **Key files to read first**: 
+  - `src/pages/EditPage.tsx` (will be extended)
+  - `src/db/queries.ts` (updateScan)
+- **Patterns to follow**: Textarea for raw text, simple table editor for sizes
+
+---
+
+## APPLICABLE STANDARDS
+
+**None** — No standards directory exists yet.
+
+---
+
+## TASK
+
+Extend the edit page to support raw text editing in a textarea and a simplified size table editor. Add tab navigation between structured fields and raw text views. Allow users to edit the raw OCR text directly and update the size table. Save changes to IndexedDB when user saves the form.
+
+---
+
+## SPECIFICATIONS
+
+### Business Rules
+
+1. **Tab navigation**: Switch between "Thông tin" (structured) and "Văn bản gốc" (raw text)
+2. **Raw text editor**: Multiline textarea with preserved formatting
+3. **Size table editor**: Already implemented in TIP-010
+4. **Save behavior**: Update both structured and raw text in single save
+5. **Character count**: Show character count for raw text
+6. **Preserve formatting**: Maintain line breaks and spacing
+
+### Updated Edit Page with Tabs
+
+**src/pages/EditPage.tsx** (extend existing):
+```typescript
+import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useForm, useFieldArray } from 'react-hook-form';
 import Layout from '@/components/layout/Layout';
-import { useScan, updateScan, markScanAsEdited } from '@/hooks/useScans';
-import { Save, X, Plus, Trash2, ChevronDown, ChevronUp } from 'lucide-react';
-import { categorizeFields } from '@/lib/fieldCategories';
-import type { OCRResponse } from '@/db/schema';
+import { useScan } from '@/hooks/useScans';
+import { updateScan, markScanAsEdited } from '@/db/queries';
+import { Save, X, Plus, Trash2 } from 'lucide-react';
+import type { OCRResponse, OCRField, OCRSize } from '@/lib/gemini';
 
 interface EditFormData {
   title: string;
-  fields: Array<{ id?: string; field: string; value: string; confidence: string }>;
-  sizes: Array<{ id?: string; size: string; quantity: number }>;
+  fields: OCRField[];
+  sizes: OCRSize[];
   raw_text: string;
+  notes: string[];
 }
 
 type TabType = 'structured' | 'rawText';
@@ -21,50 +72,15 @@ export default function EditPage() {
   const navigate = useNavigate();
   const scan = useScan(scanId);
   const [activeTab, setActiveTab] = useState<TabType>('structured');
-  const [showOtherFields, setShowOtherFields] = useState(false);
 
-  const {
-    register,
-    control,
-    handleSubmit,
-    reset,
-    watch,
-    formState: { errors, isDirty },
-  } = useForm<EditFormData>();
-
-  const {
-    fields: fieldArray,
-    append: appendField,
-    remove: removeField,
-  } = useFieldArray({
+  const { register, control, handleSubmit, reset, watch, formState: { errors, isDirty } } = useForm<EditFormData>();
+  
+  const { fields: fieldArray, append: appendField, remove: removeField } = useFieldArray({
     control,
     name: 'fields',
   });
 
-  const fieldsWatch = watch('fields');
-
-  const categorizedIndices = useMemo(() => {
-    const main: number[] = [];
-    const other: number[] = [];
-
-    fieldsWatch?.forEach((field, index) => {
-      // Use categorizeField logic from lib
-      const category = categorizeFields([{ field: field.field || '' }])[0].category;
-      if (category === 'main') {
-        main.push(index);
-      } else {
-        other.push(index);
-      }
-    });
-
-    return { main, other };
-  }, [fieldsWatch]);
-
-  const {
-    fields: sizeArray,
-    append: appendSize,
-    remove: removeSize,
-  } = useFieldArray({
+  const { fields: sizeArray, append: appendSize, remove: removeSize } = useFieldArray({
     control,
     name: 'sizes',
   });
@@ -74,17 +90,11 @@ export default function EditPage() {
   useEffect(() => {
     if (scan) {
       reset({
-        title: scan.ocrStructured?.title || '',
-        fields: (scan.ocrStructured?.fields || []).map((f) => ({
-          field: f.field,
-          value: f.value,
-          confidence: f.confidence || 'medium',
-        })),
-        sizes: (scan.ocrStructured?.sizes || []).map((s) => ({
-          size: s.size,
-          quantity: s.quantity,
-        })),
-        raw_text: scan.ocrStructured?.raw_text || '',
+        title: scan.ocrStructured.title || '',
+        fields: scan.ocrStructured.fields || [],
+        sizes: scan.ocrStructured.sizes || [],
+        raw_text: scan.ocrStructured.raw_text || '',
+        notes: scan.ocrStructured.notes || [],
       });
     }
   }, [scan, reset]);
@@ -94,20 +104,18 @@ export default function EditPage() {
 
     const updatedOCR: OCRResponse = {
       title: data.title,
-      fields: data.fields.map((f) => ({
-        field: f.field,
-        value: f.value,
-        confidence: f.confidence as 'high' | 'medium' | 'low',
-      })),
-      sizes: data.sizes.map((s) => ({
-        size: s.size,
-        quantity: s.quantity,
-      })),
+      fields: data.fields,
+      sizes: data.sizes,
       raw_text: data.raw_text,
+      notes: data.notes,
     };
 
-    await updateScan(scanId, { ocrStructured: updatedOCR });
+    await updateScan(scanId, {
+      ocrStructured: updatedOCR,
+    });
+
     await markScanAsEdited(scanId);
+
     navigate(`/ocr-result/${scanId}`);
   };
 
@@ -199,23 +207,19 @@ export default function EditPage() {
                 </div>
 
                 <div className="space-y-3">
-                  {/* Main Fields - Always visible, larger inputs */}
-                  <div className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
-                    Thông tin chính
-                  </div>
-                  {categorizedIndices.main.map((index) => (
-                    <div key={fieldArray[index].id} className="flex gap-2">
+                  {fieldArray.map((field, index) => (
+                    <div key={field.id} className="flex gap-2">
                       <div className="flex-1 space-y-2">
                         <input
                           type="text"
                           {...register(`fields.${index}.field`, { required: 'Tên trường bắt buộc' })}
-                          className="w-full px-3 py-3 border border-gray-300 rounded-lg text-sm font-medium focus:ring-2 focus:ring-primary focus:border-transparent"
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-primary focus:border-transparent"
                           placeholder="Tên trường"
                         />
                         <input
                           type="text"
                           {...register(`fields.${index}.value`, { required: 'Giá trị bắt buộc' })}
-                          className="w-full px-3 py-3 border border-gray-300 rounded-lg font-semibold focus:ring-2 focus:ring-primary focus:border-transparent"
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
                           placeholder="Giá trị"
                         />
                         {errors.fields?.[index] && (
@@ -234,50 +238,6 @@ export default function EditPage() {
                       </button>
                     </div>
                   ))}
-
-                  {/* Other Fields - Collapsible */}
-                  {categorizedIndices.other.length > 0 && (
-                    <>
-                      <button
-                        type="button"
-                        onClick={() => setShowOtherFields(!showOtherFields)}
-                        className="w-full flex items-center justify-between py-2 text-xs font-semibold text-gray-500 uppercase tracking-wide hover:text-gray-700"
-                      >
-                        <span>Thông tin khác ({categorizedIndices.other.length})</span>
-                        {showOtherFields ? (
-                          <ChevronUp className="w-4 h-4" />
-                        ) : (
-                          <ChevronDown className="w-4 h-4" />
-                        )}
-                      </button>
-                      {showOtherFields && categorizedIndices.other.map((index) => (
-                        <div key={fieldArray[index].id} className="flex gap-2">
-                          <div className="flex-1 space-y-2">
-                            <input
-                              type="text"
-                              {...register(`fields.${index}.field`, { required: 'Tên trường bắt buộc' })}
-                              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-primary focus:border-transparent"
-                              placeholder="Tên trường"
-                            />
-                            <input
-                              type="text"
-                              {...register(`fields.${index}.value`, { required: 'Giá trị bắt buộc' })}
-                              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
-                              placeholder="Giá trị"
-                            />
-                          </div>
-                          <button
-                            type="button"
-                            onClick={() => removeField(index)}
-                            className="flex items-center justify-center w-10 h-10 text-error hover:bg-error/10 rounded-lg transition-colors"
-                            aria-label="Xóa trường"
-                          >
-                            <Trash2 className="w-5 h-5" />
-                          </button>
-                        </div>
-                      ))}
-                    </>
-                  )}
 
                   {fieldArray.length === 0 && (
                     <p className="text-sm text-neutral text-center py-4">
@@ -312,7 +272,7 @@ export default function EditPage() {
                       />
                       <input
                         type="number"
-                        {...register(`sizes.${index}.quantity`, {
+                        {...register(`sizes.${index}.quantity`, { 
                           required: 'Số lượng bắt buộc',
                           min: { value: 0, message: 'Số lượng phải >= 0' },
                           valueAsNumber: true,
@@ -390,3 +350,148 @@ export default function EditPage() {
     </Layout>
   );
 }
+```
+
+### Validation
+
+1. **Tab switching**: Preserve form state when switching tabs
+2. **Raw text**: No validation, accept any text
+3. **Character count**: Update in real-time
+4. **Save**: Update both structured and raw text
+5. **Formatting**: Preserve line breaks and spacing
+
+### Error Handling
+
+- **No errors specific to raw text**: Accept any input
+- **Form state**: Preserve across tab switches
+- **Save failure**: Handle in TIP-017
+
+---
+
+## ACCEPTANCE CRITERIA
+
+### AC-001: Tab Navigation
+- **Given**: User is on edit page
+- **When**: Page loads
+- **Then**:
+  - Two tabs display: "Thông tin" and "Văn bản gốc"
+  - "Thông tin" tab is active by default
+  - Active tab has blue underline and text
+
+### AC-002: Switch to Raw Text Tab
+- **Given**: User is on "Thông tin" tab
+- **When**: User taps "Văn bản gốc" tab
+- **Then**:
+  - Tab switches to raw text view
+  - Textarea displays with raw_text content
+  - Character count shows
+  - Structured fields are hidden
+
+### AC-003: Edit Raw Text
+- **Given**: Raw text is "INVOICE\nContract: ABC123"
+- **When**: User changes to "INVOICE\nContract: XYZ789"
+- **Then**:
+  - Textarea value updates
+  - Character count updates
+  - Form is marked as dirty
+
+### AC-004: Character Count
+- **Given**: Raw text has 150 characters
+- **When**: Textarea displays
+- **Then**:
+  - Character count shows "150 ký tự"
+  - Updates in real-time as user types
+
+### AC-005: Preserve Line Breaks
+- **Given**: Raw text has multiple lines with line breaks
+- **When**: User edits and saves
+- **Then**:
+  - Line breaks are preserved in database
+  - When viewing result page, line breaks display correctly
+
+### AC-006: Switch Back to Structured
+- **Given**: User is on "Văn bản gốc" tab
+- **When**: User taps "Thông tin" tab
+- **Then**:
+  - Tab switches back to structured view
+  - All form fields retain their values
+  - No data is lost
+
+### AC-007: Save Both Tabs
+- **Given**: User edits structured fields and raw text
+- **When**: User taps "Lưu" button
+- **Then**:
+  - Both structured data and raw text are saved
+  - Scan record updated in IndexedDB
+  - User navigates back to result page
+
+### AC-008: Textarea Sizing
+- **Given**: User is on raw text tab
+- **When**: Textarea displays
+- **Then**:
+  - Textarea has 20 rows
+  - Monospace font for better readability
+  - Resize is disabled (resize-none)
+  - Scrollable if content exceeds height
+
+### AC-009: Empty Raw Text
+- **Given**: Raw text is empty
+- **When**: User views raw text tab
+- **Then**:
+  - Placeholder shows: "Nhập văn bản gốc từ OCR..."
+  - Character count shows "0 ký tự"
+  - No error message
+
+### AC-010: Help Text
+- **Given**: User is on raw text tab
+- **When**: Viewing textarea
+- **Then**:
+  - Help text displays below textarea
+  - Text: "Chỉnh sửa văn bản gốc từ kết quả OCR. Các thay đổi sẽ được lưu khi bạn nhấn 'Lưu'."
+
+---
+
+## CONSTRAINTS
+
+### DO NOT:
+- ❌ Add rich text editor — plain text only
+- ❌ Implement markdown preview — raw text only
+- ❌ Add text formatting buttons — keep simple
+- ❌ Validate raw text format — accept any input
+- ❌ Auto-sync structured fields from raw text — manual only
+- ❌ Add spell check — browser default is fine
+
+### REUSE:
+- ✅ Existing EditPage from TIP-010
+- ✅ React Hook Form watch for character count
+- ✅ Tab pattern (common UI pattern)
+- ✅ Tailwind utility classes
+
+### SKIP (out of scope for TIP-011):
+- ⏭️ Rich text editor
+- ⏭️ Markdown support
+- ⏭️ Text formatting toolbar
+- ⏭️ Auto-sync between structured and raw text
+- ⏭️ Spell check
+- ⏭️ Find and replace
+
+---
+
+## COMPLETION CHECKLIST
+
+- [ ] `src/pages/EditPage.tsx` updated with tabs
+- [ ] Tab navigation works
+- [ ] Raw text textarea displays
+- [ ] Character count displays and updates
+- [ ] Edit raw text works
+- [ ] Line breaks preserved
+- [ ] Switch between tabs preserves form state
+- [ ] Save updates both structured and raw text
+- [ ] Textarea has monospace font
+- [ ] Help text displays
+- [ ] No TypeScript errors
+- [ ] No console errors
+
+---
+
+*TIP-011 | Generated: 2026-05-05 | Vibecode Kit v5.0*

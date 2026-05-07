@@ -6,6 +6,7 @@ import EditPage from '@/pages/EditPage';
 import HistoryPage from '@/pages/HistoryPage';
 import HistoryDetailPage from '@/pages/HistoryDetailPage';
 import AnalyticsPage from '@/pages/AnalyticsPage';
+import SettingsPage from '@/pages/SettingsPage';
 import ProtectedRoute from '@/components/layout/ProtectedRoute';
 import RootRedirect from '@/components/layout/RootRedirect';
 import ErrorBoundary from '@/components/ErrorBoundary';
@@ -68,6 +69,7 @@ function CameraPage() {
         edited: false,
         tokenUsage: ocrResult.tokenUsage,
         apiKeyIndex: ocrResult.apiKeyIndex,
+        modelTier: ocrResult.modelTier,
       });
 
       setProgress('Hoàn tất!');
@@ -175,6 +177,14 @@ function App() {
             element={
               <ProtectedRoute>
                 <AnalyticsPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/settings"
+            element={
+              <ProtectedRoute>
+                <SettingsPage />
               </ProtectedRoute>
             }
           />

@@ -1,0 +1,39 @@
+{
+  "timestamp": "2026-05-05T00:00:00Z",
+  "mode": "plan-supervised",
+  "planDir": "D:\\scripts\\ocr_gemini\\.coding_space\\coding-packs\\tips",
+  "score": {
+    "lexical": 25,
+    "structural": 50,
+    "impact": 20,
+    "total": 95
+  },
+  "tier": "THOROUGH",
+  "rationale": "17 TIPs across 5 weeks = 90 hours of implementation. Cross-file dependencies, mobile web architecture, OCR processing, IndexedDB, API integration, Excel export, analytics. Non-trivial by definition per plan-integration.md rules.",
+  "tipCount": 17,
+  "totalHours": 90,
+  "weekBreakdown": {
+    "week1": { "tips": ["TIP-001", "TIP-002", "TIP-003", "TIP-004", "TIP-005"], "hours": 24, "status": "READY" },
+    "week2": { "tips": ["TIP-006", "TIP-007", "TIP-008", "TIP-009"], "hours": 26, "status": "READY" },
+    "week3": { "tips": ["TIP-010", "TIP-011", "TIP-012"], "hours": 16, "status": "READY" },
+    "week4": { "tips": ["TIP-013", "TIP-014", "TIP-015"], "hours": 16, "status": "READY" },
+    "week5": { "tips": ["TIP-016", "TIP-017"], "hours": 8, "status": "READY" }
+  },
+  "techStack": [
+    "React 18", "Vite 5", "TypeScript 5", "Tailwind CSS 3",
+    "Zustand 4", "Dexie.js 4", "React Router 6", "React Hook Form 7",
+    "ExcelJS 4", "browser-image-compression 2", "bcryptjs 2.4", "Lucide React"
+  ],
+  "domains": ["Authentication", "Camera", "OCR", "Storage", "Export", "History", "Analytics"],
+  "keywords": ["architecture", "security", "refactor", "database", "API", "mobile"],
+  "complexSignals": [
+    "hasArchitectureKeywords: refactor, restructure (multi-phase implementation)",
+    "hasRiskKeywords: security (PIN auth, bcrypt), database (IndexedDB)",
+    "hasDebuggingKeywords: investigate (retry logic for API)",
+    "wordCount > 100: each TIP has detailed specs",
+    "codeBlockCount > 2: multiple code examples per TIP",
+    "filePathCount > 3: cross-file scope across pages, components, hooks, lib",
+    "crossFileDependencies: TIPs depend on each other",
+    "impactScope: system-wide (5 weeks, 17 TIPs)"
+  ]
+}
