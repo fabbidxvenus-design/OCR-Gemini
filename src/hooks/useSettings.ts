@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import { db } from '@/db/schema';
 import type { AppSettings } from '@/db/schema';
 
