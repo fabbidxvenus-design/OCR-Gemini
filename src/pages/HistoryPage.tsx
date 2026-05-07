@@ -5,6 +5,7 @@ import { useScans, useSearchScans } from '@/hooks/useScans';
 import { useExport } from '@/hooks/useExport';
 import { useDebounce } from '@/hooks/useDebounce';
 import SkeletonCard from '@/components/ui/SkeletonCard';
+import Toast from '@/components/ui/Toast';
 import { Search, Calendar, Edit3, Camera, CheckSquare, Square, X, Download } from 'lucide-react';
 
 function formatTimestamp(date: Date): string {
@@ -37,6 +38,7 @@ export default function HistoryPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [isSelectMode, setIsSelectMode] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
 
   const debouncedQuery = useDebounce(searchQuery, 300);
   const { isExporting, exportMultiple } = useExport();
@@ -84,8 +86,24 @@ export default function HistoryPage() {
   // Export selected scans
   const handleExportSelected = async () => {
     if (!scans || selectedIds.size === 0) return;
-    const selectedScans = scans.filter(s => s.id && selectedIds.has(s.id));
-    await exportMultiple(selectedScans);
+
+    try {
+      const selectedScans = scans.filter(s => s.id && selectedIds.has(s.id));
+      if (selectedScans.length === 0) {
+        setToast({ message: 'Không tìm thấy dữ liệu scan để xuất', type: 'error' });
+        return;
+      }
+
+      await exportMultiple(selectedScans);
+      setToast({ message: `Đã xuất ${selectedScans.length} scan thành công`, type: 'success' });
+
+      // Clear selection and exit select mode on success
+      setIsSelectMode(false);
+      setSelectedIds(new Set());
+    } catch (err) {
+      console.error('[History] Export error:', err);
+      setToast({ message: 'Lỗi khi xuất file Excel', type: 'error' });
+    }
   };
 
   const handleScanClick = (scanId?: string) => {
@@ -303,6 +321,14 @@ export default function HistoryPage() {
               </button>
             </div>
           </div>
+        )}
+        {/* Toast Notification */}
+        {toast && (
+          <Toast
+            message={toast.message}
+            type={toast.type}
+            onClose={() => setToast(null)}
+          />
         )}
       </div>
     </Layout>

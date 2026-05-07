@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { db } from '@/db/schema';
 import type { AppSettings } from '@/db/schema';
 
@@ -13,12 +13,7 @@ export function useSettings() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Load settings from IndexedDB
-  useEffect(() => {
-    loadSettings();
-  }, []);
-
-  const loadSettings = async () => {
+  async function loadSettings() {
     try {
       setIsLoading(true);
       const stored = await db.settings.get('app-settings');
@@ -37,7 +32,13 @@ export function useSettings() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }
+
+  // Load settings from IndexedDB on mount
+  useEffect(() => {
+    loadSettings();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const updateSettings = async (
     updates: Partial<Omit<AppSettings, 'id'>>

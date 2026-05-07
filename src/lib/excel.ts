@@ -43,13 +43,9 @@ async function shareFile(blob: Blob, filename: string): Promise<boolean> {
         console.log('[Share] Share API success');
         return true;
       } catch (err) {
-        // User cancelled or error
-        if ((err as Error).name !== 'AbortError') {
-          console.error('[Share] Share failed:', err);
-          alert(`Lỗi chia sẻ: ${(err as Error).message}`);
-        } else {
-          console.log('[Share] Share cancelled by user');
-        }
+        // User cancelled or error - silently fallback to download
+        // Do NOT show alert for recoverable errors (Permission denied, AbortError, etc.)
+        console.log('[Share] Share API failed, falling back to download:', (err as Error).message);
       }
     } else {
       console.log('[Share] navigator.canShare not available or returns false');
@@ -227,10 +223,10 @@ export async function exportMultipleToExcel(scans: ScanRecord[]): Promise<void> 
   scans.forEach((scan, index) => {
     const prefix = `Scan ${index + 1}`;
     const title = scan.ocrStructured?.title || `Scan ${index + 1}`;
-    const safeName = title.substring(0, 25).replace(/[\\/?*[\]]/g, '_');
+    const safeName = title.substring(0, 25).replace(/[\\\\/:?*[\]]/g, '_');
 
     // Sheet: Summary
-    const summarySheet = workbook.addWorksheet(`${prefix}: ${safeName}`);
+    const summarySheet = workbook.addWorksheet(`${prefix} ${safeName}`);
     summarySheet.columns = [
       { width: 25 },
       { width: 40 },

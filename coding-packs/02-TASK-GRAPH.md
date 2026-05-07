@@ -147,6 +147,8 @@ Week 5: Polish & Testing
 | TIP-026 | Move Excel export to History (multi-select) | TIP-013 | P2 | 4 | 6 | READY |
 | TIP-037 | Settings page - Model selector (Free/Default/High) | TIP-004, TIP-005 | P1 | 6-8 | 7 | READY |
 | TIP-038 | Field categorization - Main vs Other | TIP-009, TIP-010 | P1 | 4-6 | 7 | READY |
+| TIP-039 | Fix Excel export share error on mobile | TIP-012 | P1 | 1 | 7 | READY |
+| TIP-040 | Fix multi-select Excel export not working | TIP-026 | P1 | 1 | 7 | READY |
 
 **Legend**:
 - **TBD**: To be done
