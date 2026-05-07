@@ -8,5 +8,5 @@ export default function RootRedirect() {
     return <Navigate to="/camera" replace />;
   }
 
-  return <Navigate to="/" replace />;
+  return <Navigate to="/login" replace />;
 }

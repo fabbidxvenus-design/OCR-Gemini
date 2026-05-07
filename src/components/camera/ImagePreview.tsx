@@ -1,4 +1,5 @@
 import { RotateCcw, Check } from 'lucide-react';
+import { PrimaryButton } from '@/components/ui';
 
 interface ImagePreviewProps {
   imageDataUrl: string;
@@ -9,33 +10,21 @@ interface ImagePreviewProps {
 export default function ImagePreview({ imageDataUrl, onRetake, onConfirm }: ImagePreviewProps) {
   return (
     <div className="relative w-full h-full bg-black">
-      {/* Image preview */}
-      <img
-        src={imageDataUrl}
-        alt="Captured"
-        className="w-full h-full object-contain"
-      />
+      <img src={imageDataUrl} alt="Captured" className="w-full h-full object-contain" />
 
-      {/* Controls overlay */}
-      <div className="absolute bottom-0 left-0 right-0 p-6 bg-gradient-to-t from-black/80 to-transparent">
+      <div className="absolute bottom-8 left-0 right-0 p-6 bg-gradient-to-t from-black/80 to-transparent">
         <div className="flex items-center justify-center gap-4">
-          {/* Retake button */}
           <button
             onClick={onRetake}
-            className="flex items-center gap-2 bg-white/20 text-white py-3 px-6 rounded-lg font-medium hover:bg-white/30 transition-colors touch-target"
+            className="flex items-center gap-2 bg-white/20 backdrop-blur-sm text-white py-4 px-6 rounded-xl font-semibold hover:bg-white/30 transition-colors active:scale-95"
           >
             <RotateCcw className="w-5 h-5" />
             Chụp lại
           </button>
-
-          {/* Confirm button */}
-          <button
-            onClick={onConfirm}
-            className="flex items-center gap-2 bg-primary text-white py-3 px-6 rounded-lg font-medium hover:bg-primary/90 transition-colors touch-target"
-          >
-            <Check className="w-5 h-5" />
+          <PrimaryButton onClick={onConfirm} className="shadow-elevated">
+            <Check className="w-5 h-5 mr-2" />
             Xác nhận
-          </button>
+          </PrimaryButton>
         </div>
       </div>
     </div>

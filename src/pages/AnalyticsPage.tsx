@@ -1,7 +1,8 @@
 import { useState, useMemo } from 'react';
 import Layout from '@/components/layout/Layout';
 import { useScans } from '@/hooks/useScans';
-import { TrendingUp, DollarSign, Calendar, Key, CreditCard } from 'lucide-react';
+import { TrendingUp, DollarSign, Calendar, Key, CreditCard, ChevronRight } from 'lucide-react';
+import { FilterChip } from '@/components/ui';
 
 type DateRange = '7d' | '30d' | '90d' | 'all';
 
@@ -10,11 +11,7 @@ interface KPI {
   value: string;
   icon: React.ReactNode;
   color: string;
-}
-
-interface ProductCount {
-  title: string;
-  count: number;
+  bg: string;
 }
 
 export default function AnalyticsPage() {
@@ -23,190 +20,110 @@ export default function AnalyticsPage() {
 
   const filteredScans = useMemo(() => {
     if (!allScans || dateRange === 'all') return allScans || [];
-
     const now = new Date();
     const cutoff = new Date();
-
-    switch (dateRange) {
-      case '7d':
-        cutoff.setDate(now.getDate() - 7);
-        break;
-      case '30d':
-        cutoff.setDate(now.getDate() - 30);
-        break;
-      case '90d':
-        cutoff.setDate(now.getDate() - 90);
-        break;
-    }
-
+    if (dateRange === '7d') cutoff.setDate(now.getDate() - 7);
+    else if (dateRange === '30d') cutoff.setDate(now.getDate() - 30);
+    else if (dateRange === '90d') cutoff.setDate(now.getDate() - 90);
     return allScans.filter((scan) => new Date(scan.timestamp) >= cutoff);
   }, [allScans, dateRange]);
 
   const kpis = useMemo<KPI[]>(() => {
-    if (!filteredScans || filteredScans.length === 0) {
-      return [
-        {
-          label: 'Tổng số scan',
-          value: '0',
-          icon: <TrendingUp className="w-6 h-6" />,
-          color: 'text-primary',
-        },
-        {
-          label: 'Tổng chi phí',
-          value: '$0.00',
-          icon: <DollarSign className="w-6 h-6" />,
-          color: 'text-success',
-        },
-      ];
-    }
-
-    const totalScans = filteredScans.length;
-    const totalCost = filteredScans.reduce((sum, scan) => sum + scan.tokenUsage.cost, 0);
-
-    const key1Scans = filteredScans.filter(s => s.apiKeyIndex === 1).length;
-    const key2Scans = filteredScans.filter(s => s.apiKeyIndex === 2).length;
-
-    const key1Cost = filteredScans.filter(s => s.apiKeyIndex === 1).reduce((sum, s) => sum + s.tokenUsage.cost, 0);
-    const key2Cost = filteredScans.filter(s => s.apiKeyIndex === 2).reduce((sum, s) => sum + s.tokenUsage.cost, 0);
+    const totalScans = filteredScans?.length || 0;
+    const totalCost = filteredScans?.reduce((sum, scan) => sum + scan.tokenUsage.cost, 0) || 0;
+    const key1Scans = filteredScans?.filter(s => s.apiKeyIndex === 1).length || 0;
+    const key2Scans = filteredScans?.filter(s => s.apiKeyIndex === 2).length || 0;
 
     return [
-      {
-        label: 'Tổng số scan',
-        value: totalScans.toString(),
-        icon: <TrendingUp className="w-6 h-6" />,
-        color: 'text-primary',
-      },
-      {
-        label: 'Tổng chi phí',
-        value: `$${totalCost.toFixed(4)}`,
-        icon: <DollarSign className="w-6 h-6" />,
-        color: 'text-success',
-      },
-      {
-        label: 'API Key 1 (Lượt/Phí)',
-        value: `${key1Scans} / $${key1Cost.toFixed(4)}`,
-        icon: <Key className="w-6 h-6" />,
-        color: 'text-blue-500',
-      },
-      {
-        label: 'API Key 2 (Lượt/Phí)',
-        value: `${key2Scans} / $${key2Cost.toFixed(4)}`,
-        icon: <CreditCard className="w-6 h-6" />,
-        color: 'text-purple-500',
-      },
+      { label: 'Tổng số scan', value: totalScans.toString(), icon: <TrendingUp className="w-6 h-6" />, color: 'text-primary', bg: 'bg-primary-light' },
+      { label: 'Tổng chi phí', value: `$${totalCost.toFixed(3)}`, icon: <DollarSign className="w-6 h-6" />, color: 'text-success', bg: 'bg-success-light' },
+      { label: 'API Key 1', value: `${key1Scans} scans`, icon: <Key className="w-6 h-6" />, color: 'text-blue-600', bg: 'bg-blue-50' },
+      { label: 'API Key 2', value: `${key2Scans} scans`, icon: <CreditCard className="w-6 h-6" />, color: 'text-purple-600', bg: 'bg-purple-50' },
     ];
   }, [filteredScans]);
 
-  const topProducts = useMemo<ProductCount[]>(() => {
-    if (!filteredScans || filteredScans.length === 0) return [];
-
-    const productCounts = new Map<string, number>();
-
-    filteredScans.forEach((scan) => {
-      const title = scan.ocrStructured?.title || 'Không có tiêu đề';
-      productCounts.set(title, (productCounts.get(title) || 0) + 1);
+  const topProducts = useMemo(() => {
+    if (!filteredScans) return [];
+    const counts = new Map<string, number>();
+    filteredScans.forEach(s => {
+      const t = s.ocrStructured?.title || 'Không rõ';
+      counts.set(t, (counts.get(t) || 0) + 1);
     });
-
-    return Array.from(productCounts.entries())
+    return Array.from(counts.entries())
       .map(([title, count]) => ({ title, count }))
       .sort((a, b) => b.count - a.count)
       .slice(0, 5);
   }, [filteredScans]);
 
-  const maxCount = topProducts.length > 0 ? topProducts[0].count : 1;
-
   return (
     <Layout title="Thống kê">
-      <div className="p-4 space-y-4">
-        {/* Date Range Filter */}
-        <div className="bg-white rounded-lg border border-gray-200 p-4">
-          <div className="flex items-center gap-2 mb-3">
-            <Calendar className="w-5 h-5 text-neutral" />
-            <h3 className="font-semibold text-gray-900">Khoảng thời gian</h3>
+      <div className="p-screen space-y-section pb-24 bg-surface min-h-full">
+        {/* Date Range Chips */}
+        <div className="bg-card rounded-2xl border border-card-border p-card shadow-card overflow-hidden">
+          <div className="flex items-center gap-2 mb-4 text-text-secondary">
+            <Calendar className="w-4 h-4" />
+            <span className="text-label font-bold uppercase tracking-widest">Thời gian</span>
           </div>
-          <div className="grid grid-cols-4 gap-2">
+          <div className="flex gap-2">
             {[
-              { value: '7d', label: '7 ngày' },
-              { value: '30d', label: '30 ngày' },
-              { value: '90d', label: '90 ngày' },
-              { value: 'all', label: 'Tất cả' },
-            ].map((option) => (
-              <button
-                key={option.value}
-                onClick={() => setDateRange(option.value as DateRange)}
-                className={`py-2 px-3 rounded-lg text-sm font-medium transition-colors ${
-                  dateRange === option.value
-                    ? 'bg-primary text-white'
-                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                }`}
-              >
-                {option.label}
-              </button>
+              { v: '7d', l: '7 ngày' },
+              { v: '30d', l: '30 ngày' },
+              { v: '90d', l: '90 ngày' },
+              { v: 'all', l: 'Tất cả' },
+            ].map(o => (
+              <FilterChip key={o.v} label={o.l} isActive={dateRange === o.v} onClick={() => setDateRange(o.v as DateRange)} className="flex-1" />
             ))}
           </div>
         </div>
 
-        {/* KPI Cards */}
-        <div className="grid grid-cols-1 gap-3">
-          {kpis.map((kpi, index) => (
-            <div
-              key={index}
-              className="bg-white rounded-lg border border-gray-200 p-4 flex items-center gap-4"
-            >
-              <div className={`${kpi.color}`}>{kpi.icon}</div>
-              <div className="flex-1">
-                <p className="text-sm text-neutral">{kpi.label}</p>
-                <p className="text-2xl font-bold text-gray-900">{kpi.value}</p>
+        {/* KPI Grid */}
+        <div className="grid grid-cols-1 gap-section">
+          {kpis.map((kpi, i) => (
+            <div key={i} className="bg-card rounded-2xl border border-card-border p-card shadow-card flex items-center gap-4 animate-fade-in" style={{ animationDelay: `${i * 50}ms` }}>
+              <div className={`w-12 h-12 ${kpi.bg} ${kpi.color} rounded-xl flex items-center justify-center flex-shrink-0`}>
+                {kpi.icon}
+              </div>
+              <div>
+                <p className="text-label font-medium text-text-secondary uppercase tracking-wider">{kpi.label}</p>
+                <p className="text-2xl font-bold text-text-primary mt-0.5">{kpi.value}</p>
               </div>
             </div>
           ))}
         </div>
 
-        {/* Top Products */}
-        <div className="bg-white rounded-lg border border-gray-200 p-4">
-          <h3 className="font-semibold text-gray-900 mb-4">Top 5 sản phẩm</h3>
+        {/* Top Products Card */}
+        <div className="bg-card rounded-2xl border border-card-border p-card shadow-card animate-fade-in">
+          <div className="flex items-center justify-between mb-6">
+            <h3 className="text-body font-bold text-text-primary uppercase tracking-widest">Top sản phẩm</h3>
+            <TrendingUp className="w-5 h-5 text-text-placeholder" />
+          </div>
 
           {topProducts.length > 0 ? (
-            <div className="space-y-3">
-              {topProducts.map((product, index) => (
-                <div key={index}>
-                  <div className="flex items-center justify-between mb-1">
-                    <p className="text-sm font-medium text-gray-900 truncate flex-1">
-                      {product.title}
-                    </p>
-                    <span className="text-sm font-semibold text-primary ml-2">
-                      {product.count}
+            <div className="space-y-5">
+              {topProducts.map((p, i) => (
+                <div key={i} className="group">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-small font-semibold text-text-primary truncate pr-4">
+                      {i + 1}. {p.title}
                     </span>
+                    <span className="text-small font-bold text-primary">{p.count}</span>
                   </div>
-                  <div className="w-full bg-gray-200 rounded-full h-2">
+                  <div className="h-2 w-full bg-surface rounded-full overflow-hidden">
                     <div
-                      className="bg-primary h-2 rounded-full transition-all"
-                      style={{ width: `${(product.count / maxCount) * 100}%` }}
+                      className="h-full bg-primary rounded-full transition-all duration-1000 ease-out"
+                      style={{ width: `${(p.count / topProducts[0].count) * 100}%` }}
                     />
                   </div>
                 </div>
               ))}
             </div>
           ) : (
-            <div className="text-center py-8">
-              <TrendingUp className="w-12 h-12 text-neutral mx-auto mb-2" />
-              <p className="text-sm text-neutral">Chưa có dữ liệu</p>
+            <div className="text-center py-10 opacity-50">
+              <TrendingUp className="w-12 h-12 mx-auto mb-2" />
+              <p className="text-small">Chưa có dữ liệu sản phẩm</p>
             </div>
           )}
         </div>
-
-        {/* Empty State */}
-        {(!filteredScans || filteredScans.length === 0) && (
-          <div className="bg-white rounded-lg border border-gray-200 p-8 text-center">
-            <TrendingUp className="w-16 h-16 text-neutral mx-auto mb-4" />
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">
-              Chưa có dữ liệu thống kê
-            </h3>
-            <p className="text-neutral mb-4">
-              Bắt đầu quét hóa đơn để xem thống kê chi tiết
-            </p>
-          </div>
-        )}
       </div>
     </Layout>
   );

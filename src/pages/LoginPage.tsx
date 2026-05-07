@@ -1,110 +1,109 @@
-import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useState } from 'react';
+import { useNavigate, Link } from 'react-router-dom';
 import { useAuthStore } from '@/store/authStore';
-import {
-  getStoredPINHash,
-  hashPIN,
-  verifyPIN,
-  storePINHash,
-  updateLastLogin,
-  validatePINFormat
-} from '@/lib/auth';
 import { Lock, Camera, Shield } from 'lucide-react';
+import { PrimaryButton, InputField, PasswordInput } from '@/components/ui';
+
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const MIN_PASSWORD_LENGTH = 8;
+
+interface FormErrors {
+  email?: string;
+  password?: string;
+}
 
 export default function LoginPage() {
-  const [pin, setPin] = useState('');
-  const [confirmPin, setConfirmPin] = useState('');
-  const [isFirstTime, setIsFirstTime] = useState(false);
-  const [error, setError] = useState('');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [errors, setErrors] = useState<FormErrors>({});
+  const [touched, setTouched] = useState<Record<string, boolean>>({});
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
   const { login } = useAuthStore();
 
-  useEffect(() => {
-    checkFirstTime();
-  }, []);
+  function validateEmail(value: string): string | undefined {
+    if (!value) return 'Email là bắt buộc';
+    if (!EMAIL_REGEX.test(value)) return 'Email không hợp lệ';
+    return undefined;
+  }
 
-  async function checkFirstTime() {
-    const storedHash = await getStoredPINHash();
-    setIsFirstTime(storedHash === null);
+  function validatePassword(value: string): string | undefined {
+    if (!value) return 'Mật khẩu là bắt buộc';
+    return undefined;
+  }
+
+  function handleEmailBlur() {
+    setTouched(prev => ({ ...prev, email: true }));
+    setErrors(prev => ({ ...prev, email: validateEmail(email) }));
+  }
+
+  function handlePasswordBlur() {
+    setTouched(prev => ({ ...prev, password: true }));
+    setErrors(prev => ({ ...prev, password: validatePassword(password) }));
   }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    setError('');
+
+    const emailError = validateEmail(email);
+    const passwordError = validatePassword(password);
+
+    setErrors({ email: emailError, password: passwordError });
+    setTouched({ email: true, password: true });
+
+    if (emailError || passwordError) return;
+
     setLoading(true);
 
     try {
-      if (isFirstTime) {
-        await handleFirstTimeSetup();
+      // TODO: Replace with actual auth API call
+      // For now, simulate login with local storage
+      const storedCredentials = localStorage.getItem('ocr_credentials');
+
+      if (storedCredentials) {
+        const { storedEmail, storedPasswordHash } = JSON.parse(storedCredentials);
+
+        if (email !== storedEmail) {
+          setErrors({ email: 'Email chưa đăng ký' });
+          setLoading(false);
+          return;
+        }
+
+        // Simple hash for demo (in production, use proper auth)
+        const inputHash = btoa(email + password);
+        if (inputHash !== storedPasswordHash) {
+          setErrors({ password: 'Mật khẩu không đúng' });
+          setLoading(false);
+          return;
+        }
       } else {
-        await handleLogin();
+        // First time - store credentials for demo
+        const passwordHash = btoa(email + password);
+        localStorage.setItem('ocr_credentials', JSON.stringify({
+          storedEmail: email,
+          storedPasswordHash: passwordHash,
+        }));
       }
+
+      login();
+      navigate('/camera');
     } catch {
-      setError('Đã xảy ra lỗi. Vui lòng thử lại.');
+      setErrors({ email: 'Đã xảy ra lỗi. Vui lòng thử lại.' });
     } finally {
       setLoading(false);
     }
   }
 
-  async function handleFirstTimeSetup() {
-    const validation = validatePINFormat(pin);
-    if (!validation.valid) {
-      setError(validation.error!);
-      return;
-    }
-
-    if (pin !== confirmPin) {
-      setError('PIN xác nhận không khớp');
-      return;
-    }
-
-    const pinHash = await hashPIN(pin);
-    await storePINHash(pinHash);
-    login();
-    navigate('/camera');
-  }
-
-  async function handleLogin() {
-    const validation = validatePINFormat(pin);
-    if (!validation.valid) {
-      setError(validation.error!);
-      return;
-    }
-
-    const storedHash = await getStoredPINHash();
-    if (!storedHash) {
-      setError('Không tìm thấy PIN. Vui lòng thiết lập lại.');
-      setIsFirstTime(true);
-      return;
-    }
-
-    const isValid = await verifyPIN(pin, storedHash);
-    if (!isValid) {
-      setError('PIN không đúng');
-      return;
-    }
-
-    await updateLastLogin();
-    login();
-    navigate('/camera');
-  }
-
   return (
     <div className="min-h-screen bg-surface flex flex-col">
-      {/* Header */}
-      <div className="flex-1 flex flex-col items-center justify-center px-6">
+      <div className="flex-1 flex flex-col items-center justify-center px-4 py-8">
         {/* Logo */}
         <div className="mb-10 text-center animate-fade-in">
           <div className="inline-flex items-center justify-center w-20 h-20 bg-primary rounded-2xl mb-6 shadow-lg shadow-primary/25">
             <Camera className="w-10 h-10 text-white" />
           </div>
-          <h1 className="text-3xl font-bold text-text-primary mb-2">
-            OCR App
-          </h1>
-          <p className="text-text-secondary text-sm">
-            Quét hóa đơn bằng AI
-          </p>
+          <h1 className="text-3xl font-bold text-text-primary mb-2">OCR App</h1>
+          <p className="text-text-secondary text-sm">Quét hóa đơn bằng AI</p>
         </div>
 
         {/* Form Card */}
@@ -114,66 +113,50 @@ export default function LoginPage() {
               <div className="inline-flex items-center justify-center w-12 h-12 bg-primary/10 rounded-xl mb-3">
                 <Lock className="w-6 h-6 text-primary" />
               </div>
-              <h2 className="text-xl font-semibold text-text-primary">
-                {isFirstTime ? 'Thiết lập PIN' : 'Đăng nhập'}
-              </h2>
-              <p className="text-sm text-text-secondary mt-1">
-                {isFirstTime
-                  ? 'Tạo mã PIN 4-6 chữ số'
-                  : 'Nhập mã PIN để tiếp tục'}
-              </p>
+              <h2 className="text-xl font-semibold text-text-primary">Đăng nhập</h2>
+              <p className="text-sm text-text-secondary mt-1">Nhập email và mật khẩu</p>
             </div>
 
             <form onSubmit={handleSubmit} className="space-y-4">
-              <div>
-                <label htmlFor="pin" className="block text-xs font-medium text-text-secondary mb-2 uppercase tracking-wide">
-                  Mã PIN
-                </label>
-                <input
-                  id="pin"
-                  type="password"
-                  inputMode="numeric"
-                  pattern="[0-9]*"
-                  maxLength={6}
-                  value={pin}
-                  onChange={(e) => setPin(e.target.value.replace(/\D/g, ''))}
-                  className="w-full px-4 py-4 bg-surface border border-card-border rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent text-center text-2xl font-mono tracking-[0.3em]"
-                  placeholder="••••"
-                  autoFocus
-                  required
-                />
+              <InputField
+                label="Email"
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                onBlur={handleEmailBlur}
+                error={errors.email}
+                touched={touched.email}
+                placeholder="email@example.com"
+                autoComplete="email"
+                autoFocus
+              />
+
+              <PasswordInput
+                label="Mật khẩu"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                onBlur={handlePasswordBlur}
+                error={errors.password}
+                touched={touched.password}
+                placeholder="Nhập mật khẩu"
+                autoComplete="current-password"
+              />
+
+              {/* Forgot Password Link */}
+              <div className="text-right">
+                <Link
+                  to="/forgot-password"
+                  className="text-small text-primary hover:underline"
+                >
+                  Quên mật khẩu?
+                </Link>
               </div>
 
-              {isFirstTime && (
-                <div className="animate-fade-in">
-                  <label htmlFor="confirmPin" className="block text-xs font-medium text-text-secondary mb-2 uppercase tracking-wide">
-                    Xác nhận PIN
-                  </label>
-                  <input
-                    id="confirmPin"
-                    type="password"
-                    inputMode="numeric"
-                    pattern="[0-9]*"
-                    maxLength={6}
-                    value={confirmPin}
-                    onChange={(e) => setConfirmPin(e.target.value.replace(/\D/g, ''))}
-                    className="w-full px-4 py-4 bg-surface border border-card-border rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent text-center text-2xl font-mono tracking-[0.3em]"
-                    placeholder="••••"
-                    required
-                  />
-                </div>
-              )}
-
-              {error && (
-                <div className="bg-error/10 border border-error/20 rounded-xl p-3">
-                  <p className="text-sm text-error text-center font-medium">{error}</p>
-                </div>
-              )}
-
-              <button
+              <PrimaryButton
                 type="submit"
-                disabled={loading || !pin || (isFirstTime && pin.length < 4)}
-                className="w-full bg-primary text-white py-4 rounded-xl font-semibold hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-all touch-target active:scale-[0.98]"
+                className="w-full"
+                size="lg"
+                disabled={loading}
               >
                 {loading ? (
                   <span className="flex items-center justify-center gap-2">
@@ -181,17 +164,25 @@ export default function LoginPage() {
                       <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
                       <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
                     </svg>
-                    Đang xử lý...
+                    Đang đăng nhập...
                   </span>
-                ) : isFirstTime ? 'Tạo PIN' : 'Đăng nhập'}
-              </button>
+                ) : 'Đăng nhập'}
+              </PrimaryButton>
             </form>
+          </div>
+
+          {/* Register Link */}
+          <div className="text-center mt-6">
+            <span className="text-text-secondary text-small">Chưa có tài khoản? </span>
+            <Link to="/register" className="text-primary font-medium hover:underline">
+              Đăng ký
+            </Link>
           </div>
 
           {/* Security Badge */}
           <div className="flex items-center justify-center gap-2 mt-6 text-text-secondary">
             <Shield className="w-4 h-4" />
-            <span className="text-xs">Dữ liệu được lưu trữ cục bộ</span>
+            <span className="text-xs">Dữ liệu được mã hóa</span>
           </div>
         </div>
       </div>

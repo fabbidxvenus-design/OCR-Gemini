@@ -3,61 +3,24 @@ import { useSettings } from '@/hooks/useSettings';
 import { MODEL_CONFIGS } from '@/lib/models';
 import { db } from '@/db/schema';
 import Layout from '@/components/layout/Layout';
-import Spinner from '@/components/ui/Spinner';
-import { Check, ChevronDown, ChevronUp } from 'lucide-react';
-
-interface TierStats {
-  tier: 'free' | 'default' | 'high';
-  count: number;
-  totalTokens: number;
-  totalCost: number;
-}
+import { Spinner, PrimaryButton, Toast } from '@/components/ui';
+import { Check, Info, Shield, LogOut } from 'lucide-react';
+import { useAuthStore } from '@/store/authStore';
+import { useNavigate } from 'react-router-dom';
 
 export default function SettingsPage() {
   const { settings, isLoading, updateModelTier } = useSettings();
+  const { logout } = useAuthStore();
+  const navigate = useNavigate();
   const [isSaving, setIsSaving] = useState(false);
-  const [showSuccess, setShowSuccess] = useState(false);
-  const [stats, setStats] = useState<TierStats[]>([]);
-  const [expandedTier, setExpandedTier] = useState<string | null>(null);
-
-  useEffect(() => {
-    loadStats();
-  }, []);
-
-  const loadStats = async () => {
-    try {
-      const scans = await db.scans.toArray();
-
-      const tierMap = new Map<'free' | 'default' | 'high', TierStats>();
-
-      scans.forEach((scan) => {
-        const tier = scan.modelTier || 'default';
-        const existing = tierMap.get(tier) || {
-          tier,
-          count: 0,
-          totalTokens: 0,
-          totalCost: 0,
-        };
-
-        existing.count += 1;
-        existing.totalTokens += scan.tokenUsage.input + scan.tokenUsage.output;
-        existing.totalCost += scan.tokenUsage.cost;
-
-        tierMap.set(tier, existing);
-      });
-
-      setStats(Array.from(tierMap.values()));
-    } catch (error) {
-      console.error('Failed to load stats:', error);
-    }
-  };
+  const [showToast, setShowToast] = useState(false);
 
   const handleTierChange = async (tier: 'free' | 'default' | 'high') => {
     setIsSaving(true);
     try {
       await updateModelTier(tier);
-      setShowSuccess(true);
-      setTimeout(() => setShowSuccess(false), 2000);
+      setShowToast(true);
+      setTimeout(() => setShowToast(false), 2000);
     } catch (error) {
       console.error('Failed to update tier:', error);
     } finally {
@@ -65,13 +28,14 @@ export default function SettingsPage() {
     }
   };
 
-  const toggleExpanded = (tierId: string) => {
-    setExpandedTier(expandedTier === tierId ? null : tierId);
+  const handleLogout = () => {
+    logout();
+    navigate('/login');
   };
 
   if (isLoading) {
     return (
-      <Layout title="Cài đặt" showBottomNav>
+      <Layout title="Cài đặt">
         <div className="flex items-center justify-center h-64">
           <Spinner size="lg" />
         </div>
@@ -80,16 +44,14 @@ export default function SettingsPage() {
   }
 
   return (
-    <Layout title="Cài đặt" showBottomNav>
-      <div className="p-4 space-y-6 pb-24">
-        {/* Model Tier Selection */}
-        <section className="bg-white rounded-2xl p-5 shadow-sm">
-          <h2 className="text-lg font-semibold text-gray-900 mb-4">
-            Chất lượng OCR
-          </h2>
-          <p className="text-sm text-gray-600 mb-4">
-            Chọn mô hình AI để xử lý OCR. Mô hình cao cấp hơn cho độ chính xác tốt hơn nhưng tốn phí nhiều hơn.
-          </p>
+    <Layout title="Cài đặt">
+      <div className="p-screen space-y-section pb-24 bg-surface min-h-full">
+        {/* Model Selection section */}
+        <div className="bg-card rounded-2xl border border-card-border p-card shadow-card">
+          <div className="flex items-center gap-2 mb-4">
+            <h2 className="text-label font-bold uppercase tracking-widest text-text-secondary">Chất lượng OCR</h2>
+            <Info className="w-4 h-4 text-text-placeholder" />
+          </div>
 
           <div className="space-y-3">
             {(['free', 'default', 'high'] as const).map((tier) => {
@@ -101,159 +63,62 @@ export default function SettingsPage() {
                   key={tier}
                   onClick={() => handleTierChange(tier)}
                   disabled={isSaving}
-                  className={`w-full text-left p-4 rounded-xl border-2 transition-all ${
+                  className={`w-full text-left p-4 rounded-xl border-2 transition-all group ${
                     isSelected
-                      ? 'border-primary bg-primary/5'
-                      : 'border-gray-200 hover:border-gray-300'
-                  } ${isSaving ? 'opacity-50 cursor-not-allowed' : ''}`}
+                      ? 'border-primary bg-primary-light ring-4 ring-primary/5'
+                      : 'border-surface bg-surface hover:border-card-border'
+                  }`}
                 >
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-1">
-                        <span className="font-semibold text-gray-900">
-                          {config.name}
-                        </span>
-                        {isSelected && (
-                          <Check className="w-5 h-5 text-primary" />
-                        )}
-                      </div>
-                      <p className="text-sm text-gray-600 mb-2">
-                        {config.description}
-                      </p>
-                      <div className="text-xs text-gray-500">
-                        <div>Model: {config.model}</div>
-                        <div>
-                          Giá: ${config.pricing.input}/1M input tokens, $
-                          {config.pricing.output}/1M output tokens
-                        </div>
-                      </div>
-                    </div>
+                  <div className="flex items-center justify-between mb-1">
+                    <span className={`font-bold text-body ${isSelected ? 'text-primary' : 'text-text-primary'}`}>
+                      {config.name}
+                    </span>
+                    {isSelected && <Check className="w-5 h-5 text-primary" />}
+                  </div>
+                  <p className="text-small text-text-secondary leading-snug mb-3">
+                    {config.description}
+                  </p>
+                  <div className={`text-label font-medium px-2 py-1 rounded inline-block ${isSelected ? 'bg-primary/10 text-primary' : 'bg-card-border/50 text-text-secondary'}`}>
+                    ${config.pricing.input}/1M tokens
                   </div>
                 </button>
               );
             })}
           </div>
+        </div>
 
-          {showSuccess && (
-            <div className="mt-4 p-3 bg-green-50 border border-green-200 rounded-lg text-sm text-green-800">
-              ✓ Đã lưu cài đặt thành công
+        {/* Info section */}
+        <div className="bg-card rounded-2xl border border-card-border p-card shadow-card space-y-4">
+          <div className="flex items-center gap-2 text-text-secondary mb-1">
+            <h2 className="text-label font-bold uppercase tracking-widest">Thông tin hệ thống</h2>
+          </div>
+          <div className="space-y-3">
+            <div className="flex justify-between items-center py-2 border-b border-surface">
+              <span className="text-small text-text-secondary">Phiên bản</span>
+              <span className="text-small font-bold text-text-primary">1.0.0-industrial</span>
             </div>
-          )}
-        </section>
-
-        {/* Token Usage Statistics */}
-        <section className="bg-white rounded-2xl p-5 shadow-sm">
-          <h2 className="text-lg font-semibold text-gray-900 mb-4">
-            Thống kê sử dụng
-          </h2>
-
-          {stats.length === 0 ? (
-            <p className="text-sm text-gray-500 text-center py-8">
-              Chưa có dữ liệu thống kê
-            </p>
-          ) : (
-            <div className="space-y-3">
-              {stats.map((stat) => {
-                const config = MODEL_CONFIGS[stat.tier];
-                const isExpanded = expandedTier === stat.tier;
-
-                return (
-                  <div
-                    key={stat.tier}
-                    className="border border-gray-200 rounded-xl overflow-hidden"
-                  >
-                    <button
-                      onClick={() => toggleExpanded(stat.tier)}
-                      className="w-full p-4 flex items-center justify-between hover:bg-gray-50 transition-colors"
-                    >
-                      <div className="text-left">
-                        <div className="font-semibold text-gray-900">
-                          {config.name}
-                        </div>
-                        <div className="text-sm text-gray-600 mt-1">
-                          {stat.count} lần quét • {stat.totalTokens.toLocaleString()} tokens
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-3">
-                        <div className="text-right">
-                          <div className="font-semibold text-gray-900">
-                            ${stat.totalCost.toFixed(4)}
-                          </div>
-                        </div>
-                        {isExpanded ? (
-                          <ChevronUp className="w-5 h-5 text-gray-400" />
-                        ) : (
-                          <ChevronDown className="w-5 h-5 text-gray-400" />
-                        )}
-                      </div>
-                    </button>
-
-                    {isExpanded && (
-                      <div className="px-4 pb-4 pt-2 bg-gray-50 border-t border-gray-200">
-                        <div className="grid grid-cols-2 gap-3 text-sm">
-                          <div>
-                            <div className="text-gray-600">Số lần quét</div>
-                            <div className="font-semibold text-gray-900">
-                              {stat.count}
-                            </div>
-                          </div>
-                          <div>
-                            <div className="text-gray-600">Tổng tokens</div>
-                            <div className="font-semibold text-gray-900">
-                              {stat.totalTokens.toLocaleString()}
-                            </div>
-                          </div>
-                          <div>
-                            <div className="text-gray-600">Trung bình/lần</div>
-                            <div className="font-semibold text-gray-900">
-                              {Math.round(stat.totalTokens / stat.count).toLocaleString()} tokens
-                            </div>
-                          </div>
-                          <div>
-                            <div className="text-gray-600">Tổng chi phí</div>
-                            <div className="font-semibold text-gray-900">
-                              ${stat.totalCost.toFixed(4)}
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
-          )}
-        </section>
-
-        {/* Model Details */}
-        <section className="bg-white rounded-2xl p-5 shadow-sm">
-          <h2 className="text-lg font-semibold text-gray-900 mb-4">
-            Chi tiết mô hình
-          </h2>
-          <div className="space-y-4 text-sm">
-            <div>
-              <h3 className="font-semibold text-gray-900 mb-2">Free Tier</h3>
-              <p className="text-gray-600">
-                Sử dụng mô hình miễn phí từ OpenRouter. Tốc độ nhanh nhất nhưng độ chính xác thấp hơn.
-                Phù hợp cho hóa đơn đơn giản, rõ ràng.
-              </p>
-            </div>
-            <div>
-              <h3 className="font-semibold text-gray-900 mb-2">Default Quality</h3>
-              <p className="text-gray-600">
-                Sử dụng Gemini 2.0 Flash. Cân bằng giữa tốc độ và độ chính xác.
-                Được khuyến nghị cho hầu hết các trường hợp.
-              </p>
-            </div>
-            <div>
-              <h3 className="font-semibold text-gray-900 mb-2">High Quality</h3>
-              <p className="text-gray-600">
-                Sử dụng Gemini Pro 1.5. Độ chính xác cao nhất.
-                Phù hợp cho ảnh chất lượng thấp hoặc văn bản phức tạp.
-              </p>
+            <div className="flex justify-between items-center py-2 border-b border-surface">
+              <span className="text-small text-text-secondary">Bảo mật</span>
+              <div className="flex items-center gap-1 text-success">
+                <Shield className="w-4 h-4" />
+                <span className="text-small font-bold">AES-256</span>
+              </div>
             </div>
           </div>
-        </section>
+        </div>
+
+        {/* Danger zone */}
+        <div className="pt-4">
+          <PrimaryButton variant="danger" className="w-full h-btn-primary" onClick={handleLogout}>
+            <LogOut className="w-5 h-5 mr-2" />
+            Đăng xuất tài khoản
+          </PrimaryButton>
+          <p className="text-center text-label text-text-placeholder mt-4">
+            Thiết bị: {navigator.platform} • v1.0.0
+          </p>
+        </div>
+
+        {showToast && <Toast message="Đã lưu thay đổi" type="success" onClose={() => setShowToast(false)} />}
       </div>
     </Layout>
   );

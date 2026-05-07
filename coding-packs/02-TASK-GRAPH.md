@@ -151,6 +151,11 @@ Week 5: Polish & Testing
 | TIP-040 | Fix multi-select Excel export not working | TIP-026 | P1 | 1 | 7 | READY |
 | TIP-041 | Scan display name - product_name priority | TIP-038 | P1 | 2 | 7 | DONE |
 | TIP-042 | Enhanced search, filter, sort, view modes | TIP-013, TIP-041 | P1 | 6-8 | 7 | DONE |
+| TIP-044 | Design Tokens & Common UI Components | TIP-042 | P1 | 4-6 | 8 | READY |
+| TIP-045 | Auth Flow (Login/Register/Forgot) | TIP-044 | P1 | 6-8 | 8 | READY |
+| TIP-046 | Layout Components (Header/Nav) | TIP-044 | P1 | 2-4 | 8 | READY |
+| TIP-047 | OCR & History Screens Redesign | TIP-046 | P1 | 8-10 | 8 | READY |
+| TIP-048 | Analytics & Settings Screens Redesign | TIP-046 | P2 | 4-6 | 8 | READY |
 
 **Legend**:
 - **TBD**: To be done

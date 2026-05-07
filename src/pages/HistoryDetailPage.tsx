@@ -3,17 +3,10 @@ import { useParams, useNavigate } from 'react-router-dom';
 import Layout from '@/components/layout/Layout';
 import { useScan, deleteScan } from '@/hooks/useScans';
 import { useExport } from '@/hooks/useExport';
-import { Edit, Trash2, ChevronDown, ChevronUp, FileText, AlertTriangle, Download, Loader2 } from 'lucide-react';
+import { Edit, Trash2, FileText, AlertTriangle, Download, Loader2 } from 'lucide-react';
 import { categorizeFields } from '@/lib/fieldCategories';
 import scanDisplayName from '@/lib/scanDisplayName';
-
-interface ExpandedSections {
-  mainFields: boolean;
-  otherFields: boolean;
-  sizes: boolean;
-  rawText: boolean;
-  notes: boolean;
-}
+import { CollapsibleSection, PrimaryButton } from '@/components/ui';
 
 export default function HistoryDetailPage() {
   const { scanId } = useParams<{ scanId: string }>();
@@ -21,15 +14,6 @@ export default function HistoryDetailPage() {
   const scan = useScan(scanId);
   const { isExporting, exportScan } = useExport();
 
-  const [expandedSections, setExpandedSections] = useState<ExpandedSections>({
-    mainFields: true,
-    otherFields: false,
-    sizes: true,
-    rawText: false,
-    notes: false,
-  });
-
-  // Categorize fields into main and other
   const categorizedFields = useMemo(() => {
     const fields = scan?.ocrStructured?.fields || [];
     const withCategories = categorizeFields(fields);
@@ -41,44 +25,20 @@ export default function HistoryDetailPage() {
 
   if (!scan) {
     return (
-      <Layout title="Đang tải...">
-        <div className="flex items-center justify-center h-full">
-          <p className="text-neutral">Đang tải...</p>
+      <Layout title="Chi tiết scan" showBack>
+        <div className="flex items-center justify-center h-64">
+          <p className="text-text-secondary animate-pulse">Đang tải...</p>
         </div>
       </Layout>
     );
   }
 
-  const toggleSection = (section: keyof ExpandedSections) => {
-    setExpandedSections((prev) => ({
-      ...prev,
-      [section]: !prev[section],
-    }));
-  };
-
-  const handleEdit = () => {
-    navigate(`/edit/${scanId}`);
-  };
-
-  const handleExport = async () => {
-    if (scan) {
-      await exportScan(scan);
-    }
-  };
-
+  const handleEdit = () => navigate(`/edit/${scanId}`);
+  const handleExport = async () => scan && await exportScan(scan);
   const handleDelete = async () => {
-    const confirmed = window.confirm(
-      'Bạn có chắc muốn xóa scan này? Hành động này không thể hoàn tác.'
-    );
-
-    if (!confirmed) return;
-
-    try {
-      await deleteScan(scanId!);
-      navigate('/history');
-    } catch (error) {
-      console.error('[Delete] Error:', error);
-      alert('Không thể xóa scan. Vui lòng thử lại.');
+    if (window.confirm('Xóa scan này? Không thể hoàn tác.')) {
+      try { await deleteScan(scanId!); navigate('/history'); }
+      catch { alert('Lỗi khi xóa scan'); }
     }
   };
 
@@ -88,260 +48,119 @@ export default function HistoryDetailPage() {
   const displayTitle = scanDisplayName(scan);
 
   return (
-    <Layout title="Chi tiết scan">
-      <div className="p-4 space-y-3 pb-44">
-        {/* Image Preview */}
-        <div className="bg-card rounded-xl border border-card-border overflow-hidden shadow-card animate-fade-in">
-          <img
-            src={scan.imageDataUrl}
-            alt="Scan"
-            className="w-full h-auto"
-          />
+    <Layout title="Chi tiết scan" showBack>
+      <div className="p-screen space-y-section pb-44">
+        {/* Image Card */}
+        <div className="bg-card rounded-2xl border border-card-border overflow-hidden shadow-card animate-fade-in">
+          <img src={scan.imageDataUrl} alt="Scan" className="w-full h-auto max-h-[40vh] object-contain bg-surface" />
         </div>
 
-        {/* Title Card */}
-        <div className="bg-card rounded-xl border border-card-border p-4 shadow-card animate-fade-in">
+        {/* Title Header */}
+        <div className="bg-card rounded-2xl border border-card-border p-card shadow-card animate-fade-in">
           <div className="flex items-start gap-3">
-            <div className="w-10 h-10 bg-primary/10 rounded-xl flex items-center justify-center flex-shrink-0">
+            <div className="w-10 h-10 bg-primary-light rounded-xl flex items-center justify-center flex-shrink-0">
               <FileText className="w-5 h-5 text-primary" />
             </div>
-            <div>
-              <h2 className="text-lg font-semibold text-text-primary">{displayTitle}</h2>
-              <p className="text-xs text-text-secondary mt-1">
-                {new Date(scan.timestamp).toLocaleDateString('vi-VN', {
-                  day: '2-digit',
-                  month: '2-digit',
-                  year: 'numeric',
-                  hour: '2-digit',
-                  minute: '2-digit'
-                })}
-              </p>
-            </div>
-          </div>
-        </div>
-
-        {/* Edited Badge */}
-        {scan.edited && (
-          <div className="bg-warning/10 border border-warning/20 rounded-xl p-3 animate-fade-in">
-            <div className="flex items-center gap-2">
-              <AlertTriangle className="w-4 h-4 text-warning" />
-              <p className="text-sm text-warning font-medium">
-                Scan này đã được chỉnh sửa
-              </p>
-            </div>
-          </div>
-        )}
-
-        {/* Main Fields */}
-        {categorizedFields.main.length > 0 && (
-          <div className="bg-card rounded-xl border border-card-border shadow-card overflow-hidden animate-fade-in">
-            <button
-              onClick={() => toggleSection('mainFields')}
-              className="w-full flex items-center justify-between p-4 text-left"
-            >
-              <span className="text-xs font-semibold text-text-secondary uppercase tracking-wide">
-                Thông tin chính
-              </span>
-              <span className="text-xs text-text-secondary bg-surface px-2 py-1 rounded-md">
-                {categorizedFields.main.length}
-              </span>
-            </button>
-
-            {expandedSections.mainFields && (
-              <div className="border-t border-card-border">
-                <div className="divide-y divide-card-border">
-                  {categorizedFields.main.map((field, index) => (
-                    <div key={index} className="px-4 py-3.5 flex items-start justify-between">
-                      <div className="flex-1 min-w-0">
-                        <p className="text-xs text-text-secondary font-medium">{field.field}</p>
-                        <p className="text-base font-semibold text-text-primary mt-1 break-words">{field.value}</p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* Other Fields */}
-        {categorizedFields.other.length > 0 && (
-          <div className="bg-card rounded-xl border border-card-border shadow-card overflow-hidden animate-fade-in">
-            <button
-              onClick={() => toggleSection('otherFields')}
-              className="w-full flex items-center justify-between p-4 text-left"
-            >
-              <span className="text-xs font-semibold text-text-secondary uppercase tracking-wide">
-                Thông tin khác ({categorizedFields.other.length})
-              </span>
-              {expandedSections.otherFields ? (
-                <ChevronUp className="w-4 h-4 text-text-secondary" />
-              ) : (
-                <ChevronDown className="w-4 h-4 text-text-secondary" />
-              )}
-            </button>
-
-            {expandedSections.otherFields && (
-              <div className="border-t border-card-border">
-                <div className="divide-y divide-card-border">
-                  {categorizedFields.other.map((field, index) => (
-                    <div key={index} className="px-4 py-2.5 flex items-start justify-between">
-                      <div className="flex-1 min-w-0">
-                        <p className="text-xs text-text-secondary">{field.field}</p>
-                        <p className="text-sm text-text-primary mt-0.5 break-words">{field.value}</p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* Size Table */}
-        {sizes.length > 0 && (
-          <div className="bg-card rounded-xl border border-card-border shadow-card overflow-hidden animate-fade-in">
-            <button
-              onClick={() => toggleSection('sizes')}
-              className="w-full flex items-center justify-between p-4 text-left"
-            >
-              <span className="text-xs font-semibold text-text-secondary uppercase tracking-wide">
-                Bảng size
-              </span>
-              <span className="text-xs text-text-secondary bg-surface px-2 py-1 rounded-md">
-                {sizes.length}
-              </span>
-            </button>
-
-            {expandedSections.sizes && (
-              <div className="border-t border-card-border overflow-hidden">
-                <table className="w-full">
-                  <thead className="bg-surface">
-                    <tr>
-                      <th className="text-left py-2.5 px-4 text-xs font-semibold text-text-secondary uppercase tracking-wide">Size</th>
-                      <th className="text-right py-2.5 px-4 text-xs font-semibold text-text-secondary uppercase tracking-wide">Số lượng</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-card-border">
-                    {sizes.map((size, index) => (
-                      <tr key={index}>
-                        <td className="py-3 px-4 text-base text-text-primary font-medium">{size.size}</td>
-                        <td className="py-3 px-4 text-base text-text-primary text-right">{size.quantity}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* Raw Text */}
-        <div className="bg-card rounded-xl border border-card-border shadow-card overflow-hidden animate-fade-in">
-          <button
-            onClick={() => toggleSection('rawText')}
-            className="w-full flex items-center justify-between p-4 text-left"
-          >
-            <span className="text-xs font-semibold text-text-secondary uppercase tracking-wide">
-              Văn bản gốc
-            </span>
-            <ChevronDown className={`w-4 h-4 text-text-secondary transition-transform ${expandedSections.rawText ? 'rotate-180' : ''}`} />
-          </button>
-
-          {expandedSections.rawText && (
-            <div className="border-t border-card-border p-4">
-              <pre className="text-sm text-text-primary whitespace-pre-wrap font-mono leading-relaxed">
-                {rawText || 'Không có văn bản'}
-              </pre>
-            </div>
-          )}
-        </div>
-
-        {/* Notes */}
-        {notes.length > 0 && (
-          <div className="bg-card rounded-xl border border-card-border shadow-card overflow-hidden animate-fade-in">
-            <button
-              onClick={() => toggleSection('notes')}
-              className="w-full flex items-center justify-between p-4 text-left"
-            >
-              <span className="text-xs font-semibold text-text-secondary uppercase tracking-wide">
-                Ghi chú
-              </span>
-              <span className="text-xs text-text-secondary bg-surface px-2 py-1 rounded-md">
-                {notes.length}
-              </span>
-            </button>
-
-            {expandedSections.notes && (
-              <div className="border-t border-card-border p-4 space-y-2">
-                {notes.map((note, index) => (
-                  <p key={index} className="text-sm text-text-secondary leading-relaxed">• {note}</p>
-                ))}
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* Metadata */}
-        <div className="bg-card rounded-xl border border-card-border p-4 shadow-card animate-fade-in">
-          <h3 className="text-xs font-semibold text-text-secondary uppercase tracking-wide mb-3">
-            Thông tin scan
-          </h3>
-          <div className="space-y-2.5">
-            <div className="flex justify-between">
-              <span className="text-sm text-text-secondary">Thời gian:</span>
-              <span className="text-sm font-medium text-text-primary">
+            <div className="min-w-0">
+              <h2 className="text-body font-semibold text-text-primary truncate">{displayTitle}</h2>
+              <p className="text-label text-text-secondary mt-1">
                 {new Date(scan.timestamp).toLocaleString('vi-VN')}
-              </span>
+              </p>
             </div>
-            <div className="flex justify-between">
-              <span className="text-sm text-text-secondary">Token sử dụng:</span>
-              <span className="text-sm font-medium text-text-primary">
-                {scan.tokenUsage.input + scan.tokenUsage.output}
-              </span>
+          </div>
+        </div>
+
+        {/* Warning Badge */}
+        {scan.edited && (
+          <div className="bg-warning-light border border-warning/20 rounded-xl p-3 flex items-center gap-3 animate-fade-in">
+            <AlertTriangle className="w-5 h-5 text-warning flex-shrink-0" />
+            <p className="text-small text-warning font-medium">Scan này đã được chỉnh sửa</p>
+          </div>
+        )}
+
+        {/* Sections */}
+        {categorizedFields.main.length > 0 && (
+          <CollapsibleSection title="Thông tin chính" count={categorizedFields.main.length}>
+            <div className="divide-y divide-card-border -my-4">
+              {categorizedFields.main.map((field, i) => (
+                <div key={i} className="py-3">
+                  <p className="text-label text-text-secondary uppercase tracking-wide">{field.field}</p>
+                  <p className="text-body font-semibold text-text-primary mt-1">{field.value}</p>
+                </div>
+              ))}
             </div>
-            <div className="flex justify-between">
-              <span className="text-sm text-text-secondary">Chi phí:</span>
-              <span className="text-sm font-medium text-text-primary">
-                ${scan.tokenUsage.cost.toFixed(6)}
-              </span>
+          </CollapsibleSection>
+        )}
+
+        {categorizedFields.other.length > 0 && (
+          <CollapsibleSection title="Thông tin khác" count={categorizedFields.other.length} defaultExpanded={false}>
+            <div className="divide-y divide-card-border -my-4">
+              {categorizedFields.other.map((field, i) => (
+                <div key={i} className="py-2.5">
+                  <p className="text-label text-text-secondary">{field.field}</p>
+                  <p className="text-small text-text-primary mt-0.5">{field.value}</p>
+                </div>
+              ))}
+            </div>
+          </CollapsibleSection>
+        )}
+
+        {sizes.length > 0 && (
+          <CollapsibleSection title="Bảng size" count={sizes.length}>
+            <div className="border border-card-border rounded-xl overflow-hidden">
+              <table className="w-full text-left">
+                <thead className="bg-surface">
+                  <tr>
+                    <th className="py-2.5 px-4 text-label font-semibold text-text-secondary uppercase">Size</th>
+                    <th className="py-2.5 px-4 text-label font-semibold text-text-secondary uppercase text-right">Qty</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-card-border">
+                  {sizes.map((s, i) => (
+                    <tr key={i}>
+                      <td className="py-3 px-4 text-body text-text-primary font-medium">{s.size}</td>
+                      <td className="py-3 px-4 text-body text-text-primary text-right">{s.quantity}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </CollapsibleSection>
+        )}
+
+        {/* Metadata Card */}
+        <div className="bg-card rounded-2xl border border-card-border p-card shadow-card space-y-3">
+          <h3 className="text-label font-bold text-text-secondary uppercase tracking-widest">Chi tiết kỹ thuật</h3>
+          <div className="space-y-2">
+            <div className="flex justify-between text-small">
+              <span className="text-text-secondary">Token dùng:</span>
+              <span className="font-medium text-text-primary">{(scan.tokenUsage.input + scan.tokenUsage.output).toLocaleString()}</span>
+            </div>
+            <div className="flex justify-between text-small">
+              <span className="text-text-secondary">Chi phí ước tính:</span>
+              <span className="font-medium text-text-primary">${scan.tokenUsage.cost.toFixed(4)}</span>
+            </div>
+            <div className="flex justify-between text-small">
+              <span className="text-text-secondary">Mô hình:</span>
+              <span className="font-medium text-text-primary uppercase">{scan.modelTier || 'default'}</span>
             </div>
           </div>
         </div>
 
         {/* Action Buttons */}
-        <div className="bg-card rounded-xl border border-card-border p-4 shadow-card animate-fade-in">
-          <button
-            onClick={handleExport}
-            disabled={isExporting}
-            className="w-full flex items-center justify-center gap-2 bg-primary text-white py-3.5 rounded-xl font-semibold hover:bg-primary/90 transition-colors touch-target active:scale-[0.98] disabled:opacity-70"
-          >
-            {isExporting ? (
-              <>
-                <Loader2 className="w-5 h-5 animate-spin" />
-                Đang xuất...
-              </>
-            ) : (
-              <>
-                <Download className="w-5 h-5" />
-                Xuất Excel
-              </>
-            )}
-          </button>
-          <button
-            onClick={handleEdit}
-            className="w-full flex items-center justify-center gap-2 bg-card border border-card-border text-text-primary py-3.5 mt-3 rounded-xl font-semibold hover:bg-surface transition-colors touch-target active:scale-[0.98]"
-          >
-            <Edit className="w-5 h-5" />
-            Sửa
-          </button>
-          <button
-            onClick={handleDelete}
-            className="w-full flex items-center justify-center gap-2 bg-error/10 text-error py-3 mt-3 rounded-xl font-medium hover:bg-error/15 transition-colors touch-target"
-          >
-            <Trash2 className="w-4 h-4" />
-            <span>Xóa scan</span>
-          </button>
+        <div className="grid grid-cols-1 gap-section pb-12">
+          <PrimaryButton onClick={handleExport} disabled={isExporting} size="lg">
+            {isExporting ? <Loader2 className="w-5 h-5 animate-spin mr-2" /> : <Download className="w-5 h-5 mr-2" />}
+            Xuất file Excel
+          </PrimaryButton>
+          <div className="grid grid-cols-2 gap-section">
+            <PrimaryButton variant="secondary" onClick={handleEdit}>
+              <Edit className="w-5 h-5 mr-2" /> Sửa
+            </PrimaryButton>
+            <PrimaryButton variant="danger" onClick={handleDelete}>
+              <Trash2 className="w-5 h-5 mr-2" /> Xóa
+            </PrimaryButton>
+          </div>
         </div>
       </div>
     </Layout>

@@ -4,12 +4,10 @@ import Layout from '@/components/layout/Layout';
 import { useScans } from '@/hooks/useScans';
 import { useExport } from '@/hooks/useExport';
 import { useDebounce } from '@/hooks/useDebounce';
-import SkeletonCard from '@/components/ui/SkeletonCard';
-import Toast from '@/components/ui/Toast';
-import ViewModeToggle from '@/components/ui/ViewModeToggle';
+import { SkeletonCard, Toast, ViewModeToggle, FilterChip, PrimaryButton } from '@/components/ui';
 import scanDisplayName from '@/lib/scanDisplayName';
 import { filterAndSortScans, type ViewMode, type SortOption, type FilterState } from '@/lib/scanFilters';
-import { Search, Calendar, Edit3, Camera, CheckSquare, Square, X, Download, Filter, ArrowUpDown } from 'lucide-react';
+import { Search, Calendar, Edit3, Camera, CheckSquare, X, Download, Filter, ArrowUpDown, LayoutGrid, List } from 'lucide-react';
 
 function formatTimestamp(date: Date): string {
   const now = new Date();
@@ -25,15 +23,10 @@ function formatTimestamp(date: Date): string {
       month: '2-digit',
       year: 'numeric',
     });
-  } else if (days > 0) {
-    return `${days} ngày trước`;
-  } else if (hours > 0) {
-    return `${hours} giờ trước`;
-  } else if (minutes > 0) {
-    return `${minutes} phút trước`;
-  } else {
-    return 'Vừa xong';
-  }
+  } else if (days > 0) return `${days} ngày trước`;
+  else if (hours > 0) return `${hours} giờ trước`;
+  else if (minutes > 0) return `${minutes} phút trước`;
+  return 'Vừa xong';
 }
 
 const FILTER_CHIPS = [
@@ -48,7 +41,6 @@ const SORT_OPTIONS: { value: SortOption; label: string }[] = [
   { value: 'date_asc', label: 'Cũ nhất' },
   { value: 'name_az', label: 'A → Z' },
   { value: 'name_za', label: 'Z → A' },
-  { value: 'fields_count', label: 'Nhiều field nhất' },
 ];
 
 export default function HistoryPage() {
@@ -57,19 +49,16 @@ export default function HistoryPage() {
   const [isSelectMode, setIsSelectMode] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
-  const [viewMode, setViewMode] = useState<ViewMode>('list');
+  const [viewMode, setViewMode] = useState<ViewMode>('grid');
   const [sortBy, setSortBy] = useState<SortOption>('date_desc');
   const [activeFilters, setActiveFilters] = useState<string[]>([]);
-  const [showFilters, setShowFilters] = useState(false);
-  const [showSort, setShowSort] = useState(false);
+  const [showSortMenu, setShowSortMenu] = useState(false);
 
   const debouncedQuery = useDebounce(searchQuery, 300);
   const { isExporting, exportMultiple } = useExport();
-
   const allScans = useScans({ limit: 100, order: 'desc' });
   const isLoading = !allScans;
 
-  // Apply filters and sorting
   const filters: FilterState = useMemo(() => ({
     search: debouncedQuery,
     chips: activeFilters,
@@ -88,414 +77,220 @@ export default function HistoryPage() {
     );
   };
 
-  const toggleSelectMode = () => {
-    setIsSelectMode(!isSelectMode);
-    setSelectedIds(new Set());
-  };
-
-  const toggleSelect = (scanId?: string) => {
-    if (!scanId) return;
-    const newSelected = new Set(selectedIds);
-    if (newSelected.has(scanId)) {
-      newSelected.delete(scanId);
-    } else {
-      newSelected.add(scanId);
-    }
-    setSelectedIds(newSelected);
-  };
-
-  const selectAll = () => {
-    if (scans) {
-      const ids = scans
-        .map(s => s.id)
-        .filter((id): id is string => id !== undefined);
-      setSelectedIds(new Set(ids));
-    }
-  };
-
-  const deselectAll = () => {
-    setSelectedIds(new Set());
-  };
-
-  const handleExportSelected = async () => {
-    if (!scans || selectedIds.size === 0) return;
-
-    try {
-      const selectedScans = scans.filter(s => s.id && selectedIds.has(s.id));
-      if (selectedScans.length === 0) {
-        setToast({ message: 'Không tìm thấy dữ liệu scan để xuất', type: 'error' });
-        return;
-      }
-
-      await exportMultiple(selectedScans);
-      setToast({ message: `Đã xuất ${selectedScans.length} scan thành công`, type: 'success' });
-      setIsSelectMode(false);
-      setSelectedIds(new Set());
-    } catch (err) {
-      console.error('[History] Export error:', err);
-      setToast({ message: 'Lỗi khi xuất file Excel', type: 'error' });
-    }
-  };
-
   const handleScanClick = (scanId?: string) => {
+    if (!scanId) return;
     if (isSelectMode) {
-      toggleSelect(scanId);
-    } else if (scanId) {
+      const newSelected = new Set(selectedIds);
+      if (newSelected.has(scanId)) newSelected.delete(scanId);
+      else newSelected.add(scanId);
+      setSelectedIds(newSelected);
+    } else {
       navigate(`/history/${scanId}`);
     }
   };
 
-  const renderScanCard = (scan: typeof scans[0]) => {
-    if (!scan || !scan.id) return null;
-    const isSelected = selectedIds.has(scan.id);
-    const title = scanDisplayName(scan);
-
-    if (viewMode === 'grid') {
-      return (
-        <button
-          key={scan.id}
-          onClick={() => handleScanClick(scan.id)}
-          className={`bg-white rounded-lg border overflow-hidden hover:border-primary transition-colors ${
-            isSelectMode ? 'cursor-pointer' : ''
-          } ${isSelected ? 'border-primary ring-2 ring-primary/20' : 'border-gray-200'}`}
-        >
-          <div className="aspect-square bg-gray-100">
-            <img
-              src={scan.imageDataUrl}
-              alt={title}
-              className="w-full h-full object-cover"
-            />
-          </div>
-          <div className="p-2">
-            <p className="text-xs font-medium text-gray-900 truncate">{title}</p>
-            {scan.edited && (
-              <span className="inline-flex items-center gap-1 mt-1 text-[10px] text-warning">
-                <Edit3 className="w-2.5 h-2.5" />
-                Đã sửa
-              </span>
-            )}
-          </div>
-        </button>
-      );
+  const handleExportSelected = async () => {
+    if (!scans || selectedIds.size === 0) return;
+    try {
+      const selectedScans = scans.filter(s => s.id && selectedIds.has(s.id));
+      await exportMultiple(selectedScans);
+      setToast({ message: `Đã xuất ${selectedScans.length} scan`, type: 'success' });
+      setIsSelectMode(false);
+      setSelectedIds(new Set());
+    } catch {
+      setToast({ message: 'Lỗi khi xuất file Excel', type: 'error' });
     }
-
-    if (viewMode === 'compact') {
-      return (
-        <button
-          key={scan.id}
-          onClick={() => handleScanClick(scan.id)}
-          className={`w-full flex items-center gap-3 p-3 bg-white rounded-lg border hover:border-primary transition-colors text-left ${
-            isSelectMode ? 'cursor-pointer' : ''
-          } ${isSelected ? 'border-primary bg-primary/5' : 'border-gray-200'}`}
-        >
-          {isSelectMode && (
-            <div className="flex-shrink-0">
-              {isSelected ? (
-                <div className="w-5 h-5 bg-primary rounded flex items-center justify-center">
-                  <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
-                  </svg>
-                </div>
-              ) : (
-                <Square className="w-5 h-5 text-gray-300" />
-              )}
-            </div>
-          )}
-          <p className="flex-1 text-sm font-medium text-gray-900 truncate">{title}</p>
-          <span className="text-xs text-gray-400">{formatTimestamp(scan.timestamp)}</span>
-          {scan.edited && <Edit3 className="w-3.5 h-3.5 text-warning flex-shrink-0" />}
-        </button>
-      );
-    }
-
-    // List view (default)
-    return (
-      <button
-        key={scan.id}
-        onClick={() => handleScanClick(scan.id)}
-        className={`w-full bg-white rounded-lg border p-3 hover:border-primary transition-colors text-left ${
-          isSelectMode ? 'cursor-pointer' : ''
-        } ${isSelected ? 'border-primary bg-primary/5' : 'border-gray-200'}`}
-      >
-        <div className="flex gap-3">
-          {isSelectMode && (
-            <div className="flex-shrink-0 flex items-center">
-              {isSelected ? (
-                <div className="w-6 h-6 bg-primary rounded flex items-center justify-center">
-                  <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                  </svg>
-                </div>
-              ) : (
-                <Square className="w-6 h-6 text-gray-300" />
-              )}
-            </div>
-          )}
-          <div className="flex-shrink-0 w-20 h-20 bg-gray-100 rounded overflow-hidden">
-            <img
-              src={scan.imageDataUrl}
-              alt={title}
-              className="w-full h-full object-cover"
-            />
-          </div>
-          <div className="flex-1 min-w-0">
-            <div className="flex items-start justify-between gap-2 mb-1">
-              <h3 className="font-semibold text-gray-900 truncate">{title}</h3>
-              {scan.edited && (
-                <span className="flex-shrink-0 inline-flex items-center gap-1 px-2 py-0.5 bg-warning/10 text-warning text-xs font-medium rounded">
-                  <Edit3 className="w-3 h-3" />
-                  Đã sửa
-                </span>
-              )}
-            </div>
-            <p className="text-sm text-neutral line-clamp-2 mb-2">
-              {scan.ocrStructured?.fields?.[0]?.value || scan.ocrStructured?.raw_text || 'Không có nội dung'}
-            </p>
-            <div className="flex items-center gap-1 text-xs text-neutral">
-              <Calendar className="w-3 h-3" />
-              {formatTimestamp(scan.timestamp)}
-            </div>
-          </div>
-        </div>
-      </button>
-    );
   };
 
   return (
     <Layout title="Lịch sử">
-      <div className="flex flex-col h-full">
-        {/* Search Bar + Controls */}
-        <div className="p-4 bg-white border-b border-gray-200 space-y-3">
+      <div className="flex flex-col h-full bg-surface">
+        {/* Header Area */}
+        <div className="p-screen bg-card border-b border-card-border space-y-section">
           <div className="flex items-center gap-2">
             <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-neutral" />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-text-placeholder" />
               <input
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Tìm kiếm..."
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+                placeholder="Tìm kiếm scan..."
+                className="w-full h-11 pl-10 pr-4 bg-surface border border-card-border rounded-sm text-body focus:ring-2 focus:ring-primary focus:border-transparent outline-none"
               />
             </div>
-            <ViewModeToggle viewMode={viewMode} onChange={setViewMode} />
-            {allScans && allScans.length > 0 && (
+            <div className="flex bg-surface p-1 rounded-xl border border-card-border">
               <button
-                onClick={toggleSelectMode}
-                className={`p-2 rounded-lg transition-colors ${
-                  isSelectMode
-                    ? 'bg-error/10 text-error'
-                    : 'bg-surface text-text-secondary hover:bg-gray-200'
-                }`}
+                onClick={() => setViewMode('list')}
+                className={`p-1.5 rounded-sm transition-colors ${viewMode === 'list' ? 'bg-card shadow-sm text-primary' : 'text-text-secondary'}`}
               >
-                {isSelectMode ? <X className="w-5 h-5" /> : <CheckSquare className="w-5 h-5" />}
+                <List className="w-5 h-5" />
               </button>
-            )}
+              <button
+                onClick={() => setViewMode('grid')}
+                className={`p-1.5 rounded-sm transition-colors ${viewMode === 'grid' ? 'bg-card shadow-sm text-primary' : 'text-text-secondary'}`}
+              >
+                <LayoutGrid className="w-5 h-5" />
+              </button>
+            </div>
+            <button
+              onClick={() => {
+                setIsSelectMode(!isSelectMode);
+                setSelectedIds(new Set());
+              }}
+              className={`p-2.5 rounded-xl transition-colors ${isSelectMode ? 'bg-error-light text-error' : 'bg-surface text-text-secondary border border-card-border'}`}
+            >
+              {isSelectMode ? <X className="w-5 h-5" /> : <CheckSquare className="w-5 h-5" />}
+            </button>
           </div>
 
-          {/* Filter & Sort Row */}
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-section overflow-x-auto no-scrollbar pb-1">
             <button
-              onClick={() => setShowFilters(!showFilters)}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm border transition-colors ${
-                activeFilters.length > 0
-                  ? 'bg-primary/10 border-primary text-primary'
-                  : 'border-gray-200 text-text-secondary hover:border-gray-300'
-              }`}
-            >
-              <Filter className="w-4 h-4" />
-              Bộ lọc
-              {activeFilters.length > 0 && (
-                <span className="ml-1 px-1.5 py-0.5 bg-primary text-white text-xs rounded-full">
-                  {activeFilters.length}
-                </span>
-              )}
-            </button>
-
-            <button
-              onClick={() => setShowSort(true)}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm border border-gray-200 text-text-secondary hover:border-gray-300 transition-colors"
+              onClick={() => setShowSortMenu(true)}
+              className="flex items-center gap-1.5 h-9 px-4 rounded-full border border-card-border bg-card text-label font-semibold text-text-primary whitespace-nowrap"
             >
               <ArrowUpDown className="w-4 h-4" />
-              {SORT_OPTIONS.find(o => o.value === sortBy)?.label || 'Sắp xếp'}
+              {SORT_OPTIONS.find(o => o.value === sortBy)?.label}
             </button>
-
-            {scans.length > 0 && (
-              <span className="ml-auto text-xs text-neutral">
-                {scans.length} scan
-              </span>
-            )}
+            <div className="w-px h-6 bg-card-border flex-shrink-0" />
+            {FILTER_CHIPS.map(chip => (
+              <FilterChip
+                key={chip.key}
+                label={chip.label}
+                isActive={activeFilters.includes(chip.key)}
+                onClick={() => toggleFilter(chip.key)}
+              />
+            ))}
           </div>
-
-          {/* Filter Chips */}
-          {showFilters && (
-            <div className="flex flex-wrap gap-2 animate-slide-down">
-              {FILTER_CHIPS.map(chip => (
-                <button
-                  key={chip.key}
-                  onClick={() => toggleFilter(chip.key)}
-                  className={`px-3 py-1.5 rounded-full text-sm border transition-colors ${
-                    activeFilters.includes(chip.key)
-                      ? 'bg-primary/10 border-primary text-primary'
-                      : 'border-gray-200 text-text-secondary hover:border-gray-300'
-                  }`}
-                >
-                  {activeFilters.includes(chip.key) && (
-                    <svg className="w-3 h-3 inline-block mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
-                    </svg>
-                  )}
-                  {chip.label}
-                </button>
-              ))}
-            </div>
-          )}
         </div>
 
-        {/* Sort Dropdown */}
-        {showSort && (
-          <div className="fixed inset-0 z-50" onClick={() => setShowSort(false)}>
-            <div className="absolute top-20 right-4 bg-white rounded-xl shadow-lg border p-2 min-w-48 animate-fade-in">
-              {SORT_OPTIONS.map(option => (
-                <button
-                  key={option.value}
-                  onClick={() => {
-                    setSortBy(option.value);
-                    setShowSort(false);
-                  }}
-                  className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-colors ${
-                    sortBy === option.value
-                      ? 'bg-primary/10 text-primary font-medium'
-                      : 'text-text-primary hover:bg-gray-100'
-                  }`}
-                >
-                  {option.label}
-                </button>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* Selection Controls */}
+        {/* Selection Summary */}
         {isSelectMode && (
-          <div className="px-4 py-2 bg-surface border-b border-gray-200 flex items-center justify-between text-sm">
-            <span className="text-text-secondary">
-              {selectedIds.size > 0 ? (
-                <>Đã chọn: <span className="font-semibold text-text-primary">{selectedIds.size}</span> items</>
-              ) : (
-                <span className="text-text-secondary">Chọn các scan để xuất</span>
-              )}
+          <div className="px-screen py-2 bg-primary-light flex items-center justify-between animate-fade-in border-b border-primary/10">
+            <span className="text-label font-semibold text-primary">
+              Đã chọn: {selectedIds.size}
             </span>
-            <div className="flex gap-3">
-              <button onClick={selectAll} className="text-primary hover:underline">
+            <div className="flex gap-4">
+              <button
+                onClick={() => setSelectedIds(new Set(scans.map(s => s.id!)))}
+                className="text-label text-primary hover:underline"
+              >
                 Chọn tất cả
               </button>
-              <button onClick={deselectAll} className="text-text-secondary hover:underline">
+              <button
+                onClick={() => setSelectedIds(new Set())}
+                className="text-label text-text-secondary hover:underline"
+              >
                 Bỏ chọn
               </button>
             </div>
           </div>
         )}
 
-        {/* Scan List/Grid */}
-        <div className={`flex-1 overflow-y-auto p-4 ${viewMode === 'grid' ? 'grid grid-cols-2 gap-3' : 'space-y-3'} pb-24`}>
-          {isLoading && (
-            <>
-              <SkeletonCard />
-              <SkeletonCard />
-              <SkeletonCard />
-            </>
-          )}
+        {/* List Content */}
+        <div className={`flex-1 overflow-y-auto p-screen pb-32 ${viewMode === 'grid' ? 'grid grid-cols-2 gap-section' : 'space-y-section'}`}>
+          {isLoading ? (
+            Array(4).fill(0).map((_, i) => <SkeletonCard key={i} />)
+          ) : scans.length > 0 ? (
+            scans.map((scan) => {
+              const isSelected = selectedIds.has(scan.id!);
+              const title = scanDisplayName(scan);
 
-          {scans.length > 0 && scans.map(renderScanCard)}
+              if (viewMode === 'grid') {
+                return (
+                  <button
+                    key={scan.id}
+                    onClick={() => handleScanClick(scan.id)}
+                    className={`relative bg-card rounded-2xl border transition-all text-left overflow-hidden shadow-card group ${
+                      isSelected ? 'border-primary ring-2 ring-primary/20' : 'border-card-border'
+                    }`}
+                  >
+                    <div className="aspect-square bg-surface">
+                      <img src={scan.imageDataUrl} alt="" className="w-full h-full object-cover" />
+                    </div>
+                    <div className="p-3">
+                      <p className="text-small font-semibold text-text-primary truncate">{title}</p>
+                      <p className="text-label text-text-secondary mt-1">{formatTimestamp(scan.timestamp)}</p>
+                    </div>
+                    {isSelectMode && (
+                      <div className={`absolute top-2 right-2 w-6 h-6 rounded-full border-2 flex items-center justify-center transition-colors ${
+                        isSelected ? 'bg-primary border-primary' : 'bg-black/20 border-white/60'
+                      }`}>
+                        {isSelected && <X className="w-4 h-4 text-white" />}
+                      </div>
+                    )}
+                  </button>
+                );
+              }
 
-          {scans.length === 0 && searchQuery && (
-            <div className="flex flex-col items-center justify-center h-full text-center p-8">
-              <Search className="w-16 h-16 text-neutral mb-4" />
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                Không tìm thấy kết quả
-              </h3>
-              <p className="text-neutral">
-                Không có scan nào khớp với "{searchQuery}"
-              </p>
-            </div>
-          )}
-
-          {!isLoading && scans.length === 0 && !searchQuery && activeFilters.length === 0 && (
-            <div className="flex flex-col items-center justify-center h-full text-center p-8">
-              <Calendar className="w-16 h-16 text-neutral mb-4" />
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                Chưa có lịch sử
-              </h3>
-              <p className="text-neutral mb-4">
-                Bạn chưa quét scan nào. Hãy chụp ảnh để bắt đầu!
-              </p>
-              <button
-                onClick={() => navigate('/camera')}
-                className="bg-primary text-white py-2 px-6 rounded-lg font-medium hover:bg-primary/90 transition-colors"
-              >
-                <Camera className="w-5 h-5 inline-block mr-2" />
-                Chụp ảnh
-              </button>
-            </div>
-          )}
-
-          {!isLoading && scans.length === 0 && (searchQuery || activeFilters.length > 0) && (
-            <div className="flex flex-col items-center justify-center h-full text-center p-8">
-              <Filter className="w-16 h-16 text-neutral mb-4" />
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                Không có kết quả
-              </h3>
-              <p className="text-neutral mb-4">
-                Thử thay đổi bộ lọc hoặc từ khóa tìm kiếm
-              </p>
-              <button
-                onClick={() => {
-                  setSearchQuery('');
-                  setActiveFilters([]);
-                }}
-                className="text-primary hover:underline"
-              >
-                Xóa bộ lọc
-              </button>
+              return (
+                <button
+                  key={scan.id}
+                  onClick={() => handleScanClick(scan.id)}
+                  className={`flex gap-3 p-3 bg-card rounded-2xl border transition-all text-left shadow-card ${
+                    isSelected ? 'border-primary ring-2 ring-primary/20' : 'border-card-border'
+                  }`}
+                >
+                  <div className="w-20 h-20 bg-surface rounded-xl overflow-hidden flex-shrink-0">
+                    <img src={scan.imageDataUrl} alt="" className="w-full h-full object-cover" />
+                  </div>
+                  <div className="flex-1 min-w-0 py-1">
+                    <div className="flex justify-between items-start gap-2">
+                      <h3 className="text-body font-semibold text-text-primary truncate">{title}</h3>
+                      {scan.edited && <Edit3 className="w-4 h-4 text-warning flex-shrink-0" />}
+                    </div>
+                    <p className="text-small text-text-secondary mt-1 line-clamp-2">
+                      {scan.ocrStructured?.fields?.[0]?.value || 'Chưa có nội dung'}
+                    </p>
+                    <div className="flex items-center gap-1.5 mt-2 text-label text-text-secondary">
+                      <Calendar className="w-3.5 h-3.5" />
+                      {formatTimestamp(scan.timestamp)}
+                    </div>
+                  </div>
+                </button>
+              );
+            })
+          ) : (
+            <div className="col-span-full flex flex-col items-center justify-center py-20 text-center">
+              <div className="w-16 h-16 bg-surface rounded-full flex items-center justify-center mb-4">
+                <Search className="w-8 h-8 text-text-placeholder" />
+              </div>
+              <h3 className="text-body font-semibold text-text-primary">Không có kết quả</h3>
+              <p className="text-small text-text-secondary mt-1">Thử thay đổi bộ lọc hoặc từ khóa</p>
             </div>
           )}
         </div>
 
-        {/* Export Bar */}
+        {/* Floating Export Button */}
         {isSelectMode && selectedIds.size > 0 && (
-          <div className="fixed bottom-20 left-0 right-0 p-4 bg-primary text-white shadow-lg">
-            <div className="flex items-center justify-between">
-              <span className="font-medium">
-                {selectedIds.size} scan(s) được chọn
-              </span>
-              <button
-                onClick={handleExportSelected}
-                disabled={isExporting}
-                className="flex items-center gap-2 bg-white text-primary px-4 py-2 rounded-lg font-semibold hover:bg-gray-100 disabled:opacity-50 transition-colors"
-              >
-                {isExporting ? (
-                  <>
-                    <div className="w-5 h-5 border-2 border-primary border-t-transparent rounded-full animate-spin" />
-                    Đang xuất...
-                  </>
-                ) : (
-                  <>
-                    <Download className="w-5 h-5" />
-                    Xuất Excel
-                  </>
-                )}
-              </button>
+          <div className="fixed bottom-24 left-4 right-4 animate-slide-up">
+            <PrimaryButton className="w-full shadow-elevated" size="lg" onClick={handleExportSelected} disabled={isExporting}>
+              <Download className="w-5 h-5 mr-2" />
+              {isExporting ? 'Đang xuất...' : `Xuất ${selectedIds.size} scan`}
+            </PrimaryButton>
+          </div>
+        )}
+
+        {/* Sort Bottom Sheet / Menu Placeholder */}
+        {showSortMenu && (
+          <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4 bg-black/40 animate-fade-in" onClick={() => setShowSortMenu(false)}>
+            <div className="w-full max-w-sm bg-card rounded-2xl p-4 animate-slide-up" onClick={e => e.stopPropagation()}>
+              <h3 className="text-label uppercase tracking-widest text-text-secondary mb-4 px-2">Sắp xếp theo</h3>
+              <div className="space-y-1">
+                {SORT_OPTIONS.map(opt => (
+                  <button
+                    key={opt.value}
+                    onClick={() => { setSortBy(opt.value); setShowSortMenu(false); }}
+                    className={`w-full text-left p-4 rounded-xl font-medium transition-colors ${sortBy === opt.value ? 'bg-primary-light text-primary' : 'hover:bg-surface text-text-primary'}`}
+                  >
+                    {opt.label}
+                  </button>
+                ))}
+              </div>
             </div>
           </div>
         )}
 
-        {toast && (
-          <Toast
-            message={toast.message}
-            type={toast.type}
-            onClose={() => setToast(null)}
-          />
-        )}
+        {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
       </div>
     </Layout>
   );

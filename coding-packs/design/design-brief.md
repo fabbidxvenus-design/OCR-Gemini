@@ -12,8 +12,10 @@
 
 **Design Goal**: Transform the app from "functional prototype" to "production-ready tool" with a cohesive visual system, improved information hierarchy, and mobile-optimized interactions.
 
-**Scope**: 7 core screens + shared components
-- Login (PIN entry)
+**Scope**: 9 core screens + shared components
+- Login (email/password)
+- Register (email/password with confirmation)
+- Forgot Password (email reset)
 - Camera/Scan (not in current pages list, needs design)
 - OCR Result (structured fields display)
 - Edit (field editing)
@@ -25,14 +27,16 @@
 
 ## CURRENT STATE ANALYSIS
 
-### Existing Screens
-1. **LoginPage** — PIN entry with first-time setup flow
-2. **OCRResultPage** — Collapsible sections for Main Fields, Other Fields, Sizes, Raw Text
-3. **EditPage** — Form-based editing (assumed, not read yet)
-4. **HistoryPage** — List/Grid/Compact views with search, filter chips, sort
-5. **HistoryDetailPage** — Full scan detail with export actions
-6. **AnalyticsPage** — KPI cards + date range filter
-7. **SettingsPage** — Model tier selector (Free/Default/High)
+### Existing Screens (to be redesigned)
+1. **LoginPage** — Currently PIN entry, will be replaced with email/password login
+2. **RegisterPage** — NEW screen for user registration with email/password
+3. **ForgotPasswordPage** — NEW screen for password reset flow
+4. **OCRResultPage** — Collapsible sections for Main Fields, Other Fields, Sizes, Raw Text
+5. **EditPage** — Form-based editing (assumed, not read yet)
+6. **HistoryPage** — List/Grid/Compact views with search, filter chips, sort
+7. **HistoryDetailPage** — Full scan detail with export actions
+8. **AnalyticsPage** — KPI cards + date range filter
+9. **SettingsPage** — Model tier selector (Free/Default/High)
 
 ### Current Tech Stack
 - **Framework**: React 18 + TypeScript
@@ -223,21 +227,109 @@ A design system that feels like a professional tool, not a consumer app. Think: 
 ```
 ┌─────────────────────────────────────┐
 │                                     │
-│          [Lock Icon]                │
+│          [Camera Icon]              │
 │                                     │
-│      OCR Mobile Scanner             │
-│      Warehouse Edition              │
-│                                     │
-│  ┌─────────────────────────────┐   │
-│  │  Nhập mã PIN (4-6 số)      │   │
-│  │  [● ● ● ● ○ ○]             │   │
-│  └─────────────────────────────┘   │
+│           OCR App                   │
+│      Quét hóa đơn bằng AI          │
 │                                     │
 │  ┌─────────────────────────────┐   │
-│  │      ĐĂNG NHẬP              │   │
+│  │  [Lock Icon]                │   │
+│  │  Đăng nhập                  │   │
+│  │  Nhập email và mật khẩu     │   │
+│  │                             │   │
+│  │  EMAIL                      │   │
+│  │  ┌───────────────────────┐  │   │
+│  │  │ your@email.com        │  │   │
+│  │  └───────────────────────┘  │   │
+│  │                             │   │
+│  │  MẬT KHẨU                   │   │
+│  │  ┌───────────────────────┐  │   │
+│  │  │ ••••••••••    [Eye]   │  │   │
+│  │  └───────────────────────┘  │   │
+│  │                             │   │
+│  │  ┌───────────────────────┐  │   │
+│  │  │   Đăng nhập           │  │   │
+│  │  └───────────────────────┘  │   │
+│  │                             │   │
+│  │  Quên mật khẩu?             │   │
 │  └─────────────────────────────┘   │
+│                                     │
+│  Chưa có tài khoản? Đăng ký        │
 │                                     │
 │  [Shield Icon] Dữ liệu được mã hóa │
+│                                     │
+└─────────────────────────────────────┘
+```
+
+### 1b. Register Screen
+
+```
+┌─────────────────────────────────────┐
+│                                     │
+│          [Camera Icon]              │
+│                                     │
+│           OCR App                   │
+│      Quét hóa đơn bằng AI          │
+│                                     │
+│  ┌─────────────────────────────┐   │
+│  │  [UserPlus Icon]            │   │
+│  │  Đăng ký                    │   │
+│  │  Tạo tài khoản mới          │   │
+│  │                             │   │
+│  │  EMAIL                      │   │
+│  │  ┌───────────────────────┐  │   │
+│  │  │ your@email.com        │  │   │
+│  │  └───────────────────────┘  │   │
+│  │                             │   │
+│  │  MẬT KHẨU                   │   │
+│  │  ┌───────────────────────┐  │   │
+│  │  │ ••••••••••    [Eye]   │  │   │
+│  │  └───────────────────────┘  │   │
+│  │  ████░░░░░░ Mạnh            │   │
+│  │                             │   │
+│  │  XÁC NHẬN MẬT KHẨU          │   │
+│  │  ┌───────────────────────┐  │   │
+│  │  │ ••••••••••    [Eye]   │  │   │
+│  │  └───────────────────────┘  │   │
+│  │                             │   │
+│  │  ☑ Tôi đồng ý điều khoản    │   │
+│  │                             │   │
+│  │  ┌───────────────────────┐  │   │
+│  │  │   Đăng ký             │  │   │
+│  │  └───────────────────────┘  │   │
+│  └─────────────────────────────┘   │
+│                                     │
+│  Đã có tài khoản? Đăng nhập        │
+│                                     │
+└─────────────────────────────────────┘
+```
+
+### 1c. Forgot Password Screen
+
+```
+┌─────────────────────────────────────┐
+│                                     │
+│          [Camera Icon]              │
+│                                     │
+│           OCR App                   │
+│      Quét hóa đơn bằng AI          │
+│                                     │
+│  ┌─────────────────────────────┐   │
+│  │  [Key Icon]                 │   │
+│  │  Quên mật khẩu              │   │
+│  │  Nhập email để đặt lại      │   │
+│  │                             │   │
+│  │  EMAIL                      │   │
+│  │  ┌───────────────────────┐  │   │
+│  │  │ your@email.com        │  │   │
+│  │  └───────────────────────┘  │   │
+│  │                             │   │
+│  │  ┌───────────────────────┐  │   │
+│  │  │ Gửi link đặt lại      │  │   │
+│  │  └───────────────────────┘  │   │
+│  │                             │   │
+│  │  ← Quay lại đăng nhập       │   │
+│  └─────────────────────────────┘   │
 │                                     │
 └─────────────────────────────────────┘
 ```
