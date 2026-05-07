@@ -1,5 +1,4 @@
 import { describe, it, expect } from 'vitest';
-import { render, screen } from '@testing-library/react';
 
 describe('HistoryPage', () => {
   it('displays items in 2-column grid', () => {

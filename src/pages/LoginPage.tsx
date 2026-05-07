@@ -5,7 +5,6 @@ import { Lock, Camera, Shield } from 'lucide-react';
 import { PrimaryButton, InputField, PasswordInput } from '@/components/ui';
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-const MIN_PASSWORD_LENGTH = 8;
 
 interface FormErrors {
   email?: string;

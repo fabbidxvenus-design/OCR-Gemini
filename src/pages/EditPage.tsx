@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useForm, useFieldArray } from 'react-hook-form';
 import Layout from '@/components/layout/Layout';
 import { useScan, updateScan, markScanAsEdited } from '@/hooks/useScans';
-import { Save, X, Plus, Trash2, ChevronDown, ChevronUp } from 'lucide-react';
+import { Save, X, Plus, Trash2 } from 'lucide-react';
 import { categorizeFields } from '@/lib/fieldCategories';
 import { PrimaryButton, InputField, CollapsibleSection } from '@/components/ui';
 import type { OCRResponse } from '@/db/schema';
@@ -21,7 +21,7 @@ export default function EditPage() {
   const scan = useScan(scanId);
   const [activeTab, setActiveTab] = useState<'structured' | 'rawText'>('structured');
 
-  const { register, control, handleSubmit, reset, watch, formState: { errors, isDirty } } = useForm<EditFormData>();
+  const { register, control, handleSubmit, reset, watch, formState: { isDirty } } = useForm<EditFormData>();
   const { fields: fieldArray, append: appendField, remove: removeField } = useFieldArray({ control, name: 'fields' });
   const { fields: sizeArray, append: appendSize, remove: removeSize } = useFieldArray({ control, name: 'sizes' });
   const fieldsWatch = watch('fields');

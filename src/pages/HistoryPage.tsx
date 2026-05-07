@@ -4,10 +4,10 @@ import Layout from '@/components/layout/Layout';
 import { useScans } from '@/hooks/useScans';
 import { useExport } from '@/hooks/useExport';
 import { useDebounce } from '@/hooks/useDebounce';
-import { SkeletonCard, Toast, ViewModeToggle, FilterChip, PrimaryButton } from '@/components/ui';
+import { SkeletonCard, Toast, FilterChip, PrimaryButton } from '@/components/ui';
 import scanDisplayName from '@/lib/scanDisplayName';
 import { filterAndSortScans, type ViewMode, type SortOption, type FilterState } from '@/lib/scanFilters';
-import { Search, Calendar, Edit3, Camera, CheckSquare, X, Download, Filter, ArrowUpDown, LayoutGrid, List } from 'lucide-react';
+import { Search, Calendar, Edit3, CheckSquare, X, Download, ArrowUpDown, LayoutGrid, List } from 'lucide-react';
 
 function formatTimestamp(date: Date): string {
   const now = new Date();

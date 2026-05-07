@@ -1,7 +1,6 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useSettings } from '@/hooks/useSettings';
 import { MODEL_CONFIGS } from '@/lib/models';
-import { db } from '@/db/schema';
 import Layout from '@/components/layout/Layout';
 import { Spinner, PrimaryButton, Toast } from '@/components/ui';
 import { Check, Info, Shield, LogOut } from 'lucide-react';

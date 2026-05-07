@@ -16,7 +16,7 @@ describe('CollapsibleSection', () => {
 
   it('expands when clicked', () => {
     render(
-      <CollapsibleSection title="Section" defaultExpanded={false}>
+      <CollapsibleSection title="Section" count={0} defaultExpanded={false}>
         <div>Content</div>
       </CollapsibleSection>
     );

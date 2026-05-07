@@ -1,7 +1,7 @@
 import { useState, useMemo } from 'react';
 import Layout from '@/components/layout/Layout';
 import { useScans } from '@/hooks/useScans';
-import { TrendingUp, DollarSign, Calendar, Key, CreditCard, ChevronRight } from 'lucide-react';
+import { TrendingUp, DollarSign, Calendar, Key, CreditCard } from 'lucide-react';
 import { FilterChip } from '@/components/ui';
 
 type DateRange = '7d' | '30d' | '90d' | 'all';

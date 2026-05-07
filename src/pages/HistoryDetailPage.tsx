@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import Layout from '@/components/layout/Layout';
 import { useScan, deleteScan } from '@/hooks/useScans';
@@ -43,8 +43,6 @@ export default function HistoryDetailPage() {
   };
 
   const sizes = scan.ocrStructured?.sizes || [];
-  const notes = scan.ocrStructured?.notes || [];
-  const rawText = scan.ocrStructured?.raw_text || '';
   const displayTitle = scanDisplayName(scan);
 
   return (

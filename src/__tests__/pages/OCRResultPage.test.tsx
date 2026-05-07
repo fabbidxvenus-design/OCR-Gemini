@@ -6,10 +6,10 @@ describe('OCRResultPage', () => {
   it('renders collapsible sections', () => {
     render(
       <>
-        <CollapsibleSection title="THÔNG TIN CHÍNH" defaultExpanded>
+        <CollapsibleSection title="THÔNG TIN CHÍNH" count={1} defaultExpanded>
           <div>Main Info</div>
         </CollapsibleSection>
-        <CollapsibleSection title="THÔNG TIN KHÁC" defaultExpanded={false}>
+        <CollapsibleSection title="THÔNG TIN KHÁC" count={0} defaultExpanded={false}>
           <div>Other Info</div>
         </CollapsibleSection>
       </>
