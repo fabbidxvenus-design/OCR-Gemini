@@ -50,8 +50,8 @@ const FIELD_PRIORITY_PATTERNS = [
  * - Lowercase for case-insensitive matching
  * - Collapse multiple spaces
  */
-function normalizeFieldName(name: string): string {
-  return name.trim().toLowerCase().replace(/\s+/g, ' ');
+function normalizeFieldName(name: string | null | undefined): string {
+  return (name || '').trim().toLowerCase().replace(/\s+/g, ' ');
 }
 
 /**
