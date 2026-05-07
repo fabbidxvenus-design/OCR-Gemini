@@ -149,6 +149,8 @@ Week 5: Polish & Testing
 | TIP-038 | Field categorization - Main vs Other | TIP-009, TIP-010 | P1 | 4-6 | 7 | READY |
 | TIP-039 | Fix Excel export share error on mobile | TIP-012 | P1 | 1 | 7 | READY |
 | TIP-040 | Fix multi-select Excel export not working | TIP-026 | P1 | 1 | 7 | READY |
+| TIP-041 | Scan display name - product_name priority | TIP-038 | P1 | 2 | 7 | DONE |
+| TIP-042 | Enhanced search, filter, sort, view modes | TIP-013, TIP-041 | P1 | 6-8 | 7 | DONE |
 
 **Legend**:
 - **TBD**: To be done

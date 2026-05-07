@@ -5,6 +5,7 @@ import { useScan, deleteScan } from '@/hooks/useScans';
 import { useExport } from '@/hooks/useExport';
 import { Edit, Trash2, ChevronDown, ChevronUp, FileText, AlertTriangle, Download, Loader2 } from 'lucide-react';
 import { categorizeFields } from '@/lib/fieldCategories';
+import scanDisplayName from '@/lib/scanDisplayName';
 
 interface ExpandedSections {
   mainFields: boolean;
@@ -84,7 +85,7 @@ export default function HistoryDetailPage() {
   const sizes = scan.ocrStructured?.sizes || [];
   const notes = scan.ocrStructured?.notes || [];
   const rawText = scan.ocrStructured?.raw_text || '';
-  const title = scan.ocrStructured?.title || '';
+  const displayTitle = scanDisplayName(scan);
 
   return (
     <Layout title="Chi tiết scan">
@@ -99,27 +100,25 @@ export default function HistoryDetailPage() {
         </div>
 
         {/* Title Card */}
-        {title && (
-          <div className="bg-card rounded-xl border border-card-border p-4 shadow-card animate-fade-in">
-            <div className="flex items-start gap-3">
-              <div className="w-10 h-10 bg-primary/10 rounded-xl flex items-center justify-center flex-shrink-0">
-                <FileText className="w-5 h-5 text-primary" />
-              </div>
-              <div>
-                <h2 className="text-lg font-semibold text-text-primary">{title}</h2>
-                <p className="text-xs text-text-secondary mt-1">
-                  {new Date(scan.timestamp).toLocaleDateString('vi-VN', {
-                    day: '2-digit',
-                    month: '2-digit',
-                    year: 'numeric',
-                    hour: '2-digit',
-                    minute: '2-digit'
-                  })}
-                </p>
-              </div>
+        <div className="bg-card rounded-xl border border-card-border p-4 shadow-card animate-fade-in">
+          <div className="flex items-start gap-3">
+            <div className="w-10 h-10 bg-primary/10 rounded-xl flex items-center justify-center flex-shrink-0">
+              <FileText className="w-5 h-5 text-primary" />
+            </div>
+            <div>
+              <h2 className="text-lg font-semibold text-text-primary">{displayTitle}</h2>
+              <p className="text-xs text-text-secondary mt-1">
+                {new Date(scan.timestamp).toLocaleDateString('vi-VN', {
+                  day: '2-digit',
+                  month: '2-digit',
+                  year: 'numeric',
+                  hour: '2-digit',
+                  minute: '2-digit'
+                })}
+              </p>
             </div>
           </div>
-        )}
+        </div>
 
         {/* Edited Badge */}
         {scan.edited && (

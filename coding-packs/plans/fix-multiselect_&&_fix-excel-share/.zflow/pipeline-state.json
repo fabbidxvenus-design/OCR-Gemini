@@ -1,0 +1,16 @@
+{
+  "planDir": "D:\\scripts\\ocr_gemini\\ocr-mobile-web\\coding-packs\\plans\\fix-multiselect_&&_fix-excel-share",
+  "activePhase": "execute",
+  "tier": "LIGHT",
+  "mode": "--plan",
+  "tips": ["TIP-039", "TIP-040"],
+  "startTime": "2026-05-07T16:00:00.000Z",
+  "lastUpdate": "2026-05-07T16:00:00.000Z",
+  "fixCount": 0,
+  "complexity": {
+    "tip039": 15,
+    "tip040": 20,
+    "total": 35
+  },
+  "status": "WIP"
+}

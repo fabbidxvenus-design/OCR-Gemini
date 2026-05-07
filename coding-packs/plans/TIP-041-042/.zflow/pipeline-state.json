@@ -1,0 +1,17 @@
+{
+  "planDir": "D:\\scripts\\ocr_gemini\\ocr-mobile-web\\coding-packs\\plans\\TIP-041-042",
+  "activePhase": "complete",
+  "tier": "STANDARD",
+  "mode": "--plan",
+  "tips": ["TIP-041", "TIP-042"],
+  "startTime": "2026-05-07T16:45:00.000Z",
+  "lastUpdate": "2026-05-07T17:15:00.000Z",
+  "fixCount": 0,
+  "complexity": {
+    "tip041": 30,
+    "tip042": 75,
+    "total": 105
+  },
+  "status": "COMPLETE",
+  "notes": "TIP-041: scanDisplayName utility created | TIP-042: View modes, filters, sort implemented in HistoryPage"
+}
