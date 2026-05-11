@@ -50,7 +50,11 @@ export default function HistoryDetailPage() {
       <div className="p-screen space-y-section pb-44">
         {/* Image Card */}
         <div className="bg-card rounded-2xl border border-card-border overflow-hidden shadow-card animate-fade-in">
-          <img src={scan.imageDataUrl} alt="Scan" className="w-full h-auto max-h-[40vh] object-contain bg-surface" />
+          {scan.imageDataUrl ? (
+            <img src={scan.imageDataUrl} alt="Scan" className="w-full h-auto max-h-[40vh] object-contain bg-surface" />
+          ) : (
+            <div className="w-full h-40 flex items-center justify-center bg-surface text-text-secondary">No image available</div>
+          )}
         </div>
 
         {/* Title Header */}

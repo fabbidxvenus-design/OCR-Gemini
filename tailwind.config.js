@@ -5,6 +5,12 @@ export default {
     "./src/**/*.{js,ts,jsx,tsx}",
   ],
   theme: {
+    screens: {
+      'sm': '640px',
+      'md': '768px',
+      'lg': '1024px',
+      'xl': '1280px',
+    },
     extend: {
       colors: {
         primary: '#2563EB',
@@ -43,9 +49,21 @@ export default {
       },
       spacing: {
         'screen': '16px',
+        'screen-sm': '24px',
+        'screen-md': '32px',
+        'screen-lg': '48px',
         'card': '16px',
+        'card-sm': '20px',
+        'card-md': '24px',
         'section': '12px',
+        'section-sm': '16px',
+        'section-md': '20px',
         'element': '8px',
+        'sidebar': '240px',
+      },
+      maxWidth: {
+        'app': '1024px',
+        'content': '1280px',
       },
       height: {
         'touch': '44px',

@@ -1,7 +1,7 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import Layout from '@/components/layout/Layout';
-import { useScans } from '@/hooks/useScans';
-import { TrendingUp, DollarSign, Calendar, Key, CreditCard } from 'lucide-react';
+import { useScans, getApiKeyUsageStats } from '@/hooks/useScans';
+import { TrendingUp, DollarSign, Calendar, Key } from 'lucide-react';
 import { FilterChip } from '@/components/ui';
 
 type DateRange = '7d' | '30d' | '90d' | 'all';
@@ -17,6 +17,11 @@ interface KPI {
 export default function AnalyticsPage() {
   const [dateRange, setDateRange] = useState<DateRange>('30d');
   const allScans = useScans({ limit: 1000, order: 'desc' });
+  const [apiStats, setApiStats] = useState<{ key1Count: number; key2Count: number; key1Cost: number; key2Cost: number } | null>(null);
+
+  useEffect(() => {
+    getApiKeyUsageStats().then(setApiStats).catch(console.error);
+  }, []);
 
   const filteredScans = useMemo(() => {
     if (!allScans || dateRange === 'all') return allScans || [];
@@ -31,16 +36,18 @@ export default function AnalyticsPage() {
   const kpis = useMemo<KPI[]>(() => {
     const totalScans = filteredScans?.length || 0;
     const totalCost = filteredScans?.reduce((sum, scan) => sum + scan.tokenUsage.cost, 0) || 0;
-    const key1Scans = filteredScans?.filter(s => s.apiKeyIndex === 1).length || 0;
-    const key2Scans = filteredScans?.filter(s => s.apiKeyIndex === 2).length || 0;
+
+    // Use backend stats if available, otherwise fallback to local calculation
+    const key1Scans = apiStats ? apiStats.key1Count : (filteredScans?.filter(s => s.apiKeyIndex === 1).length || 0);
+    const key2Scans = apiStats ? apiStats.key2Count : (filteredScans?.filter(s => s.apiKeyIndex === 2).length || 0);
 
     return [
       { label: 'Tổng số scan', value: totalScans.toString(), icon: <TrendingUp className="w-6 h-6" />, color: 'text-primary', bg: 'bg-primary-light' },
       { label: 'Tổng chi phí', value: `$${totalCost.toFixed(3)}`, icon: <DollarSign className="w-6 h-6" />, color: 'text-success', bg: 'bg-success-light' },
       { label: 'API Key 1', value: `${key1Scans} scans`, icon: <Key className="w-6 h-6" />, color: 'text-blue-600', bg: 'bg-blue-50' },
-      { label: 'API Key 2', value: `${key2Scans} scans`, icon: <CreditCard className="w-6 h-6" />, color: 'text-purple-600', bg: 'bg-purple-50' },
+      { label: 'API Key 2', value: `${key2Scans} scans`, icon: <Key className="w-6 h-6" />, color: 'text-purple-600', bg: 'bg-purple-50' },
     ];
-  }, [filteredScans]);
+  }, [filteredScans, apiStats]);
 
   const topProducts = useMemo(() => {
     if (!filteredScans) return [];
@@ -57,33 +64,33 @@ export default function AnalyticsPage() {
 
   return (
     <Layout title="Thống kê">
-      <div className="p-screen space-y-section pb-24 bg-surface min-h-full">
+      <div className="space-y-section pb-24 bg-surface min-h-full">
         {/* Date Range Chips */}
         <div className="bg-card rounded-2xl border border-card-border p-card shadow-card overflow-hidden">
           <div className="flex items-center gap-2 mb-4 text-text-secondary">
             <Calendar className="w-4 h-4" />
             <span className="text-label font-bold uppercase tracking-widest">Thời gian</span>
           </div>
-          <div className="flex gap-2">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
             {[
               { v: '7d', l: '7 ngày' },
               { v: '30d', l: '30 ngày' },
               { v: '90d', l: '90 ngày' },
               { v: 'all', l: 'Tất cả' },
             ].map(o => (
-              <FilterChip key={o.v} label={o.l} isActive={dateRange === o.v} onClick={() => setDateRange(o.v as DateRange)} className="flex-1" />
+              <FilterChip key={o.v} label={o.l} isActive={dateRange === o.v} onClick={() => setDateRange(o.v as DateRange)} className="w-full" />
             ))}
           </div>
         </div>
 
         {/* KPI Grid */}
-        <div className="grid grid-cols-1 gap-section">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-section">
           {kpis.map((kpi, i) => (
-            <div key={i} className="bg-card rounded-2xl border border-card-border p-card shadow-card flex items-center gap-4 animate-fade-in" style={{ animationDelay: `${i * 50}ms` }}>
+            <div key={i} className="bg-card rounded-2xl border border-card-border p-card shadow-card flex flex-col md:flex-row items-center md:items-start gap-4 animate-fade-in" style={{ animationDelay: `${i * 50}ms` }}>
               <div className={`w-12 h-12 ${kpi.bg} ${kpi.color} rounded-xl flex items-center justify-center flex-shrink-0`}>
                 {kpi.icon}
               </div>
-              <div>
+              <div className="text-center md:text-left">
                 <p className="text-label font-medium text-text-secondary uppercase tracking-wider">{kpi.label}</p>
                 <p className="text-2xl font-bold text-text-primary mt-0.5">{kpi.value}</p>
               </div>

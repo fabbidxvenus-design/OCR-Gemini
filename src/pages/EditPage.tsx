@@ -2,7 +2,7 @@ import { useEffect, useState, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useForm, useFieldArray } from 'react-hook-form';
 import Layout from '@/components/layout/Layout';
-import { useScan, updateScan, markScanAsEdited } from '@/hooks/useScans';
+import { useScan, updateScan } from '@/hooks/useScans';
 import { Save, X, Plus, Trash2 } from 'lucide-react';
 import { categorizeFields } from '@/lib/fieldCategories';
 import { PrimaryButton, InputField, CollapsibleSection } from '@/components/ui';
@@ -58,7 +58,6 @@ export default function EditPage() {
       raw_text: data.raw_text,
     };
     await updateScan(scanId, { ocrStructured: updatedOCR });
-    await markScanAsEdited(scanId);
     navigate(`/ocr-result/${scanId}`);
   };
 

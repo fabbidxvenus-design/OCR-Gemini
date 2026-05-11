@@ -1,0 +1,28 @@
+{
+  "name": "api-client",
+  "goal": "Migrate frontend source-of-truth behavior from localStorage/Dexie/direct OpenRouter/browser ExcelJS toward localhost:3001 API-backed services while preserving existing UI and routes.",
+  "mode": "plan",
+  "implementation": "not_started",
+  "executionOrder": [
+    ["TIP-055"],
+    ["TIP-056", "TIP-057"],
+    ["TIP-058", "TIP-059", "TIP-060"],
+    ["TIP-061"]
+  ],
+  "dependencies": {
+    "TIP-055": [],
+    "TIP-056": ["TIP-055"],
+    "TIP-057": ["TIP-055"],
+    "TIP-058": ["TIP-055", "TIP-057"],
+    "TIP-059": ["TIP-055", "TIP-057"],
+    "TIP-060": ["TIP-055", "TIP-057"],
+    "TIP-061": ["TIP-056", "TIP-057", "TIP-058", "TIP-059", "TIP-060"]
+  },
+  "artifacts": {
+    "state": ".zflow/state.json",
+    "intake": ".zflow/intake-report.md",
+    "spec": ".zflow/SPEC.md",
+    "decompose": ".zflow/DECOMPOSE.md",
+    "handoff": ".zflow/handoff.md"
+  }
+}

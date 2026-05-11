@@ -1,0 +1,28 @@
+{
+  "pipeline": "zflow",
+  "mode": "plan",
+  "planDir": "D:\\scripts\\HLVN\\ocr-mobile-web\\coding-packs\\plans\\api-client",
+  "phase": "COMPLETE",
+  "tier": "STANDARD",
+  "complexity": {
+    "score": 52,
+    "axis_scope": "medium",
+    "axis_uncertainty": "medium",
+    "axis_risk": "medium",
+    "rationale": "API cutover spans auth, scans, OCR, settings/analytics, export, tests and cleanup. Scope is multi-module with backend contract assumptions and offline/error behavior risk, but TIPs are detailed and bounded."
+  },
+  "tips": ["TIP-055", "TIP-056", "TIP-057", "TIP-058", "TIP-059", "TIP-060", "TIP-061"],
+  "completedTips": ["TIP-055", "TIP-056", "TIP-057", "TIP-058", "TIP-059", "TIP-060", "TIP-061"],
+  "currentTips": [],
+  "fixCount": 0,
+  "elapsed": 5400,
+  "lastEvent": "2026-05-09T10:00:00",
+  "created": "2026-05-08T00:00:00",
+  "tests": {
+    "total": 35,
+    "passed": 35,
+    "failed": 0
+  },
+  "verdict": "COMPLETE",
+  "verifier": null
+}

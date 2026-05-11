@@ -1,66 +1,62 @@
-import { useState, useEffect } from 'react';
-import { db } from '@/db/schema';
-import type { AppSettings } from '@/db/schema';
+import { useState, useEffect, useCallback } from 'react';
+import { useAuthStore } from '@/store/authStore';
+import { settingsApi, type AppSettings } from '@/lib/settingsApi';
 
 const DEFAULT_SETTINGS: AppSettings = {
   id: 'app-settings',
   selectedModelTier: 'default',
-  lastUpdated: new Date(),
 };
 
 export function useSettings() {
+  const accessToken = useAuthStore((state) => state.accessToken);
+  const logout = useAuthStore((state) => state.logout);
   const [settings, setSettings] = useState<AppSettings>(DEFAULT_SETTINGS);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  async function loadSettings() {
+  const loadSettings = useCallback(async () => {
+    if (!accessToken) {
+      setIsLoading(false);
+      return;
+    }
+
     try {
       setIsLoading(true);
-      const stored = await db.settings.get('app-settings');
-
-      if (stored) {
-        setSettings(stored);
-      } else {
-        // Initialize with defaults
-        await db.settings.put(DEFAULT_SETTINGS);
-        setSettings(DEFAULT_SETTINGS);
-      }
-    } catch (err) {
+      const data = await settingsApi.getSettings(accessToken);
+      setSettings(data);
+    } catch (err: any) {
       console.error('Failed to load settings:', err);
+      if (err.status === 401 || err.code === 'AUTH_FAILED') {
+        logout();
+        return;
+      }
       setError('Failed to load settings');
-      setSettings(DEFAULT_SETTINGS);
+      // If backend fails, we stay with default settings in memory
     } finally {
       setIsLoading(false);
     }
-  }
+  }, [accessToken, logout]);
 
-  // Load settings from IndexedDB on mount
+  // Load settings from backend on mount
   useEffect(() => {
     loadSettings();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [loadSettings]);
 
   const updateSettings = async (
     updates: Partial<Omit<AppSettings, 'id'>>
   ): Promise<void> => {
+    if (!accessToken) throw new Error('Not authenticated');
+
     try {
-      const newSettings: AppSettings = {
-        ...settings,
-        ...updates,
-        id: 'app-settings',
-        lastUpdated: new Date(),
-      };
-
-      // Optimistic update
+      const newSettings = await settingsApi.updateSettings(accessToken, updates);
       setSettings(newSettings);
-
-      // Persist to IndexedDB
-      await db.settings.put(newSettings);
-    } catch (err) {
+    } catch (err: any) {
       console.error('Failed to update settings:', err);
+      if (err.status === 401 || err.code === 'AUTH_FAILED') {
+        logout();
+        throw new Error('Session expired');
+      }
       setError('Failed to save settings');
-      // Revert optimistic update
-      await loadSettings();
       throw err;
     }
   };
@@ -80,3 +76,4 @@ export function useSettings() {
     reload: loadSettings,
   };
 }
+

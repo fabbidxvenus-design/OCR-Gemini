@@ -1,116 +1,159 @@
-import { useLiveQuery } from 'dexie-react-hooks';
-import { db, type ScanRecord } from '@/db/schema';
+import { useEffect, useState } from 'react';
+import type { OCRResponse, ScanRecord } from '@/db/schema';
+import { scansApi } from '@/lib/scansApi';
+import { useAuthStore } from '@/store/authStore';
+import type { BackendScanRecord } from '@/lib/apiTypes';
 
-// Get all scans with optional pagination
-export function useScans(options?: { limit?: number; order?: 'asc' | 'desc' }): ScanRecord[] | undefined {
-  const { limit = 100, order = 'desc' } = options || {};
-
-  return useLiveQuery(async () => {
-    const scans = await db.scans
-      .orderBy('timestamp')
-      .limit(limit)
-      .toArray();
-
-    return order === 'desc' ? scans.reverse() : scans;
-  }, [limit, order]);
-}
-
-// Get a single scan by ID
-export function useScan(scanId?: string): ScanRecord | undefined {
-  return useLiveQuery(
-    async () => {
-      if (!scanId) return undefined;
-      return await db.scans.get(scanId);
-    },
-    [scanId]
-  );
-}
-
-// Search scans by text
-export function useSearchScans(query: string): ScanRecord[] | undefined {
-  return useLiveQuery(
-    async () => {
-      if (!query) return [];
-
-      const allScans = await db.scans.toArray();
-      const lowerQuery = query.toLowerCase();
-
-      return allScans.filter((scan) => {
-        const title = scan.ocrStructured?.title;
-        const fields = scan.ocrStructured?.fields;
-        const rawText = scan.ocrStructured?.raw_text;
-
-        // Search in title
-        if (title && title.toString().toLowerCase().includes(lowerQuery)) {
-          return true;
-        }
-        // Search in fields (safely handle null/undefined values)
-        if (fields?.some((f) => f.value != null && f.value.toString().toLowerCase().includes(lowerQuery))) {
-          return true;
-        }
-        // Search in raw text
-        if (rawText && rawText.toString().toLowerCase().includes(lowerQuery)) {
-          return true;
-        }
-        return false;
-      });
-    },
-    [query]
-  );
-}
-
-// Create a new scan
-export async function createScan(data: Omit<ScanRecord, 'id'>): Promise<string> {
-  const id = crypto.randomUUID();
-  await db.scans.add({ id, ...data });
-  return id;
-}
-
-// Get API key usage statistics
-export async function getApiKeyUsageStats(): Promise<{ key1Count: number; key2Count: number; key1Cost: number; key2Cost: number }> {
-  const scans = await db.scans.toArray();
-
-  const key1Scans = scans.filter(s => s.apiKeyIndex === 1);
-  const key2Scans = scans.filter(s => s.apiKeyIndex === 2);
-
-  const key1Cost = key1Scans.reduce((sum, s) => sum + (s.tokenUsage?.cost || 0), 0);
-  const key2Cost = key2Scans.reduce((sum, s) => sum + (s.tokenUsage?.cost || 0), 0);
-
+function toMobileScan(scan: BackendScanRecord): ScanRecord {
   return {
-    key1Count: key1Scans.length,
-    key2Count: key2Scans.length,
-    key1Cost,
-    key2Cost,
+    id: scan.id,
+    timestamp: new Date(scan.timestamp),
+    imageDataUrl: scan.imageUrl ?? '',
+    ocrStructured: {
+      title: scan.ocrStructured.title,
+      fields: scan.ocrStructured.fields || [],
+      sizes: scan.ocrStructured.sizes || [],
+      raw_text: scan.ocrStructured.rawText ?? scan.ocrRaw,
+      notes: scan.ocrStructured.notes || [],
+    },
+    edited: scan.edited,
+    tokenUsage: scan.tokenUsage,
+    apiKeyIndex: scan.apiKeyIndex,
+    modelTier: undefined,
   };
 }
 
-// Update a scan
+function toBackendOCR(ocr: OCRResponse) {
+  return {
+    title: ocr.title,
+    fields: ocr.fields || [],
+    sizes: ocr.sizes || [],
+    rawText: ocr.raw_text,
+    notes: ocr.notes || [],
+  };
+}
+
+function getAccessToken(): string {
+  const accessToken = useAuthStore.getState().accessToken;
+  if (!accessToken) throw new Error('Bạn cần đăng nhập để xem dữ liệu scan');
+  return accessToken;
+}
+
+export function useScans(options?: { limit?: number; order?: 'asc' | 'desc' }): ScanRecord[] | undefined {
+  const { limit = 100, order = 'desc' } = options || {};
+  const accessToken = useAuthStore((state) => state.accessToken);
+  const [scans, setScans] = useState<ScanRecord[] | undefined>();
+
+  useEffect(() => {
+    if (!accessToken) {
+      setScans([]);
+      return;
+    }
+
+    let cancelled = false;
+
+    async function loadScans() {
+      if (!accessToken) return;
+      try {
+        const data = await scansApi.getScans(accessToken, { limit });
+        const mapped = data.map(toMobileScan);
+        const ordered = order === 'desc'
+          ? mapped.sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime())
+          : mapped.sort((a, b) => a.timestamp.getTime() - b.timestamp.getTime());
+        if (!cancelled) setScans(ordered);
+      } catch (err) {
+        console.error('Failed to load scans:', err);
+        if (!cancelled) setScans([]);
+      }
+    }
+
+    loadScans();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [accessToken, limit, order]);
+
+  return scans;
+}
+
+export function useScan(scanId?: string): ScanRecord | undefined {
+  const accessToken = useAuthStore((state) => state.accessToken);
+  const [scan, setScan] = useState<ScanRecord | undefined>();
+
+  useEffect(() => {
+    if (!scanId || !accessToken) {
+      setScan(undefined);
+      return;
+    }
+
+    let cancelled = false;
+
+    async function loadScan() {
+      if (!accessToken || !scanId) return;
+      try {
+        const data = await scansApi.getScan(accessToken, scanId);
+        if (!cancelled) setScan(toMobileScan(data));
+      } catch (err) {
+        console.error('Failed to load scan:', err);
+        if (!cancelled) setScan(undefined);
+      }
+    }
+
+    loadScan();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [accessToken, scanId]);
+
+  return scan;
+}
+
+export function useSearchScans(query: string): ScanRecord[] | undefined {
+  const scans = useScans({ limit: 100, order: 'desc' });
+
+  if (!query) return [];
+  if (!scans) return undefined;
+
+  const lowerQuery = query.toLowerCase();
+  return scans.filter((scan) => {
+    const title = scan.ocrStructured?.title;
+    const fields = scan.ocrStructured?.fields;
+    const rawText = scan.ocrStructured?.raw_text;
+
+    return Boolean(
+      title?.toString().toLowerCase().includes(lowerQuery) ||
+      fields?.some((field) => field.value != null && field.value.toString().toLowerCase().includes(lowerQuery)) ||
+      rawText?.toString().toLowerCase().includes(lowerQuery)
+    );
+  });
+}
+
+export async function createScan(data: Omit<ScanRecord, 'id'>): Promise<string> {
+  const created = await scansApi.createScan(getAccessToken(), {
+    imageUrl: data.imageDataUrl,
+    timestamp: data.timestamp.toISOString(),
+    ocrRaw: data.ocrRaw,
+    ocrStructured: toBackendOCR(data.ocrStructured),
+    tokenUsage: data.tokenUsage,
+    apiKeyIndex: data.apiKeyIndex,
+    edited: data.edited,
+  });
+  return created.id;
+}
+
+export async function getApiKeyUsageStats(): Promise<{ key1Count: number; key2Count: number; key1Cost: number; key2Cost: number }> {
+  return scansApi.getApiKeyUsageStats(getAccessToken());
+}
+
 export async function updateScan(scanId: string, updates: Partial<ScanRecord>): Promise<void> {
-  await db.scans.update(scanId, updates);
+  if (!updates.ocrStructured) return;
+  await scansApi.updateScan(getAccessToken(), scanId, {
+    ocrStructured: toBackendOCR(updates.ocrStructured),
+  });
 }
 
-// Mark scan as edited
-export async function markScanAsEdited(scanId: string): Promise<void> {
-  await db.scans.update(scanId, { edited: true });
-}
-
-// Delete a scan
 export async function deleteScan(scanId: string): Promise<void> {
-  await db.scans.delete(scanId);
-}
-
-// Cleanup old scans (90 days)
-export async function cleanupOldScans(): Promise<number> {
-  const cutoff = new Date();
-  cutoff.setDate(cutoff.getDate() - 90);
-
-  const oldScans = await db.scans
-    .where('timestamp')
-    .below(cutoff)
-    .toArray();
-
-  const ids = oldScans.map((s) => s.id!);
-  await db.scans.bulkDelete(ids);
-
-  return ids.length;
+  await scansApi.deleteScan(getAccessToken(), scanId);
 }

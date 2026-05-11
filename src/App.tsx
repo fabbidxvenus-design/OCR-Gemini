@@ -20,9 +20,11 @@ import ErrorMessage from '@/components/ui/ErrorMessage';
 import { processOCR } from '@/lib/gemini';
 import { compressImageForOCR } from '@/lib/compression';
 import { createScan } from '@/hooks/useScans';
+import { useSettings } from '@/hooks/useSettings';
 
 function CameraPage() {
   const navigate = useNavigate();
+  const { settings } = useSettings();
   const [capturedImage, setCapturedImage] = useState<{
     blob: Blob;
     dataUrl: string;
@@ -59,14 +61,15 @@ function CameraPage() {
       const compressedBlob = await compressImageForOCR(capturedImage.blob);
       setProgress('Đang xử lý OCR...');
 
-      // Process OCR
-      const ocrResult = await processOCR(compressedBlob);
+      // Process OCR with user's selected model tier
+      const ocrResult = await processOCR(compressedBlob, settings.selectedModelTier);
       setProgress('Đang lưu kết quả...');
 
       // Create scan record
       const scanId = await createScan({
         timestamp: new Date(),
         imageDataUrl: capturedImage.dataUrl,
+        ocrRaw: ocrResult.ocrRaw,
         ocrStructured: ocrResult.structured,
         edited: false,
         tokenUsage: ocrResult.tokenUsage,

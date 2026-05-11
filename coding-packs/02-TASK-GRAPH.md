@@ -156,12 +156,50 @@ Week 5: Polish & Testing
 | TIP-046 | Layout Components (Header/Nav) | TIP-044 | P1 | 2-4 | 8 | READY |
 | TIP-047 | OCR & History Screens Redesign | TIP-046 | P1 | 8-10 | 8 | READY |
 | TIP-048 | Analytics & Settings Screens Redesign | TIP-046 | P2 | 4-6 | 8 | READY |
+| TIP-055 | API Client Foundation for Local Backend | - | P0 | 2-4 | 9 | READY |
+| TIP-056 | Auth Flow API Migration | TIP-055 | P0 | 4-6 | 9 | READY |
+| TIP-057 | Scan Storage API Migration | TIP-055 | P0 | 6-8 | 9 | READY |
+| TIP-058 | OCR Backend API Migration | TIP-055, TIP-057 | P0 | 4-6 | 9 | READY |
+| TIP-059 | Settings and Analytics API Migration | TIP-055, TIP-057 | P1 | 4-6 | 9 | READY |
+| TIP-060 | Export Backend API Migration | TIP-055, TIP-057 | P1 | 4-6 | 9 | READY |
+| TIP-061 | Local Persistence Cutover and Regression Cleanup | TIP-056, TIP-057, TIP-058, TIP-059, TIP-060 | P0 | 4-6 | 9 | READY |
 
 **Legend**:
 - **TBD**: To be done
 - **WIP**: Work in progress
 - **DONE**: Completed
 - **BLOCKED**: Waiting on dependency or clarification
+
+---
+
+## API BACKEND MIGRATION PLAN (Week 9)
+
+```
+TIP-055 API Client Foundation
+  ├─ TIP-056 Auth Flow API Migration
+  └─ TIP-057 Scan Storage API Migration
+       ├─ TIP-058 OCR Backend API Migration
+       ├─ TIP-059 Settings and Analytics API Migration
+       └─ TIP-060 Export Backend API Migration
+
+TIP-056 + TIP-057 + TIP-058 + TIP-059 + TIP-060
+  ↓
+TIP-061 Local Persistence Cutover and Regression Cleanup
+```
+
+### Migration Goal
+Move frontend source-of-truth behavior from localStorage/Dexie/direct OpenRouter/browser ExcelJS toward `localhost:3001` API-backed services while keeping existing UI and route behavior stable.
+
+### Planned TIPs
+| TIP | Scope | Key Outcome |
+|---|---|---|
+| TIP-055 | API client foundation | Typed `localhost:3001` API client and shared DTO/error types |
+| TIP-056 | Auth | Backend session/auth becomes source of truth |
+| TIP-057 | Scans | Scan CRUD loads/saves through backend API, not Dexie |
+| TIP-058 | OCR | Frontend calls backend OCR endpoint, not OpenRouter directly |
+| TIP-059 | Settings/Analytics | Settings and aggregated analytics come from backend |
+| TIP-060 | Export | Backend returns `.xlsx` blob; frontend keeps save/share UX |
+| TIP-061 | Cutover cleanup | Remove stale local-source dependencies and run regression checks |
 
 ---
 

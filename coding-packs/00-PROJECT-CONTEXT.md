@@ -1,466 +1,216 @@
-# OCR Gemini — Project Context (Scan Report)
+# ocr-mobile-web — Project Context (Scan Report)
 
-> Vibecode Kit v5.0 — BƯỚC 1 (SCAN)
-> Coding workspace: D:\scripts\ocr_gemini
-> Scanned: 2026-05-05
+> Vibecode Kit v5.0 — BƯỚC 1 (SCAN)  
+> Coding workspace: `D:\scripts\HLVN\ocr-mobile-web`  
+> Scanned: 2026-05-08  
+> Note: re-scan after OCR / storage / export services are independently operational.
 
 ---
 
 ## SCAN REPORT
 
 ### TECH_STACK
-| Component | Technology | Version/Notes |
-|-----------|------------|---------------|
-| Language | Python | 3.11 (implied by `from __future__` patterns) |
-| AI SDK | google-genai | Gemini API client |
-| Vision Model | gemini-2.5-flash-lite | Cheapest 2.5 model for OCR |
-| Excel | openpyxl | Excel file generation |
-| Image Processing | Pillow | Image resize for Excel embedding |
-| Package Manager | pip | requirements.txt |
+
+| Layer | Technology | Version/Notes |
+|---|---|---|
+| Runtime | React | 19.2.5 |
+| Language | TypeScript | 6.0.2 |
+| Build Tool | Vite | 8.0.10 |
+| Routing | React Router DOM | 7.14.2 |
+| Styling | Tailwind CSS | 3.4.19, mobile-first responsive tokens |
+| State | Zustand | 5.0.13, persisted auth store |
+| Local DB | Dexie + dexie-react-hooks | 4.4.x, IndexedDB persistence |
+| OCR API | OpenRouter Chat Completions | Gemini model tiers via OpenRouter |
+| Excel Export | ExcelJS | Multi-sheet `.xlsx` generation |
+| Camera | Browser media APIs | `CameraView` / `ImagePreview` flow |
+| Image Compression | browser-image-compression | OCR-optimized image preprocessing |
+| Forms | React Hook Form | Installed; page usage varies |
+| UI Icons | Lucide React | Navigation and action icons |
+| Tests | Vitest + Testing Library + jsdom | Component/page unit tests present |
 
 ### EXISTING_MODULES
-| Module | Purpose | Lines |
-|--------|---------|-------|
-| `ocr_gemini.py` | Core OCR: reads image, calls Gemini, returns Markdown | 138 |
-| `ocr_to_excel.py` | Excel export: structured JSON → multi-sheet workbook | 312 |
-| `estimate_billing.py` | Cost estimation across multiple Gemini models | 108 |
-| `result.md` | Sample OCR output (Markdown) | - |
-| `requirements.txt` | Dependencies manifest | - |
+
+| Module | Path | Purpose |
+|---|---|---|
+| App routing + camera flow | `src/App.tsx` | Public/protected routes; capture → compress → OCR → save → result flow |
+| Auth store | `src/store/authStore.ts` | Session auth state persisted in localStorage |
+| PIN auth helpers | `src/lib/auth.ts` | PIN hashing/verification and Dexie auth record lifecycle |
+| IndexedDB schema | `src/db/schema.ts` | `auth`, `scans`, `analytics`, `settings` tables and shared data types |
+| Scan repository hooks | `src/hooks/useScans.ts` | Live query scan list/detail CRUD and usage stats |
+| OCR service | `src/lib/gemini.ts` | OpenRouter request, API-key fallback, retry, JSON extraction, cost tracking |
+| Model config | `src/lib/models.ts` | Free/default/high model tiers and prompts |
+| Compression service | `src/lib/compression.ts` | General and OCR-focused client-side image compression |
+| Excel service | `src/lib/excel.ts` | Single/multi scan Excel export, image embedding, mobile share/download fallbacks |
+| Share service | `src/lib/share.ts` | Format OCR text, clipboard fallback, Web Share API |
+| Layout system | `src/components/layout/*` | Header, bottom nav, sidebar, protected route, responsive layout shell |
+| UI kit | `src/components/ui/*` | Buttons, filter chips, inputs, toast, skeletons, checkbox, collapsible section |
+| Pages | `src/pages/*` | Login/register/reset, history, detail, edit, analytics, settings |
+| Tests | `src/__tests__/**/*` | Component/page tests for primary UI surfaces |
+
+### SERVICES_STATUS
+
+| Service | Main files | Status | Notes |
+|---|---|---|---|
+| OCR service | `src/lib/gemini.ts`, `src/lib/models.ts`, `src/lib/compression.ts` | Operational independently | Compresses image, selects model tier, calls OpenRouter, retries 429/503-like failures, tracks token cost and API key index |
+| Storage service | `src/db/schema.ts`, `src/hooks/useScans.ts`, `src/lib/auth.ts`, `src/hooks/useSettings.ts` | Operational independently | Dexie tables support auth, scans, analytics cache, app settings; live hooks derive page state |
+| Export/share service | `src/lib/excel.ts`, `src/hooks/useExport.ts`, `src/lib/share.ts`, `src/hooks/useShare.ts` | Operational independently | ExcelJS workbook generation with share/file-picker/download fallbacks; text share supports Web Share and clipboard |
 
 ### PATTERNS_DETECTED
+
 | Pattern | Where Used | Notes |
-|---------|------------|-------|
-| Hardcoded API key | All 3 scripts (line 14/22/12) | Security risk |
-| Retry with exponential backoff | `ocr_gemini.py`, `ocr_to_excel.py` | 503 handling with 2^attempt delay |
-| JSON extraction regex | `ocr_to_excel.py::extract_json()` | Strips code fences, extracts JSON from text |
-| Error status parsing | `get_error_status()` | Checks attrs + string patterns |
-| Excel workbook generation | `ocr_to_excel.py` | Multi-sheet: Summary, Sizes, Raw OCR, Image, Billing |
-| Image resize for Excel | `resize_image_for_excel()` | Max 520px width constraint |
-| Token counting | `ocr_to_excel.py::count_input_tokens()` | For billing accuracy |
-| Billing estimation | Both scripts | Input/output token cost calculation |
+|---|---|---|
+| Client-only POC architecture | `src/App.tsx`, `src/db/schema.ts`, `src/lib/gemini.ts` | No backend; browser owns API calls, persistence, export |
+| Protected route wrapper | `src/components/layout/ProtectedRoute.tsx` | Auth gate around app routes |
+| Repository-style Dexie helpers | `src/hooks/useScans.ts` | CRUD functions and live queries centralized around `db.scans` |
+| Mobile-first layout shell | `src/components/layout/Layout.tsx`, `BottomNav.tsx`, `Sidebar.tsx` | Mobile bottom nav, tablet+ sidebar, content max-width |
+| Responsive Tailwind tokens | `tailwind.config.js` | Custom `md/lg/xl`, `sidebar`, `screen-md`, `max-w-content` tokens |
+| OCR model tier abstraction | `src/lib/models.ts` | Free/default/high tiers with model, pricing, prompt bundled |
+| API-key fallback | `src/lib/gemini.ts` | Tries multiple `VITE_OPENROUTER_API_KEY_*` keys sequentially |
+| JSON extraction fallback | `src/lib/gemini.ts` | Parses fenced JSON or object-like response text |
+| Excel fallback chain | `src/lib/excel.ts` | Web Share → File System Access → anchor download |
+| Display-name normalization | `src/lib/scanDisplayName.ts` | Product/contract/lot/barcode/timestamp fallback for scan cards |
+| Filter/sort utility separation | `src/lib/scanFilters.ts` | History page delegates filtering/sorting logic |
 
 ### REUSABLE_COMPONENTS
-| Component | Path | Purpose |
-|-----------|------|---------|
-| `get_mime_type()` | All 3 scripts | Safe MIME type detection from Path |
-| `get_error_status()` | 2 scripts | Unified error code extraction |
-| `get_error_message()` | 2 scripts | Unified error message extraction |
-| Excel styling helpers | `ocr_to_excel.py` | `style_header()`, `apply_table_borders()`, `set_columns()` |
+
+| Component / Utility | Path | Purpose |
+|---|---|---|
+| `Layout` | `src/components/layout/Layout.tsx` | Shared app shell with responsive nav behavior |
+| `Sidebar` | `src/components/layout/Sidebar.tsx` | Tablet+ navigation surface |
+| `BottomNav` | `src/components/layout/BottomNav.tsx` | Mobile navigation surface |
+| `PrimaryButton` | `src/components/ui/PrimaryButton.tsx` | Main CTA button |
+| `FilterChip` | `src/components/ui/FilterChip.tsx` | Reusable chip/toggle UI |
+| `InputField` / `PasswordInput` | `src/components/ui/*` | Auth/form controls |
+| `Toast` | `src/components/ui/Toast.tsx` | UI feedback |
+| `useMediaQuery` / `useIsTablet` | `src/hooks/useMediaQuery.ts` | Runtime responsive checks |
+| `useDebounce` | `src/hooks/useDebounce.ts` | Search debounce |
+| `useExport` | `src/hooks/useExport.ts` | Export state and actions |
+| `scanDisplayName` | `src/lib/scanDisplayName.ts` | Stable scan title derivation |
+| `filterAndSortScans` | `src/lib/scanFilters.ts` | History search/filter/sort engine |
+| `formatOCRForSharing` | `src/lib/share.ts` | OCR text formatting for sharing |
 
 ### GAPS_DETECTED
+
 | Gap | Severity | Notes |
-|-----|----------|-------|
-| No test suite | HIGH | Zero pytest/unittest files |
-| Hardcoded API key | CRITICAL | Should use environment variable |
-| No type checking | MEDIUM | pyright/mypy not configured |
-| No linting | MEDIUM | No ruff/flake8/pycodestyle |
-| No formatting | MEDIUM | No black/isort |
-| No .env.example | MEDIUM | No documented env var pattern |
-| No CLI argument parsing | LOW | All paths hardcoded in scripts |
-| No logging | LOW | Print statements only |
-| No error recovery for 429 | MEDIUM | Only handles 429 in main(), not in billing script |
+|---|---|---|
+| Browser-exposed OCR keys | HIGH | `VITE_OPENROUTER_API_KEY_*` is acceptable for POC but not production-safe; backend proxy needed for production |
+| Console/debug logs in production code | MEDIUM | `src/lib/gemini.ts`, `src/lib/compression.ts`, `src/lib/excel.ts`, `src/hooks/useExport.ts` contain `console.log` / `console.error` / `console.warn` debug paths |
+| Responsive implementation verification incomplete | MEDIUM | Tablet responsive TIPs built and build-passed, but no recorded screenshot verification at 375/768/1280 |
+| Sidebar logout does not navigate directly | MEDIUM | `Sidebar` calls `logout()` only; `Header` logout also navigates to `/login` |
+| OCR response validation is prompt-based | MEDIUM | JSON is parsed into `OCRResponse` without schema validation at API boundary |
+| `useMediaQuery` initial value is `false` | LOW | Can cause short mobile-layout flash on tablet/desktop before effect runs |
+| IndexedDB schema has no migration history beyond v2 | LOW | Future schema changes need explicit Dexie version migrations |
+| Large ExcelJS bundle | LOW | Build warns about chunk size; dynamic import could reduce initial app payload |
 
 ### CODE_HEALTH
+
 | Metric | Value | Notes |
-|--------|-------|-------|
-| TypeScript Strict | N/A | Python project |
-| Type checking | Not configured | Missing mypy/pyright |
-| ESLint | N/A | Python project |
-| Linting | Not configured | Missing ruff |
-| Formatting | Not configured | Missing black/isort |
-| Tests | 0 files | No test coverage |
-| Console.logs | N/A | Uses print() for Python |
-| TODO/FIXME | 0 found | Clean |
-| Hardcoded secrets | 1 (API key repeated 3×) | Security issue |
+|---|---:|---|
+| Source TS/TSX files | 66 | Under `src` |
+| Tests present | Yes | `src/__tests__` has component/page coverage |
+| Build script | Yes | `npm run build` = `tsc -b && vite build` |
+| Lint script | Yes | `npm run lint` = `eslint .` |
+| TypeScript strictness | Config-dependent | Build uses project references via `tsc -b` |
+| File sizes | Healthy | No scanned app file exceeds 800 lines |
+| State mutation risk | Low/medium | React state mostly immutable; Dexie update helpers mutate persisted records intentionally |
+| Security posture | POC-grade | Client-side key exposure remains primary architectural risk |
+| Recent build status | PASS | Last responsive execution reported successful production build |
 
 ### ESTIMATED_SIZE
+
 | Metric | Value |
-|--------|-------|
-| Files | 3 Python scripts |
-| LoC | ~558 total (138 + 312 + 108) |
-| Components | N/A (scripts, not packages) |
-| API Routes | N/A |
-| Modules | 3 standalone scripts |
+|---|---:|
+| Source files | 66 TS/TSX files |
+| Primary app pages | 8 page files |
+| Layout components | 6 layout files |
+| UI components | 10+ reusable UI files |
+| Independent services | 3 core services: OCR, storage, export/share |
+| API routes/backend | 0; client-only SPA |
+| Persistent tables | 4 Dexie tables |
 
 ---
 
 ## Auto-Answered Requirements (for RRI)
-These are obvious from the codebase — skip in requirements interview:
 
-1. **OCR purpose**: Read Vietnamese label text from images
-2. **Output formats**: Markdown (ocr_gemini.py), Excel (ocr_to_excel.py)
-3. **AI model**: Gemini 2.5 Flash-Lite (cost-optimized for OCR)
-4. **Image types**: Supports any image with MIME type (JPEG, PNG, etc.)
-5. **Billing tracking**: Token counting for cost estimation
-6. **No user auth**: Standalone CLI scripts
-7. **No database**: File-based input/output only
-8. **No web interface**: Command-line scripts
+These are obvious from the current codebase — skip in requirements interview unless the user wants to revisit them:
+
+1. The app is a client-only React SPA for warehouse OCR workflows.
+2. The main workflow is camera capture → image compression → OCR → IndexedDB save → result/detail/edit/export.
+3. Auth is local session/PIN oriented, backed by Zustand persistence and Dexie auth records.
+4. Scan history is stored in IndexedDB and rendered through Dexie live queries.
+5. OCR uses OpenRouter with model tiers: free/default/high.
+6. Export uses ExcelJS and supports single-scan and multi-scan workbooks.
+7. Share behavior uses Web Share API where available and falls back to clipboard/download flows.
+8. UI is mobile-first with tablet+ sidebar support and responsive History/Analytics grids.
+9. Testing stack is Vitest + Testing Library + jsdom.
+10. Deployment target is static SPA hosting; camera requires HTTPS outside localhost.
 
 ## Constraints
-1. Must use Google Gemini API (API key required)
-2. Must process JPEG images (tested with real sample)
-3. Excel output must be professional formatting with styled headers
-4. Vietnamese language support required (OCR prompt in Vietnamese)
-5. Retry on 503 errors (model overload)
-6. Stop on 429 errors (quota exceeded — user must resolve)
+
+1. Keep mobile-first UX: bottom nav remains primary on mobile, sidebar only on tablet+.
+2. Preserve local-first/client-only POC architecture unless explicitly planning a backend proxy.
+3. Do not store secrets directly in source; current env-based browser keys are POC-only and still exposed in built JS.
+4. OCR inputs should stay compressed before API calls to control latency and token/image cost.
+5. IndexedDB records must remain backward-compatible or be migrated via Dexie version bumps.
+6. Excel export must remain usable on mobile browsers with share/download fallbacks.
+7. Vietnamese OCR prompts and UI copy must preserve diacritics and domain labels.
+8. UI changes should respect existing Tailwind tokens in `tailwind.config.js`.
 
 ## Risks / Tech Debt
+
 | Risk | Severity | Mitigation |
-|------|----------|------------|
-| API key hardcoded | CRITICAL | Migrate to environment variable |
-| No tests | HIGH | Add pytest suite before changes |
-| No type checking | MEDIUM | Add mypy/pyright |
-| Deprecated models | MEDIUM | `gemini-2.0-flash-lite` deprecated 2026-06-01 |
-| No dependency pinning | LOW | Add version pins to requirements.txt |
+|---|---|---|
+| API key abuse from browser bundle | HIGH | Add backend OCR proxy before production; rate-limit and keep provider keys server-side |
+| Debug logs leaking operational data | MEDIUM | Replace production logs with controlled logger or remove before release |
+| OCR output shape drift | MEDIUM | Add runtime schema validation for OCR JSON before saving |
+| Bundle weight from ExcelJS | MEDIUM | Dynamically import export service only when user exports |
+| Insufficient visual regression evidence | MEDIUM | Add Playwright screenshots for 375, 768, 1024, 1440 breakpoints |
+| Local-only data loss | MEDIUM | Add backup/export guidance or sync strategy if production needs multi-device use |
+| Dexie migration fragility | LOW | Document schema migrations and test upgrade path before changing tables |
 
 ---
 
-## VISION
+## Current Architecture Snapshot
 
-> Vibecode Kit v5.0 — BƯỚC 3 (VISION)
-> Date: 2026-05-05
-
-### PROJECT TYPE: Pattern B (Modified) — Mobile-First SaaS Tool
-
-**What we're building**: A mobile web POC that transforms warehouse invoice scanning from manual data entry into instant OCR capture with structured editing, local storage, and analytics. Workers point their phone camera at cargo box labels, get instant Vietnamese OCR results, edit fields if needed, and export to Excel or share via WhatsApp/Zalo.
-
-**Pattern justification**: Hybrid of Pattern B (SaaS app with auth + core features) and Pattern C (data dashboard with analytics), optimized for mobile-first usage. No traditional "landing page" — goes straight to auth → camera capture workflow.
-
----
-
-### ARCHITECTURE VISION
-
-```
-┌─────────────────────────────────────────────────────────────┐
-│                    MOBILE WEB APP (React SPA)               │
-│                                                             │
-│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐    │
-│  │   Auth       │  │   Camera     │  │   History    │    │
-│  │   (PIN)      │→ │   Capture    │→ │   & Analytics│    │
-│  └──────────────┘  └──────────────┘  └──────────────┘    │
-│         │                  │                  │            │
-│         ↓                  ↓                  ↓            │
-│  ┌──────────────────────────────────────────────────────┐ │
-│  │           IndexedDB (Local Storage)                  │ │
-│  │  - Auth state                                        │ │
-│  │  - Scan records (image + OCR + edits)               │ │
-│  │  - Analytics cache                                   │ │
-│  └──────────────────────────────────────────────────────┘ │
-│                          │                                 │
-└──────────────────────────┼─────────────────────────────────┘
-                           │
-                           ↓
-              ┌────────────────────────┐
-              │  Gemini 2.5 Flash-Lite │
-              │  (Google AI API)       │
-              └────────────────────────┘
-                           │
-                           ↓
-              ┌────────────────────────┐
-              │  OCR Response (JSON)   │
-              │  - Raw text            │
-              │  - Structured fields   │
-              │  - Confidence scores   │
-              └────────────────────────┘
+```text
+React SPA
+├─ Auth service
+│  ├─ Zustand persisted session
+│  └─ Dexie auth table + bcrypt PIN helpers
+├─ OCR service
+│  ├─ browser-image-compression
+│  ├─ OpenRouter chat completions
+│  ├─ Gemini model tiers
+│  └─ JSON extraction + token/cost metadata
+├─ Storage service
+│  ├─ Dexie OCRDatabase
+│  ├─ scans live queries
+│  ├─ settings live queries
+│  └─ analytics derivation in pages/hooks
+├─ Export/share service
+│  ├─ ExcelJS workbook generation
+│  ├─ Web Share API file sharing
+│  ├─ File System Access API fallback
+│  └─ anchor download / clipboard fallback
+└─ UI shell
+   ├─ mobile BottomNav
+   ├─ tablet+ Sidebar
+   ├─ responsive Header/Layout
+   └─ History + Analytics responsive pages
 ```
 
-**Data Flow**:
-1. User authenticates with PIN → stored in localStorage
-2. Camera captures image → compressed to <1MB
-3. Image sent to Gemini API → returns JSON with structured fields
-4. User edits fields → saved to IndexedDB
-5. Export: Excel (ExcelJS) / Clipboard / Share API
+## Quality Gate Self-Review
 
-**Key Architectural Decisions**:
-- **Client-side only**: No backend server (POC constraint)
-- **IndexedDB**: Persistent local storage for offline viewing
-- **API key in env var**: Exposed in browser but better than hardcoded
-- **Image compression**: Reduce token cost before API call
-- **Retry logic**: Exponential backoff on 503 errors (reuse from Python scripts)
+✅ Coding workspace identified: `D:\scripts\HLVN\ocr-mobile-web`  
+✅ Coding-packs located: `D:\scripts\HLVN\ocr-mobile-web\coding-packs`  
+✅ Scan report updated from stale Python-origin context to current React SPA state  
+✅ Tech stack cross-checked against `package.json`  
+✅ Core modules scanned across routing, OCR, storage, auth, export, layout, responsive pages  
+✅ 3 independent services documented: OCR, storage, export/share  
+✅ Reusable components and project constraints captured  
+✅ Gaps and risks explicitly recorded  
+⚠️ Standards Discovery not run in this pass; can be run later with `/vibecode:scan --standards`  
+⚠️ Product docs gate not run in this pass; can be run later with `/vibecode:scan --product`  
+⚠️ No new tests/build were executed during this scan-only update
 
----
-
-### TECH STACK
-
-| Layer | Technology | Version | Rationale |
-|-------|-----------|---------|-----------|
-| **Frontend** | React 18 | 18.3+ | Component-based, large ecosystem, team familiarity |
-| **Build Tool** | Vite | 5.x | Fast HMR, optimized for SPA |
-| **Styling** | Tailwind CSS | 3.x | Utility-first, mobile-first, rapid prototyping |
-| **UI Components** | Headless UI | 2.x | Accessible mobile components (dialogs, tabs) |
-| **State** | Zustand | 4.x | Lightweight, no boilerplate, good for local state |
-| **Storage** | Dexie.js | 4.x | IndexedDB wrapper with React hooks |
-| **Camera** | Native getUserMedia | - | Browser API, no library needed |
-| **OCR** | Google Gemini API | 2.5-flash-lite | Proven in Python scripts, cost-optimized |
-| **Excel Export** | ExcelJS | 4.x | MIT license, matches openpyxl features |
-| **Image Compression** | browser-image-compression | 2.x | Client-side compression, reduce API cost |
-| **Routing** | React Router | 6.x | Standard SPA routing |
-| **Forms** | React Hook Form | 7.x | Performant, minimal re-renders |
-| **Icons** | Lucide React | 0.x | Modern, tree-shakeable |
-| **Toast** | Sonner | 1.x | Beautiful mobile-friendly toasts |
-
-**Reused from Python Scripts**:
-- Gemini API integration patterns
-- Error handling (503 retry, 429 stop)
-- JSON parsing with regex fallback
-- Excel multi-sheet structure
-- Token counting for billing
-
----
-
-### UI VISION
-
-**Theme**: Functional Utility — Clean, fast, warehouse-worker-friendly
-
-**Design Principles**:
-1. **Touch-first**: 44px minimum tap targets, generous spacing
-2. **High contrast**: Readable in warehouse lighting conditions
-3. **Minimal chrome**: Focus on camera viewfinder and data fields
-4. **Instant feedback**: Loading states, success/error toasts
-5. **No decoration**: Zero gradients, shadows, or animations that slow perception
-
-**Typography**:
-- **Heading**: Inter Bold (system fallback: -apple-system, sans-serif)
-- **Body**: Inter Regular
-- **Monospace** (for OCR text): SF Mono, Consolas, monospace
-- **Rationale**: Inter is highly legible on mobile, optimized for UI, Vietnamese diacritics supported
-
-**Colors**:
-```css
-/* Light mode (primary) */
---primary: #2563EB      /* Blue — trust, action buttons */
---success: #22C55E      /* Green — successful scan */
---warning: #F59E0B      /* Amber — low confidence OCR */
---error: #EF4444        /* Red — API errors, validation */
---neutral: #6B7280      /* Gray — secondary text */
---background: #FFFFFF   /* White — clean canvas */
---surface: #F3F4F6      /* Light gray — cards, inputs */
-
-/* Semantic usage */
---camera-overlay: rgba(0,0,0,0.8)  /* Dark overlay for camera UI */
---field-border: #D1D5DB             /* Input borders */
---text-primary: #111827             /* High contrast text */
---text-secondary: #6B7280           /* Labels, metadata */
-```
-
-**Layout Pattern** (Mobile-first, 375px base):
-```
-┌─────────────────────────┐
-│  Header (48px)          │  ← Logo + Logout
-├─────────────────────────┤
-│                         │
-│  Main Content           │  ← Camera / Edit / History
-│  (viewport - 48px)      │
-│                         │
-│                         │
-├─────────────────────────┤
-│  Bottom Nav (56px)      │  ← Scan / History / Analytics
-└─────────────────────────┘
-```
-
-**Screen Flows**:
-1. **Login** → PIN input (4-6 digits) → Remember me checkbox
-2. **Camera** → Viewfinder → Capture button → Preview → Confirm/Retake
-3. **OCR Result** → Tabs: [Structured Fields] [Raw Text] → Edit → Save/Export
-4. **History** → List (thumbnail + metadata) → Detail view → Re-edit or Export
-5. **Analytics** → KPI cards (total scans, today, this week) → Top products list
-
----
-
-### API DESIGN
-
-**Gemini API Integration**:
-```javascript
-// Endpoint
-POST https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent
-
-// Request
-{
-  contents: [
-    { parts: [{ inline_data: { mime_type: "image/jpeg", data: base64 } }] },
-    { parts: [{ text: VIETNAMESE_OCR_PROMPT }] }
-  ],
-  generationConfig: {
-    response_mime_type: "application/json",
-    temperature: 0
-  }
-}
-
-// Response Schema (enforced by prompt)
-{
-  title: string,
-  fields: [
-    { field: string, value: string, confidence: "high"|"medium"|"low" }
-  ],
-  sizes: [
-    { size: string, quantity: number }
-  ],
-  raw_text: string,
-  notes: string[]
-}
-```
-
-**Error Handling**:
-- **503 Service Unavailable**: Retry with exponential backoff (2^attempt seconds, max 4 retries)
-- **429 Too Many Requests**: Stop, show quota error, suggest waiting
-- **400 Bad Request**: Invalid image format or size
-- **Network error**: Show offline message, suggest checking connection
-
-**Local Storage Schema** (IndexedDB via Dexie):
-```typescript
-// Table: scans
-{
-  id: string (UUID),
-  timestamp: Date,
-  imageBlob: Blob,
-  imageDataUrl: string (for thumbnails),
-  ocrRaw: string,
-  ocrStructured: {
-    title: string,
-    fields: Array<{field, value, confidence}>,
-    sizes: Array<{size, quantity}>
-  },
-  edited: boolean,
-  tokenUsage: { input: number, output: number, cost: number }
-}
-
-// Table: auth
-{
-  pinHash: string (bcrypt),
-  lastLogin: Date,
-  sessionExpiry: Date
-}
-
-// Table: analytics (cached aggregates)
-{
-  totalScans: number,
-  scansToday: number,
-  scansThisWeek: number,
-  topProducts: Array<{name, count}>
-}
-```
-
----
-
-### MVP SCOPE
-
-#### IN (MVP — Phase 1)
-
-| Domain | Screens | Priority | Estimate |
-|--------|---------|----------|----------|
-| **Auth** | Login (PIN) | P0 | 4h |
-| **Camera** | Capture + Preview | P0 | 8h |
-| **OCR** | API integration + parsing | P0 | 6h |
-| **Edit** | Structured fields form + Raw text editor | P0 | 10h |
-| **Storage** | IndexedDB setup + CRUD | P0 | 6h |
-| **Export** | Clipboard + Excel + Share | P0 | 8h |
-| **History** | List view + Detail view | P0 | 8h |
-| **Analytics** | KPI cards + Top products | P1 | 6h |
-| **Search** | Filter by product/date | P1 | 4h |
-| **UX** | Loading states + Error toasts + Responsive | P0 | 6h |
-
-**Total MVP Estimate**: ~66 hours (8-9 days for 1 developer)
-
-#### OUT (Post-MVP — Phase 2+)
-
-| Feature | Phase | Rationale |
-|---------|-------|-----------|
-| Backend API + Database | Phase 2 | POC validates client-side approach first |
-| Multi-user + Roles | Phase 2 | Single-user POC sufficient for validation |
-| Social login (Google/FB) | Phase 2 | PIN auth sufficient for warehouse use |
-| Offline queue (capture without internet) | Phase 2 | Online-only acceptable for POC |
-| Dark mode | Phase 2 | Nice-to-have, not critical for warehouse |
-| PWA offline caching | Phase 2 | Requires service worker complexity |
-| Print functionality | Phase 3 | Low priority, share/export covers use case |
-| Bulk operations | Phase 3 | Single-scan workflow is primary |
-| Advanced analytics (charts, trends) | Phase 3 | KPI cards sufficient for MVP |
-| Image editing (crop, rotate) | Phase 3 | Retake is simpler than in-app editing |
-| Multi-language UI | Phase 3 | Vietnamese-only for target users |
-
----
-
-### KEY DECISIONS
-
-| # | Decision | Rationale | Tradeoffs |
-|---|----------|-----------|-----------|
-| D-001 | **React SPA (no backend)** | Faster POC development, simpler deployment | API key exposed in browser (acceptable risk for POC) |
-| D-002 | **IndexedDB for storage** | Persistent local storage, no server cost | Data not synced across devices (single-device use case) |
-| D-003 | **Vite over Create React App** | 10x faster HMR, modern tooling | Slightly different config from CRA (acceptable) |
-| D-004 | **Tailwind over CSS-in-JS** | Faster development, smaller bundle, mobile-first utilities | Less dynamic theming (not needed for POC) |
-| D-005 | **ExcelJS over SheetJS** | MIT license, better mobile support, matches openpyxl features | Slightly larger bundle (~200KB) vs SheetJS Community |
-| D-006 | **Zustand over Redux** | 10x less boilerplate, sufficient for local state | No time-travel debugging (not needed for POC) |
-| D-007 | **Dexie over raw IndexedDB** | React hooks, simpler API, better TypeScript support | Extra dependency (~20KB) |
-| D-008 | **bcrypt.js for PIN hashing** | Better than plaintext, client-side security | Still vulnerable to browser DevTools (acceptable for POC) |
-| D-009 | **browser-image-compression** | Reduce token cost, faster uploads | Extra processing time (~500ms per image) |
-| D-010 | **Bottom nav over sidebar** | Mobile-first pattern, thumb-reachable | Less space for nav items (3-4 max) |
-
----
-
-### CONSTRAINTS & RISKS
-
-**Technical Constraints**:
-1. **Camera API requires HTTPS**: Must deploy to HTTPS domain (localhost OK for dev)
-2. **IndexedDB quota**: ~50MB on mobile Safari, ~unlimited on Chrome (monitor usage)
-3. **API key exposure**: Client-side React exposes key in bundle (document as POC limitation)
-4. **No offline OCR**: Gemini API requires internet (acceptable for warehouse with WiFi)
-5. **Mobile browser compatibility**: Test on iOS Safari 15+, Chrome Android 100+
-
-**Risks**:
-| Risk | Severity | Mitigation |
-|------|----------|------------|
-| API key abuse | HIGH | Document as POC limitation, add usage monitoring, consider backend proxy for production |
-| Quota exhaustion (429 errors) | MEDIUM | Show clear error message, suggest waiting, track daily usage |
-| IndexedDB quota exceeded | MEDIUM | Implement 90-day auto-cleanup, manual delete option |
-| Poor OCR accuracy on low-quality images | MEDIUM | Add image quality tips, retake option, manual edit fallback |
-| Slow image upload on 3G | LOW | Compress images to <1MB, show upload progress |
-| Browser compatibility issues | LOW | Test on target devices, provide fallback messages |
-
----
-
-### DESIGN SYSTEM SUMMARY
-
-**Spacing Scale** (Tailwind defaults):
-- `xs`: 4px (tight spacing)
-- `sm`: 8px (compact)
-- `md`: 16px (default)
-- `lg`: 24px (comfortable)
-- `xl`: 32px (spacious)
-
-**Touch Targets**:
-- Minimum: 44px × 44px (Apple HIG)
-- Comfortable: 48px × 48px (Material Design)
-- Primary actions: 56px × 56px (FAB-style)
-
-**Breakpoints** (mobile-first):
-- Base: 375px (iPhone SE)
-- Small: 390px (iPhone 12/13/14)
-- Medium: 428px (iPhone 14 Pro Max)
-- Tablet: 768px (out of scope for MVP)
-
-**Animation**:
-- Transitions: 150ms ease-out (fast feedback)
-- Loading spinners: 1s linear infinite
-- Toast duration: 3s (success), 5s (error)
-
----
-
-### QUALITY GATE: Self-Review
-
-✅ **Project type classified**: Pattern B (Modified) — Mobile-First SaaS Tool  
-✅ **Tech stack proposed**: React + Vite + Tailwind + Dexie + ExcelJS (with rationale)  
-✅ **Architecture vision**: ASCII diagram with data flow  
-✅ **MVP scope**: IN table (10 domains, 66h estimate) + OUT table (deferred features)  
-✅ **Key decisions**: 10 decisions with rationale + tradeoffs  
-✅ **Cross-reference with RRI**: All 44 requirements mapped to MVP scope  
-✅ **Cross-reference with Scan**: Reused patterns (retry logic, JSON parsing, Excel format)  
-✅ **UI vision**: Typography, colors, layout pattern defined  
-✅ **API design**: Gemini integration + error handling + storage schema  
-✅ **Constraints & risks**: 5 constraints + 6 risks with mitigation  
-
-⚠️ **Open item**: API key security (Q-001 from RRI) — documented as POC limitation, backend proxy recommended for production
-
-**Confidence**: 90% — Architecture is clear, tech stack validated, main risk (API key exposure) is documented and acceptable for POC scope.
-
----
-
-*Vision completed: 2026-05-05 | Framework: Vibecode Kit v5.0 | Project: ocr_gemini Mobile Web POC*
+**Confidence**: 88% — current service/module map is accurate from scanned source, with remaining confidence gap around unexecuted runtime/browser verification.

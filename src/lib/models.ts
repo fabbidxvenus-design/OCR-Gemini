@@ -31,7 +31,7 @@ Return valid JSON only.`,
   default: {
     id: 'default',
     name: 'Default Quality',
-    model: 'google/gemini-2.0-flash',
+    model: 'google/gemini-2.0-flash-001',
     description: 'Balanced speed and accuracy. Recommended for most cases.',
     pricing: {
       input: 0,

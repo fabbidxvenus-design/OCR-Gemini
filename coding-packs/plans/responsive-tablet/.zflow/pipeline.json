@@ -1,0 +1,53 @@
+{
+  "name": "responsive-tablet",
+  "description": "Add tablet responsive layout support (768px+) and desktop (1024px+) to OCR Mobile Web",
+  "tips": [
+    {
+      "id": "TIP-050",
+      "name": "Responsive Hook + Tailwind Config",
+      "file": "tips/TIP-050-responsive-foundation.md",
+      "status": "READY",
+      "dependsOn": []
+    },
+    {
+      "id": "TIP-051",
+      "name": "Sidebar Navigation Component",
+      "file": "tips/TIP-051-sidebar-component.md",
+      "status": "READY",
+      "dependsOn": ["TIP-050"]
+    },
+    {
+      "id": "TIP-052",
+      "name": "Layout + Header Responsive Update",
+      "file": "tips/TIP-052-layout-responsive.md",
+      "status": "READY",
+      "dependsOn": ["TIP-051"]
+    },
+    {
+      "id": "TIP-053",
+      "name": "HistoryPage Responsive Grid",
+      "file": "tips/TIP-053-historypage-responsive.md",
+      "status": "READY",
+      "dependsOn": ["TIP-050"]
+    },
+    {
+      "id": "TIP-054",
+      "name": "AnalyticsPage Responsive KPIs",
+      "file": "tips/TIP-054-analyticspage-responsive.md",
+      "status": "READY",
+      "dependsOn": ["TIP-050"]
+    }
+  ],
+  "executionOrder": [
+    ["TIP-050"],
+    ["TIP-051", "TIP-053", "TIP-054"],
+    ["TIP-052"]
+  ],
+  "breakpoints": {
+    "sm": "640px",
+    "md": "768px",
+    "lg": "1024px",
+    "xl": "1280px"
+  },
+  "created": "2026-05-08"
+}

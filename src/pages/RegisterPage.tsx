@@ -1,8 +1,9 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { useAuthStore } from '@/store/authStore';
 import { UserPlus, Camera, Shield } from 'lucide-react';
 import { PrimaryButton, InputField, PasswordInput, Checkbox } from '@/components/ui';
+import { authApi } from '@/lib/authApi';
+import { useAuthStore } from '@/store/authStore';
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const MIN_PASSWORD_LENGTH = 8;
@@ -23,7 +24,6 @@ export default function RegisterPage() {
   const [touched, setTouched] = useState<Record<string, boolean>>({});
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
-  const { login } = useAuthStore();
 
   function getStrength(pass: string): 'weak' | 'medium' | 'strong' {
     if (pass.length < 6) return 'weak';
@@ -70,17 +70,11 @@ export default function RegisterPage() {
     setLoading(true);
 
     try {
-      // Simulate registration
-      const passwordHash = btoa(email + password);
-      localStorage.setItem('ocr_credentials', JSON.stringify({
-        storedEmail: email,
-        storedPasswordHash: passwordHash,
-      }));
-
-      login();
+      const session = await authApi.register(email, password);
+      useAuthStore.getState().setSession(session);
       navigate('/camera');
     } catch {
-      setErrors({ email: 'Đã xảy ra lỗi khi đăng ký' });
+      setErrors({ email: 'Đã xảy ra lỗi khi đăng ký. Vui lòng thử lại.' });
     } finally {
       setLoading(false);
     }

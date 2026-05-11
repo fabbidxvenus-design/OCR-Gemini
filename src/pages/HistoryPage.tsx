@@ -187,7 +187,7 @@ export default function HistoryPage() {
         )}
 
         {/* List Content */}
-        <div className={`flex-1 overflow-y-auto p-screen pb-32 ${viewMode === 'grid' ? 'grid grid-cols-2 gap-section' : 'space-y-section'}`}>
+        <div className={`flex-1 overflow-y-auto pb-32 ${viewMode === 'grid' ? 'grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-section' : 'space-y-section'} ${viewMode === 'list' ? 'max-w-3xl mx-auto w-full' : ''}`}>
           {isLoading ? (
             Array(4).fill(0).map((_, i) => <SkeletonCard key={i} />)
           ) : scans.length > 0 ? (
@@ -205,7 +205,11 @@ export default function HistoryPage() {
                     }`}
                   >
                     <div className="aspect-square bg-surface">
-                      <img src={scan.imageDataUrl} alt="" className="w-full h-full object-cover" />
+                      {scan.imageDataUrl ? (
+                        <img src={scan.imageDataUrl} alt="" className="w-full h-full object-cover" />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center text-text-secondary text-label">No image</div>
+                      )}
                     </div>
                     <div className="p-3">
                       <p className="text-small font-semibold text-text-primary truncate">{title}</p>
@@ -231,7 +235,11 @@ export default function HistoryPage() {
                   }`}
                 >
                   <div className="w-20 h-20 bg-surface rounded-xl overflow-hidden flex-shrink-0">
-                    <img src={scan.imageDataUrl} alt="" className="w-full h-full object-cover" />
+                    {scan.imageDataUrl ? (
+                      <img src={scan.imageDataUrl} alt="" className="w-full h-full object-cover" />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center text-text-secondary text-label">No image</div>
+                    )}
                   </div>
                   <div className="flex-1 min-w-0 py-1">
                     <div className="flex justify-between items-start gap-2">

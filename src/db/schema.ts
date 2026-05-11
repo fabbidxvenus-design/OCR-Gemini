@@ -1,5 +1,3 @@
-import Dexie, { Table } from 'dexie';
-
 export interface AuthState {
   id?: number;
   pinHash: string;
@@ -8,9 +6,10 @@ export interface AuthState {
 }
 
 export interface ScanRecord {
-  id?: string;
+  id: string; // Made required
   timestamp: Date;
   imageDataUrl: string;
+  ocrRaw: string;
   ocrStructured: OCRResponse;
   edited: boolean;
   tokenUsage: TokenUsage;
@@ -58,22 +57,3 @@ export interface AnalyticsCache {
   topProducts: Array<{ name: string; count: number }>;
   lastUpdated: Date;
 }
-
-export class OCRDatabase extends Dexie {
-  auth!: Table<AuthState, number>;
-  scans!: Table<ScanRecord, string>;
-  analytics!: Table<AnalyticsCache, number>;
-  settings!: Table<AppSettings, string>;
-
-  constructor() {
-    super('OCRDatabase');
-    this.version(2).stores({
-      auth: '++id',
-      scans: 'id, timestamp, edited',
-      analytics: '++id',
-      settings: 'id',
-    });
-  }
-}
-
-export const db = new OCRDatabase();

@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { Key, Camera, ChevronLeft, Shield } from 'lucide-react';
 import { PrimaryButton, InputField } from '@/components/ui';
+import { authApi } from '@/lib/authApi';
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -29,8 +30,7 @@ export default function ForgotPasswordPage() {
 
     setLoading(true);
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      await authApi.forgotPassword(email);
       setSuccess(true);
     } catch {
       setError('Đã xảy ra lỗi. Vui lòng thử lại.');

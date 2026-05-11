@@ -1,6 +1,7 @@
 import { LogOut, ChevronLeft } from 'lucide-react';
 import { useAuthStore } from '@/store/authStore';
 import { useNavigate } from 'react-router-dom';
+import { useIsTablet } from '@/hooks/useMediaQuery';
 
 interface HeaderProps {
   title?: string;
@@ -10,9 +11,10 @@ interface HeaderProps {
 export default function Header({ title, showBack }: HeaderProps) {
   const { logout } = useAuthStore();
   const navigate = useNavigate();
+  const isTablet = useIsTablet();
 
-  const handleLogout = () => {
-    logout();
+  const handleLogout = async () => {
+    await logout();
     navigate('/login');
   };
 
@@ -22,7 +24,7 @@ export default function Header({ title, showBack }: HeaderProps) {
 
   return (
     <header className="sticky top-0 z-50 bg-card border-b border-card-border safe-area-top">
-      <div className="flex items-center justify-between h-header px-4">
+      <div className={`flex items-center justify-between h-header ${isTablet ? 'px-6' : 'px-4'}`}>
         <div className="flex items-center gap-3">
           {showBack && (
             <button
@@ -37,13 +39,16 @@ export default function Header({ title, showBack }: HeaderProps) {
             {title || 'OCR App'}
           </h1>
         </div>
-        <button
-          onClick={handleLogout}
-          className="flex items-center gap-2 text-text-secondary hover:text-text-primary transition-colors"
-          aria-label="Đăng xuất"
-        >
-          <LogOut className="w-5 h-5" />
-        </button>
+        {/* Hide logout on tablet - it's in Sidebar instead */}
+        {!isTablet && (
+          <button
+            onClick={handleLogout}
+            className="flex items-center gap-2 text-text-secondary hover:text-text-primary transition-colors"
+            aria-label="Đăng xuất"
+          >
+            <LogOut className="w-5 h-5" />
+          </button>
+        )}
       </div>
     </header>
   );

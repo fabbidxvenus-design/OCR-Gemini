@@ -112,6 +112,24 @@ Week 1: Foundation + Camera
 
 ---
 
+## ADDITIONAL TASKS (Post-Redesign)
+
+### Tablet Responsive Support
+
+| TIP | Name | Depends On | Priority | Est. Hours | Status |
+|-----|------|-----------|----------|-----------|--------|
+| TIP-049 | Tablet Responsive Layout (umbrella) | TIP-043 | P1 | M | SPLIT |
+| **Sub-Tasks** |
+| TIP-050 | Responsive Hook + Tailwind Config | - | P1 | S | READY |
+| TIP-051 | Sidebar Navigation Component | TIP-050 | P1 | S | READY |
+| TIP-052 | Layout + Header Responsive Update | TIP-051 | P1 | S | READY |
+| TIP-053 | HistoryPage Responsive Grid | TIP-050 | P1 | S | READY |
+| TIP-054 | AnalyticsPage Responsive KPIs | TIP-050 | P1 | S | READY |
+
+**Total new: 5 hours**
+
+---
+
 ## PARALLELIZATION OPPORTUNITIES
 
 ### After TIP-027 (Foundation):
@@ -151,6 +169,9 @@ Week 1: Foundation + Camera
 | BottomNav | `src/components/layout/BottomNav.tsx` | TIP-035 | Updated styling |
 | SkeletonCard | `src/components/ui/SkeletonCard.tsx` | TIP-036 | Theme updates |
 | Toast | `src/components/ui/Toast.tsx` | TIP-036 | Theme updates |
+| **Responsive (TIP-050 to TIP-054)** |
+| useMediaQuery | `src/hooks/useMediaQuery.ts` | TIP-050 | Responsive detection hook |
+| Sidebar | `src/components/layout/Sidebar.tsx` | TIP-051 | Side navigation for tablet+ |
 
 ---
 

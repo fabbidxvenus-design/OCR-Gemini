@@ -16,9 +16,8 @@ export default function LoginPage() {
   const [password, setPassword] = useState('');
   const [errors, setErrors] = useState<FormErrors>({});
   const [touched, setTouched] = useState<Record<string, boolean>>({});
-  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
-  const { login } = useAuthStore();
+  const { login, isLoading } = useAuthStore();
 
   function validateEmail(value: string): string | undefined {
     if (!value) return 'Email là bắt buộc';
@@ -52,44 +51,11 @@ export default function LoginPage() {
 
     if (emailError || passwordError) return;
 
-    setLoading(true);
-
     try {
-      // TODO: Replace with actual auth API call
-      // For now, simulate login with local storage
-      const storedCredentials = localStorage.getItem('ocr_credentials');
-
-      if (storedCredentials) {
-        const { storedEmail, storedPasswordHash } = JSON.parse(storedCredentials);
-
-        if (email !== storedEmail) {
-          setErrors({ email: 'Email chưa đăng ký' });
-          setLoading(false);
-          return;
-        }
-
-        // Simple hash for demo (in production, use proper auth)
-        const inputHash = btoa(email + password);
-        if (inputHash !== storedPasswordHash) {
-          setErrors({ password: 'Mật khẩu không đúng' });
-          setLoading(false);
-          return;
-        }
-      } else {
-        // First time - store credentials for demo
-        const passwordHash = btoa(email + password);
-        localStorage.setItem('ocr_credentials', JSON.stringify({
-          storedEmail: email,
-          storedPasswordHash: passwordHash,
-        }));
-      }
-
-      login();
+      await login(email, password);
       navigate('/camera');
     } catch {
-      setErrors({ email: 'Đã xảy ra lỗi. Vui lòng thử lại.' });
-    } finally {
-      setLoading(false);
+      setErrors({ email: 'Email hoặc mật khẩu không đúng' });
     }
   }
 
@@ -155,9 +121,9 @@ export default function LoginPage() {
                 type="submit"
                 className="w-full"
                 size="lg"
-                disabled={loading}
+                disabled={isLoading}
               >
-                {loading ? (
+                {isLoading ? (
                   <span className="flex items-center justify-center gap-2">
                     <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24">
                       <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
