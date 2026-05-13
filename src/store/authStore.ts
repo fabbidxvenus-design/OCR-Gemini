@@ -1,6 +1,12 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import { authApi, type AuthSession, type UserProfile } from '@/lib/authApi';
+import {
+  authApi,
+  normalizeProfileUpdatePayload,
+  type AuthSession,
+  type ProfileUpdatePayload,
+  type UserProfile,
+} from '@/lib/authApi';
 
 interface AuthStore {
   isAuthenticated: boolean;
@@ -12,6 +18,7 @@ interface AuthStore {
   isLoading: boolean;
   login: (email: string, pin: string) => Promise<void>;
   setSession: (session: AuthSession) => void;
+  updateUserProfile: (payload: ProfileUpdatePayload) => Promise<void>;
   logout: () => Promise<void>;
   checkSession: () => boolean;
 }
@@ -57,6 +64,23 @@ export const useAuthStore = create<AuthStore>()(
           refreshToken: session.refreshToken,
           expiresAt: session.expiresAt,
         });
+      },
+
+      updateUserProfile: async (payload) => {
+        const { accessToken } = get();
+        if (!accessToken) {
+          throw new Error('Phiên đăng nhập đã hết hạn');
+        }
+
+        set({ isLoading: true, error: null });
+        try {
+          const user = await authApi.updateProfile(normalizeProfileUpdatePayload(payload), accessToken);
+          set({ user, isLoading: false, error: null });
+        } catch (err: unknown) {
+          const message = err instanceof Error ? err.message : 'Cập nhật hồ sơ thất bại';
+          set({ error: message, isLoading: false });
+          throw err;
+        }
       },
 
       logout: async () => {

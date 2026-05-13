@@ -9,14 +9,15 @@ import HistoryPage from '@/pages/HistoryPage';
 import HistoryDetailPage from '@/pages/HistoryDetailPage';
 import AnalyticsPage from '@/pages/AnalyticsPage';
 import SettingsPage from '@/pages/SettingsPage';
+import ProfilePage from '@/pages/ProfilePage';
 import ProtectedRoute from '@/components/layout/ProtectedRoute';
 import RootRedirect from '@/components/layout/RootRedirect';
 import ErrorBoundary from '@/components/ErrorBoundary';
 import Layout from '@/components/layout/Layout';
 import CameraView from '@/components/camera/CameraView';
 import ImagePreview from '@/components/camera/ImagePreview';
-import Spinner from '@/components/ui/Spinner';
 import ErrorMessage from '@/components/ui/ErrorMessage';
+import { CheckCircle2, Circle, Loader2, X } from 'lucide-react';
 import { processOCR } from '@/lib/gemini';
 import { compressImageForOCR } from '@/lib/compression';
 import { createScan } from '@/hooks/useScans';
@@ -94,10 +95,72 @@ function CameraPage() {
     <Layout title="Chụp ảnh" showBottomNav={!capturedImage || isProcessing}>
       <div className="h-[calc(100vh-8rem)]">
         {isProcessing ? (
-          <div className="flex flex-col items-center justify-center h-full bg-white">
-            <Spinner size="lg" className="mb-4" />
-            <p className="text-lg font-medium text-gray-900">Đang xử lý...</p>
-            <p className="text-neutral mt-2">{progress}</p>
+          <div className="flex h-full flex-col items-center justify-center rounded-3xl bg-surface px-6 py-8">
+            <div className="w-full max-w-[340px]">
+              <div className="mb-6 text-center">
+                <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-primary to-primary-hover shadow-card">
+                  <Loader2 className="h-8 w-8 animate-spin text-white" />
+                </div>
+                <h2 className="font-display text-heading-lg text-text-primary">Đang xử lý</h2>
+                <p className="mt-2 text-body-sm text-text-secondary">Vui lòng chờ trong giây lát</p>
+              </div>
+
+              <div className="card-production mb-4 p-4">
+                <div className="mb-3 flex items-center gap-2 text-caption font-semibold uppercase tracking-[0.12em] text-text-muted">
+                  <span className="rounded-full bg-ai-light px-2 py-0.5 text-ai">Gemini Pro</span>
+                  <span>~3s</span>
+                </div>
+
+                <div className="space-y-3">
+                  <div className="flex items-center gap-3">
+                    <CheckCircle2 className="h-5 w-5 flex-shrink-0 text-success" />
+                    <span className="text-body text-text-primary">Tải ảnh lên</span>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    {progress.includes('OCR') ? (
+                      <Loader2 className="h-5 w-5 flex-shrink-0 animate-spin text-primary" />
+                    ) : progress.includes('lưu') || progress.includes('Hoàn tất') ? (
+                      <CheckCircle2 className="h-5 w-5 flex-shrink-0 text-success" />
+                    ) : (
+                      <Circle className="h-5 w-5 flex-shrink-0 text-text-muted" />
+                    )}
+                    <span className={`text-body ${progress.includes('OCR') ? 'font-medium text-text-primary' : 'text-text-secondary'}`}>
+                      Nhận dạng OCR
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    {progress.includes('lưu') ? (
+                      <Loader2 className="h-5 w-5 flex-shrink-0 animate-spin text-primary" />
+                    ) : progress.includes('Hoàn tất') ? (
+                      <CheckCircle2 className="h-5 w-5 flex-shrink-0 text-success" />
+                    ) : (
+                      <Circle className="h-5 w-5 flex-shrink-0 text-text-muted" />
+                    )}
+                    <span className={`text-body ${progress.includes('lưu') ? 'font-medium text-text-primary' : 'text-text-secondary'}`}>
+                      Chuẩn hóa trường dữ liệu
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    {progress.includes('Hoàn tất') ? (
+                      <CheckCircle2 className="h-5 w-5 flex-shrink-0 text-success" />
+                    ) : (
+                      <Circle className="h-5 w-5 flex-shrink-0 text-text-muted" />
+                    )}
+                    <span className={`text-body ${progress.includes('Hoàn tất') ? 'font-medium text-text-primary' : 'text-text-secondary'}`}>
+                      Lưu kết quả
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              <button
+                onClick={handleRetake}
+                className="flex w-full items-center justify-center gap-2 rounded-xl border border-card-border bg-card px-4 py-3 text-body font-medium text-text-secondary transition-colors hover:bg-surface hover:text-text-primary"
+              >
+                <X className="h-5 w-5" />
+                Hủy
+              </button>
+            </div>
           </div>
         ) : error ? (
           <div className="flex flex-col items-center justify-center h-full bg-surface p-4">
@@ -193,6 +256,14 @@ function App() {
             element={
               <ProtectedRoute>
                 <SettingsPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/profile"
+            element={
+              <ProtectedRoute>
+                <ProfilePage />
               </ProtectedRoute>
             }
           />

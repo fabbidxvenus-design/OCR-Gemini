@@ -15,12 +15,12 @@ export default function Layout({ children, title, showBottomNav = true, showBack
   const isTablet = useIsTablet();
 
   return (
-    <div className="min-h-screen bg-surface flex flex-col">
+    <div className="flex min-h-screen flex-col bg-surface">
       <Sidebar />
-      <div className={`flex-1 flex flex-col ${isTablet ? 'md:ml-sidebar' : ''}`}>
+      <div className={`flex flex-1 flex-col ${isTablet ? 'md:ml-sidebar' : ''}`}>
         <Header title={title} showBack={showBack} />
-        <main className={`flex-1 overflow-y-auto ${isTablet ? 'p-screen-md' : 'pb-16'}`}>
-          <div className={`max-w-content mx-auto ${isTablet ? 'px-screen-md py-section-md' : 'p-screen space-y-section'}`}>
+        <main className={`flex-1 overflow-y-auto ${isTablet ? '' : 'pb-20'}`}>
+          <div className={`mx-auto max-w-content ${isTablet ? 'px-8 py-6' : 'space-y-4 p-screen'}`}>
             {children}
           </div>
         </main>

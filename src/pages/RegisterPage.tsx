@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { UserPlus, Camera, Shield } from 'lucide-react';
+import { Camera, UserPlus, ShieldCheck, Sparkles } from 'lucide-react';
 import { PrimaryButton, InputField, PasswordInput, Checkbox } from '@/components/ui';
 import { authApi } from '@/lib/authApi';
 import { useAuthStore } from '@/store/authStore';
@@ -81,26 +81,44 @@ export default function RegisterPage() {
   }
 
   return (
-    <div className="min-h-screen bg-surface flex flex-col">
-      <div className="flex-1 flex flex-col items-center justify-center px-4 py-8">
-        {/* Logo */}
-        <div className="mb-8 text-center animate-fade-in">
-          <div className="inline-flex items-center justify-center w-20 h-20 bg-primary rounded-2xl mb-6 shadow-lg shadow-primary/25">
-            <Camera className="w-10 h-10 text-white" />
+    <main className="min-h-screen bg-surface px-screen py-6 text-text-primary">
+      <div className="mx-auto flex min-h-[calc(100vh-48px)] w-full max-w-mobile flex-col justify-between">
+        <section className="pt-8">
+          <div className="mb-8 flex items-start justify-between">
+            <div>
+              <p className="text-caption font-semibold uppercase tracking-[0.18em] text-primary">HLVN OCR</p>
+              <h1 className="mt-2 font-display text-display">Đăng ký</h1>
+              <p className="mt-2 max-w-[260px] text-body-sm text-text-secondary">
+                Tạo tài khoản mới để bắt đầu quét và quản lý hồ sơ.
+              </p>
+            </div>
+            <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-primary to-primary-hover shadow-card">
+              <Camera className="h-7 w-7 text-white" />
+            </div>
           </div>
-          <h1 className="text-3xl font-bold text-text-primary mb-2">OCR App</h1>
-          <p className="text-text-secondary text-sm">Tạo tài khoản mới</p>
-        </div>
 
-        {/* Form Card */}
-        <div className="w-full max-w-sm animate-slide-up">
-          <div className="bg-card rounded-2xl shadow-card p-6">
-            <div className="text-center mb-6">
-              <div className="inline-flex items-center justify-center w-12 h-12 bg-primary/10 rounded-xl mb-3">
-                <UserPlus className="w-6 h-6 text-primary" />
+          <div className="mb-5 grid grid-cols-2 gap-3">
+            <div className="card-production p-3">
+              <Sparkles className="mb-2 h-5 w-5 text-ai" />
+              <p className="text-caption text-text-muted">AI Model</p>
+              <p className="text-small font-semibold text-text-primary">Gemini Pro</p>
+            </div>
+            <div className="card-production p-3">
+              <ShieldCheck className="mb-2 h-5 w-5 text-success" />
+              <p className="text-caption text-text-muted">Bảo mật</p>
+              <p className="text-small font-semibold text-text-primary">Mã hóa phiên</p>
+            </div>
+          </div>
+
+          <div className="card-production animate-slide-up p-5">
+            <div className="mb-5 flex items-center gap-3">
+              <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-primary-light">
+                <UserPlus className="h-5 w-5 text-primary" />
               </div>
-              <h2 className="text-xl font-semibold text-text-primary">Đăng ký</h2>
-              <p className="text-sm text-text-secondary mt-1">Nhập thông tin của bạn</p>
+              <div>
+                <h2 className="font-display text-heading-sm text-text-primary">Tạo tài khoản</h2>
+                <p className="text-small text-text-secondary">Nhập thông tin của bạn</p>
+              </div>
             </div>
 
             <form onSubmit={handleSubmit} className="space-y-4">
@@ -137,40 +155,33 @@ export default function RegisterPage() {
                 autoComplete="new-password"
               />
 
-              <Checkbox
-                label="Tôi đồng ý với điều khoản dịch vụ"
-                checked={terms}
-                onChange={(e) => setTerms(e.target.checked)}
-                className="mt-2"
-              />
-              {errors.terms && touched.terms && (
-                <p className="text-label text-error mt-1">{errors.terms}</p>
-              )}
+              <div>
+                <Checkbox
+                  label="Tôi đồng ý với điều khoản dịch vụ"
+                  checked={terms}
+                  onChange={(e) => setTerms(e.target.checked)}
+                />
+                {errors.terms && touched.terms && (
+                  <p className="mt-1 text-label text-error">{errors.terms}</p>
+                )}
+              </div>
 
-              <PrimaryButton
-                type="submit"
-                className="w-full"
-                size="lg"
-                disabled={loading}
-              >
+              <PrimaryButton type="submit" className="w-full" size="lg" disabled={loading}>
                 {loading ? 'Đang xử lý...' : 'Đăng ký'}
               </PrimaryButton>
             </form>
           </div>
+        </section>
 
-          <div className="text-center mt-6">
-            <span className="text-text-secondary text-small">Đã có tài khoản? </span>
-            <Link to="/login" className="text-primary font-medium hover:underline">
+        <footer className="pb-3 pt-6 text-center">
+          <p className="text-small text-text-secondary">
+            Đã có tài khoản?{' '}
+            <Link to="/login" className="font-semibold text-primary hover:underline">
               Đăng nhập
             </Link>
-          </div>
-
-          <div className="flex items-center justify-center gap-2 mt-6 text-text-secondary">
-            <Shield className="w-4 h-4" />
-            <span className="text-xs">Dữ liệu được bảo mật</span>
-          </div>
-        </div>
+          </p>
+        </footer>
       </div>
-    </div>
+    </main>
   );
 }
