@@ -163,6 +163,12 @@ Week 5: Polish & Testing
 | TIP-059 | Settings and Analytics API Migration | TIP-055, TIP-057 | P1 | 4-6 | 9 | READY |
 | TIP-060 | Export Backend API Migration | TIP-055, TIP-057 | P1 | 4-6 | 9 | READY |
 | TIP-061 | Local Persistence Cutover and Regression Cleanup | TIP-056, TIP-057, TIP-058, TIP-059, TIP-060 | P0 | 4-6 | 9 | READY |
+| TIP-062 | User Profile Multi-Agent Orchestration | TIP-056, TIP-061 | P1 | 1 | 10 | READY |
+| TIP-063 | User Profile Backend Schema and API | TIP-062 | P1 | 3-4 | 10 | READY |
+| TIP-064 | User Profile Frontend Contract and Store Sync | TIP-063 | P1 | 2 | 10 | READY |
+| TIP-065 | User Profile Page and Header Entry | TIP-064 | P1 | 3-4 | 10 | READY |
+| TIP-066 | User Profile Validation and Automated Tests | TIP-063, TIP-064, TIP-065 | P1 | 3-4 | 10 | READY |
+| TIP-067 | User Profile E2E, Accessibility, and Polish | TIP-066 | P1 | 2 | 10 | READY |
 
 **Legend**:
 - **TBD**: To be done
