@@ -27,11 +27,8 @@ export async function compressImage(
       fileType: 'image/jpeg',
     });
 
-    console.log(`[Compression] Original: ${(fileOrBlob as File).size || fileOrBlob.size} bytes, Compressed: ${compressedBlob.size} bytes`);
-
     return compressedBlob;
-  } catch (error) {
-    console.error('[Compression] Error:', error);
+  } catch {
     throw new Error('Không thể nén ảnh. Vui lòng thử lại.');
   }
 }
@@ -43,8 +40,6 @@ export async function compressImage(
 export async function compressImageForOCR(
   fileOrBlob: File | Blob
 ): Promise<Blob> {
-  const startTime = performance.now();
-
   try {
     const file = fileOrBlob as File;
     const compressedBlob = await imageCompression(file, {
@@ -55,13 +50,9 @@ export async function compressImageForOCR(
       initialQuality: 0.6, // Lower quality for speed
     });
 
-    const elapsed = performance.now() - startTime;
-    console.log(`[Compression-OCR] ${(fileOrBlob as File).size || fileOrBlob.size} → ${compressedBlob.size} bytes in ${elapsed.toFixed(0)}ms`);
-
     return compressedBlob;
-  } catch (error) {
+  } catch {
     // Fallback: try with less aggressive settings
-    console.warn('[Compression-OCR] Ultra-fast failed, trying fallback:', error);
     return compressImage(fileOrBlob, { maxWidthOrHeight: 640, maxSizeMB: 0.1 });
   }
 }

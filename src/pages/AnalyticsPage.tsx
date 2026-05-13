@@ -1,8 +1,7 @@
 import { useState, useMemo, useEffect } from 'react';
 import Layout from '@/components/layout/Layout';
 import { useScans, getApiKeyUsageStats } from '@/hooks/useScans';
-import { TrendingUp, DollarSign, Calendar, Key } from 'lucide-react';
-import { FilterChip } from '@/components/ui';
+import { TrendingUp, DollarSign, Calendar, Key, Zap, Activity } from 'lucide-react';
 
 type DateRange = '7d' | '30d' | '90d' | 'all';
 
@@ -20,7 +19,7 @@ export default function AnalyticsPage() {
   const [apiStats, setApiStats] = useState<{ key1Count: number; key2Count: number; key1Cost: number; key2Cost: number } | null>(null);
 
   useEffect(() => {
-    getApiKeyUsageStats().then(setApiStats).catch(console.error);
+    getApiKeyUsageStats().then(setApiStats).catch(() => setApiStats(null));
   }, []);
 
   const filteredScans = useMemo(() => {
@@ -36,18 +35,29 @@ export default function AnalyticsPage() {
   const kpis = useMemo<KPI[]>(() => {
     const totalScans = filteredScans?.length || 0;
     const totalCost = filteredScans?.reduce((sum, scan) => sum + scan.tokenUsage.cost, 0) || 0;
+    const avgCost = totalScans > 0 ? totalCost / totalScans : 0;
 
-    // Use backend stats if available, otherwise fallback to local calculation
     const key1Scans = apiStats ? apiStats.key1Count : (filteredScans?.filter(s => s.apiKeyIndex === 1).length || 0);
-    const key2Scans = apiStats ? apiStats.key2Count : (filteredScans?.filter(s => s.apiKeyIndex === 2).length || 0);
 
     return [
-      { label: 'Tổng số scan', value: totalScans.toString(), icon: <TrendingUp className="w-6 h-6" />, color: 'text-primary', bg: 'bg-primary-light' },
-      { label: 'Tổng chi phí', value: `$${totalCost.toFixed(3)}`, icon: <DollarSign className="w-6 h-6" />, color: 'text-success', bg: 'bg-success-light' },
-      { label: 'API Key 1', value: `${key1Scans} scans`, icon: <Key className="w-6 h-6" />, color: 'text-blue-600', bg: 'bg-blue-50' },
-      { label: 'API Key 2', value: `${key2Scans} scans`, icon: <Key className="w-6 h-6" />, color: 'text-purple-600', bg: 'bg-purple-50' },
+      { label: 'Tổng số quét', value: totalScans.toString(), icon: <Activity className="h-6 w-6" />, color: 'text-primary', bg: 'bg-primary-light' },
+      { label: 'Tổng chi phí', value: `$${totalCost.toFixed(3)}`, icon: <DollarSign className="h-6 w-6" />, color: 'text-success', bg: 'bg-success-light' },
+      { label: 'Chi phí TB', value: `$${avgCost.toFixed(4)}`, icon: <TrendingUp className="h-6 w-6" />, color: 'text-secondary', bg: 'bg-secondary-light' },
+      { label: 'API Key 1', value: `${key1Scans} lượt`, icon: <Key className="h-6 w-6" />, color: 'text-ai', bg: 'bg-ai-light' },
     ];
   }, [filteredScans, apiStats]);
+
+  const modelUsage = useMemo(() => {
+    if (!filteredScans) return [];
+    const counts = new Map<string, number>();
+    filteredScans.forEach(s => {
+      const tier = s.modelTier || 'default';
+      counts.set(tier, (counts.get(tier) || 0) + 1);
+    });
+    return Array.from(counts.entries())
+      .map(([tier, count]) => ({ tier, count }))
+      .sort((a, b) => b.count - a.count);
+  }, [filteredScans]);
 
   const topProducts = useMemo(() => {
     if (!filteredScans) return [];
@@ -62,62 +72,75 @@ export default function AnalyticsPage() {
       .slice(0, 5);
   }, [filteredScans]);
 
+  const dateRangeOptions = [
+    { value: '7d' as DateRange, label: '7 ngày' },
+    { value: '30d' as DateRange, label: '30 ngày' },
+    { value: '90d' as DateRange, label: '90 ngày' },
+    { value: 'all' as DateRange, label: 'Tất cả' },
+  ];
+
   return (
-    <Layout title="Thống kê">
-      <div className="space-y-section pb-24 bg-surface min-h-full">
-        {/* Date Range Chips */}
-        <div className="bg-card rounded-2xl border border-card-border p-card shadow-card overflow-hidden">
-          <div className="flex items-center gap-2 mb-4 text-text-secondary">
-            <Calendar className="w-4 h-4" />
-            <span className="text-label font-bold uppercase tracking-widest">Thời gian</span>
+    <Layout title="Phân tích">
+      <div className="space-y-4 pb-24">
+        <section className="card-production animate-fade-in p-4">
+          <div className="mb-3 flex items-center gap-2">
+            <Calendar className="h-5 w-5 text-text-muted" />
+            <h3 className="text-caption font-semibold uppercase tracking-[0.14em] text-text-muted">Khoảng thời gian</h3>
           </div>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-            {[
-              { v: '7d', l: '7 ngày' },
-              { v: '30d', l: '30 ngày' },
-              { v: '90d', l: '90 ngày' },
-              { v: 'all', l: 'Tất cả' },
-            ].map(o => (
-              <FilterChip key={o.v} label={o.l} isActive={dateRange === o.v} onClick={() => setDateRange(o.v as DateRange)} className="w-full" />
+          <div className="grid grid-cols-2 gap-2 md:grid-cols-4">
+            {dateRangeOptions.map(option => (
+              <button
+                key={option.value}
+                onClick={() => setDateRange(option.value)}
+                className={`rounded-xl border px-4 py-2.5 text-small font-semibold transition-all ${
+                  dateRange === option.value
+                    ? 'border-primary bg-primary text-white shadow-md'
+                    : 'border-card-border bg-card text-text-secondary hover:border-primary hover:text-primary'
+                }`}
+              >
+                {option.label}
+              </button>
             ))}
           </div>
-        </div>
+        </section>
 
-        {/* KPI Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-section">
+        <div className="grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-4">
           {kpis.map((kpi, i) => (
-            <div key={i} className="bg-card rounded-2xl border border-card-border p-card shadow-card flex flex-col md:flex-row items-center md:items-start gap-4 animate-fade-in" style={{ animationDelay: `${i * 50}ms` }}>
-              <div className={`w-12 h-12 ${kpi.bg} ${kpi.color} rounded-xl flex items-center justify-center flex-shrink-0`}>
+            <div
+              key={i}
+              className="card-production flex items-center gap-4 p-4 animate-fade-in"
+              style={{ animationDelay: `${i * 50}ms` }}
+            >
+              <div className={`flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-2xl ${kpi.bg} ${kpi.color}`}>
                 {kpi.icon}
               </div>
-              <div className="text-center md:text-left">
-                <p className="text-label font-medium text-text-secondary uppercase tracking-wider">{kpi.label}</p>
-                <p className="text-2xl font-bold text-text-primary mt-0.5">{kpi.value}</p>
+              <div className="min-w-0 flex-1">
+                <p className="text-caption font-semibold uppercase tracking-[0.12em] text-text-muted">{kpi.label}</p>
+                <p className="truncate font-display text-heading-sm text-text-primary">{kpi.value}</p>
               </div>
             </div>
           ))}
         </div>
 
-        {/* Top Products Card */}
-        <div className="bg-card rounded-2xl border border-card-border p-card shadow-card animate-fade-in">
-          <div className="flex items-center justify-between mb-6">
-            <h3 className="text-body font-bold text-text-primary uppercase tracking-widest">Top sản phẩm</h3>
-            <TrendingUp className="w-5 h-5 text-text-placeholder" />
+        <section className="card-production animate-fade-in p-4">
+          <div className="mb-4 flex items-center justify-between">
+            <h3 className="font-display text-heading-sm text-text-primary">Top sản phẩm</h3>
+            <TrendingUp className="h-5 w-5 text-text-muted" />
           </div>
 
           {topProducts.length > 0 ? (
-            <div className="space-y-5">
+            <div className="space-y-4">
               {topProducts.map((p, i) => (
-                <div key={i} className="group">
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-small font-semibold text-text-primary truncate pr-4">
+                <div key={i}>
+                  <div className="mb-2 flex items-center justify-between">
+                    <span className="truncate pr-4 text-small font-semibold text-text-primary">
                       {i + 1}. {p.title}
                     </span>
-                    <span className="text-small font-bold text-primary">{p.count}</span>
+                    <span className="flex-shrink-0 text-small font-bold text-primary">{p.count}</span>
                   </div>
-                  <div className="h-2 w-full bg-surface rounded-full overflow-hidden">
+                  <div className="h-2 w-full overflow-hidden rounded-full bg-surface">
                     <div
-                      className="h-full bg-primary rounded-full transition-all duration-1000 ease-out"
+                      className="h-full rounded-full bg-primary transition-all duration-1000 ease-out"
                       style={{ width: `${(p.count / topProducts[0].count) * 100}%` }}
                     />
                   </div>
@@ -125,12 +148,49 @@ export default function AnalyticsPage() {
               ))}
             </div>
           ) : (
-            <div className="text-center py-10 opacity-50">
-              <TrendingUp className="w-12 h-12 mx-auto mb-2" />
-              <p className="text-small">Chưa có dữ liệu sản phẩm</p>
+            <div className="flex flex-col items-center justify-center py-10 text-center">
+              <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-surface">
+                <TrendingUp className="h-6 w-6 text-text-muted" />
+              </div>
+              <p className="text-small text-text-secondary">Chưa có dữ liệu sản phẩm</p>
             </div>
           )}
-        </div>
+        </section>
+
+        <section className="card-production animate-fade-in p-4">
+          <div className="mb-4 flex items-center justify-between">
+            <h3 className="font-display text-heading-sm text-text-primary">Sử dụng mô hình</h3>
+            <Zap className="h-5 w-5 text-text-muted" />
+          </div>
+
+          {modelUsage.length > 0 ? (
+            <div className="space-y-3">
+              {modelUsage.map((m, i) => (
+                <div key={i} className="flex items-center justify-between rounded-xl bg-surface p-3">
+                  <div className="flex items-center gap-3">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-ai-light">
+                      <Zap className="h-5 w-5 text-ai" />
+                    </div>
+                    <div>
+                      <p className="text-small font-semibold text-text-primary">{m.tier === 'flash' ? 'Gemini Flash' : 'Gemini Pro'}</p>
+                      <p className="text-caption text-text-muted">{m.count} lượt quét</p>
+                    </div>
+                  </div>
+                  <span className="rounded-full border border-ai/30 bg-ai-light px-3 py-1 text-caption font-semibold text-ai">
+                    {((m.count / filteredScans.length) * 100).toFixed(0)}%
+                  </span>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="flex flex-col items-center justify-center py-10 text-center">
+              <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-surface">
+                <Zap className="h-6 w-6 text-text-muted" />
+              </div>
+              <p className="text-small text-text-secondary">Chưa có dữ liệu mô hình</p>
+            </div>
+          )}
+        </section>
       </div>
     </Layout>
   );

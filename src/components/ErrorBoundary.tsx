@@ -46,6 +46,11 @@ export default class ErrorBoundary extends Component<Props, State> {
           <p className="text-neutral text-center mb-6 max-w-md">
             {this.state.error?.message || 'Đã có lỗi không mong muốn xảy ra. Vui lòng thử lại.'}
           </p>
+          {this.state.error?.stack && (
+            <pre className="mb-6 max-h-64 w-full max-w-2xl overflow-auto whitespace-pre-wrap rounded-xl border border-card-border bg-card p-4 text-left text-xs text-text-secondary">
+              {this.state.error.stack}
+            </pre>
+          )}
           <button
             onClick={this.handleReset}
             className="flex items-center gap-2 px-6 py-3 bg-primary text-white rounded-lg font-medium hover:bg-primary/90 transition-colors"

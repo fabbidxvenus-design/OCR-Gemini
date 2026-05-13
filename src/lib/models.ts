@@ -13,9 +13,9 @@ export interface ModelConfig {
 export const MODEL_CONFIGS: Record<'free' | 'default' | 'high', ModelConfig> = {
   free: {
     id: 'free',
-    name: 'Free Tier',
+    name: 'Tiết kiệm',
     model: 'openrouter/auto',
-    description: 'Fastest, lowest cost. Good for simple invoices.',
+    description: 'Xử lý nhanh, chi phí thấp. Phù hợp với chứng từ đơn giản.',
     pricing: {
       input: 0,
       output: 0,
@@ -30,9 +30,9 @@ Return valid JSON only.`,
   },
   default: {
     id: 'default',
-    name: 'Default Quality',
+    name: 'Tiêu chuẩn',
     model: 'google/gemini-2.0-flash-001',
-    description: 'Balanced speed and accuracy. Recommended for most cases.',
+    description: 'Cân bằng tốc độ và độ chính xác. Khuyến nghị cho hầu hết hồ sơ.',
     pricing: {
       input: 0,
       output: 0,
@@ -68,9 +68,9 @@ If text is unclear, mark confidence as "low" but still include it`,
   },
   high: {
     id: 'high',
-    name: 'High Quality',
+    name: 'Độ chính xác cao',
     model: 'google/gemini-2.5-flash',
-    description: 'Highest accuracy. Best for complex or low-quality images.',
+    description: 'Ưu tiên độ chính xác. Phù hợp với ảnh khó đọc hoặc hồ sơ phức tạp.',
     pricing: {
       input: 0.0000003,
       output: 0.0000025,

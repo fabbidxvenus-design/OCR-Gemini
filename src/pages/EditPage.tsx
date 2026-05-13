@@ -5,7 +5,7 @@ import Layout from '@/components/layout/Layout';
 import { useScan, updateScan } from '@/hooks/useScans';
 import { Save, X, Plus, Trash2 } from 'lucide-react';
 import { categorizeFields } from '@/lib/fieldCategories';
-import { PrimaryButton, InputField, CollapsibleSection } from '@/components/ui';
+import { PrimaryButton, InputField } from '@/components/ui';
 import type { OCRResponse } from '@/db/schema';
 
 interface EditFormData {
@@ -69,8 +69,8 @@ export default function EditPage() {
   if (!scan) {
     return (
       <Layout title="Đang tải...">
-        <div className="flex items-center justify-center h-64">
-          <p className="text-text-secondary animate-pulse">Đang tải...</p>
+        <div className="flex h-64 items-center justify-center">
+          <p className="animate-pulse text-text-secondary">Đang tải...</p>
         </div>
       </Layout>
     );
@@ -78,126 +78,164 @@ export default function EditPage() {
 
   return (
     <Layout title="Chỉnh sửa" showBottomNav={false}>
-      <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col h-full">
-        {/* Tab Navigation */}
+      <form onSubmit={handleSubmit(onSubmit)} className="flex h-full flex-col">
         <div className="flex border-b border-card-border bg-card">
-          <button type="button" onClick={() => setActiveTab('structured')}
-            className={`flex-1 h-12 text-small font-semibold transition-colors ${activeTab === 'structured' ? 'text-primary border-b-2 border-primary' : 'text-text-secondary hover:text-text-primary'}`}>
+          <button
+            type="button"
+            onClick={() => setActiveTab('structured')}
+            className={`h-12 flex-1 text-small font-semibold transition-colors ${activeTab === 'structured' ? 'border-b-2 border-primary text-primary' : 'text-text-secondary hover:text-text-primary'}`}
+          >
             Thông tin
           </button>
-          <button type="button" onClick={() => setActiveTab('rawText')}
-            className={`flex-1 h-12 text-small font-semibold transition-colors ${activeTab === 'rawText' ? 'text-primary border-b-2 border-primary' : 'text-text-secondary hover:text-text-primary'}`}>
+          <button
+            type="button"
+            onClick={() => setActiveTab('rawText')}
+            className={`h-12 flex-1 text-small font-semibold transition-colors ${activeTab === 'rawText' ? 'border-b-2 border-primary text-primary' : 'text-text-secondary hover:text-text-primary'}`}
+          >
             Văn bản gốc
           </button>
         </div>
 
-        {/* Content */}
-        <div className="flex-1 overflow-y-auto p-screen space-y-section pb-32 bg-surface">
+        <div className="flex-1 space-y-4 overflow-y-auto bg-surface p-screen pb-32">
           {activeTab === 'structured' ? (
             <>
-              {/* Title Card */}
-              <div className="bg-card rounded-2xl border border-card-border p-card shadow-card">
+              <div className="card-production p-4">
                 <InputField label="Tiêu đề" {...register('title')} placeholder="Nhập tiêu đề scan" />
               </div>
 
-              {/* Main Fields Section */}
-              <div className="bg-card rounded-2xl border border-card-border p-card shadow-card">
-                <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-label font-bold uppercase tracking-widest text-text-secondary">Thông tin chính</h3>
-                  <button type="button" onClick={() => appendField({ field: '', value: '', confidence: 'medium' })}
-                    className="flex items-center gap-1.5 text-primary text-small font-semibold hover:underline">
-                    <Plus className="w-4 h-4" /> Thêm
+              <section className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <h3 className="font-display text-heading-sm text-text-primary">Thông tin chính</h3>
+                  <button
+                    type="button"
+                    onClick={() => appendField({ field: '', value: '', confidence: 'medium' })}
+                    className="flex items-center gap-1.5 text-small font-semibold text-primary hover:underline"
+                  >
+                    <Plus className="h-4 w-4" /> Thêm
                   </button>
                 </div>
-                <div className="space-y-3">
-                  {categorizedIndices.main.map((index) => (
-                    <div key={fieldArray[index].id} className="flex gap-2 items-start">
+                {categorizedIndices.main.map((index) => (
+                  <div key={fieldArray[index].id} className="card-production flex gap-2 p-3">
+                    <div className="flex-1 space-y-2">
+                      <input
+                        type="text"
+                        {...register(`fields.${index}.field`)}
+                        placeholder="Tên trường"
+                        className="field-production w-full"
+                      />
+                      <input
+                        type="text"
+                        {...register(`fields.${index}.value`)}
+                        placeholder="Giá trị"
+                        className="field-production w-full font-display text-body-lg font-semibold"
+                      />
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => removeField(index)}
+                      className="touch-target flex items-center justify-center rounded-xl text-error transition-colors hover:bg-error-light"
+                    >
+                      <Trash2 className="h-5 w-5" />
+                    </button>
+                  </div>
+                ))}
+              </section>
+
+              {categorizedIndices.other.length > 0 && (
+                <section className="space-y-3">
+                  <h3 className="font-display text-heading-sm text-text-primary">Thông tin khác</h3>
+                  {categorizedIndices.other.map((index) => (
+                    <div key={fieldArray[index].id} className="card-production flex gap-2 p-3">
                       <div className="flex-1 space-y-2">
-                        <input type="text" {...register(`fields.${index}.field`)} placeholder="Tên trường"
-                          className="w-full h-11 px-4 border border-card-border rounded-sm text-small focus:ring-2 focus:ring-primary focus:border-primary outline-none" />
-                        <input type="text" {...register(`fields.${index}.value`)} placeholder="Giá trị"
-                          className="w-full h-12 px-4 border border-card-border rounded-sm text-body font-medium focus:ring-2 focus:ring-primary focus:border-primary outline-none" />
+                        <input
+                          type="text"
+                          {...register(`fields.${index}.field`)}
+                          placeholder="Tên trường"
+                          className="field-production w-full"
+                        />
+                        <input
+                          type="text"
+                          {...register(`fields.${index}.value`)}
+                          placeholder="Giá trị"
+                          className="field-production w-full"
+                        />
                       </div>
-                      <button type="button" onClick={() => removeField(index)}
-                        className="w-11 h-11 flex items-center justify-center text-error hover:bg-error-light rounded-sm transition-colors mt-1">
-                        <Trash2 className="w-5 h-5" />
+                      <button
+                        type="button"
+                        onClick={() => removeField(index)}
+                        className="touch-target flex items-center justify-center rounded-xl text-error transition-colors hover:bg-error-light"
+                      >
+                        <Trash2 className="h-5 w-5" />
                       </button>
                     </div>
                   ))}
-                </div>
-              </div>
-
-              {/* Other Fields - Collapsible */}
-              {categorizedIndices.other.length > 0 && (
-                <CollapsibleSection title="Thông tin khác" count={categorizedIndices.other.length} defaultExpanded={false}>
-                  <div className="space-y-3 -my-4">
-                    {categorizedIndices.other.map((index) => (
-                      <div key={fieldArray[index].id} className="flex gap-2 items-start">
-                        <div className="flex-1 space-y-2">
-                          <input type="text" {...register(`fields.${index}.field`)} placeholder="Tên trường"
-                            className="w-full h-10 px-3 border border-card-border rounded-sm text-small focus:ring-2 focus:ring-primary focus:border-primary outline-none" />
-                          <input type="text" {...register(`fields.${index}.value`)} placeholder="Giá trị"
-                            className="w-full h-10 px-3 border border-card-border rounded-sm text-small focus:ring-2 focus:ring-primary focus:border-primary outline-none" />
-                        </div>
-                        <button type="button" onClick={() => removeField(index)}
-                          className="w-10 h-10 flex items-center justify-center text-error hover:bg-error-light rounded-sm transition-colors mt-1">
-                          <Trash2 className="w-4 h-4" />
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                </CollapsibleSection>
+                </section>
               )}
 
-              {/* Size Table */}
-              <div className="bg-card rounded-2xl border border-card-border p-card shadow-card">
-                <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-label font-bold uppercase tracking-widest text-text-secondary">Bảng size</h3>
-                  <button type="button" onClick={() => appendSize({ size: '', quantity: 0 })}
-                    className="flex items-center gap-1.5 text-primary text-small font-semibold hover:underline">
-                    <Plus className="w-4 h-4" /> Thêm
+              <section className="card-production p-4">
+                <div className="mb-3 flex items-center justify-between">
+                  <h3 className="font-display text-heading-sm text-text-primary">Bảng size</h3>
+                  <button
+                    type="button"
+                    onClick={() => appendSize({ size: '', quantity: 0 })}
+                    className="flex items-center gap-1.5 text-small font-semibold text-primary hover:underline"
+                  >
+                    <Plus className="h-4 w-4" /> Thêm
                   </button>
                 </div>
                 <div className="space-y-2">
                   {sizeArray.map((size, index) => (
                     <div key={size.id} className="flex gap-2">
-                      <input type="text" {...register(`sizes.${index}.size`)} placeholder="Size"
-                        className="flex-1 h-11 px-4 border border-card-border rounded-sm text-small focus:ring-2 focus:ring-primary focus:border-primary outline-none" />
-                      <input type="number" {...register(`sizes.${index}.quantity`, { valueAsNumber: true })} placeholder="SL"
-                        className="w-20 h-11 px-3 border border-card-border rounded-sm text-small text-center focus:ring-2 focus:ring-primary focus:border-primary outline-none" />
-                      <button type="button" onClick={() => removeSize(index)}
-                        className="w-11 h-11 flex items-center justify-center text-error hover:bg-error-light rounded-sm transition-colors">
-                        <Trash2 className="w-5 h-5" />
+                      <input
+                        type="text"
+                        {...register(`sizes.${index}.size`)}
+                        placeholder="Size"
+                        className="field-production flex-1"
+                      />
+                      <input
+                        type="number"
+                        {...register(`sizes.${index}.quantity`, { valueAsNumber: true })}
+                        placeholder="SL"
+                        className="field-production w-20 text-center"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => removeSize(index)}
+                        className="touch-target flex items-center justify-center rounded-xl text-error transition-colors hover:bg-error-light"
+                      >
+                        <Trash2 className="h-5 w-5" />
                       </button>
                     </div>
                   ))}
                   {sizeArray.length === 0 && (
-                    <p className="text-small text-text-secondary text-center py-6">Chưa có size nào</p>
+                    <p className="py-6 text-center text-small text-text-secondary">Chưa có size nào</p>
                   )}
                 </div>
-              </div>
+              </section>
             </>
           ) : (
-            <div className="bg-card rounded-2xl border border-card-border p-card shadow-card">
-              <div className="flex justify-between items-center mb-4">
-                <h3 className="text-label font-bold uppercase tracking-widest text-text-secondary">Văn bản gốc</h3>
-                <span className="text-label text-text-placeholder">{rawText?.length || 0} ký tự</span>
+            <div className="card-production p-4">
+              <div className="mb-3 flex items-center justify-between">
+                <h3 className="font-display text-heading-sm text-text-primary">Văn bản gốc</h3>
+                <span className="text-caption text-text-muted">{rawText?.length || 0} ký tự</span>
               </div>
-              <textarea {...register('raw_text')} rows={18}
-                className="w-full px-4 py-3 border border-card-border rounded-xl text-small font-mono bg-surface focus:ring-2 focus:ring-primary focus:border-primary outline-none resize-none"
-                placeholder="Văn bản gốc từ OCR..." />
+              <textarea
+                {...register('raw_text')}
+                rows={18}
+                className="w-full resize-none rounded-xl border border-field-border bg-surface px-4 py-3 font-mono text-small outline-none transition-all focus:border-primary focus:ring-2 focus:ring-primary"
+                placeholder="Văn bản gốc từ OCR..."
+              />
             </div>
           )}
         </div>
 
-        {/* Action Buttons */}
-        <div className="absolute bottom-0 left-0 right-0 p-screen bg-card border-t border-card-border">
-          <div className="flex gap-3">
+        <div className="absolute bottom-0 left-0 right-0 border-t border-card-border bg-card p-screen md:left-sidebar">
+          <div className="mx-auto flex max-w-content gap-3">
             <PrimaryButton variant="secondary" className="flex-1" onClick={handleCancel}>
-              <X className="w-5 h-5 mr-2" /> Hủy
+              <X className="mr-2 h-5 w-5" /> Hủy
             </PrimaryButton>
             <PrimaryButton type="submit" className="flex-1">
-              <Save className="w-5 h-5 mr-2" /> Lưu
+              <Save className="mr-2 h-5 w-5" /> Lưu
             </PrimaryButton>
           </div>
         </div>
