@@ -7,6 +7,7 @@ const BackendOCRStructuredSchema = z.object({
       field: z.string(),
       value: z.string(),
       confidence: z.enum(['high', 'medium', 'low']).optional(),
+      category: z.enum(['main', 'other']).optional(),
     })
   ).optional(),
   sizes: z.array(
@@ -73,6 +74,7 @@ export const BackendScanSchema = z.object({
   }),
   apiKeyIndex: z.number(),
   edited: z.boolean(),
+  modelTier: z.enum(['free', 'default', 'high']).optional(),
 });
 
 export const BackendScanListSchema = z.array(BackendScanSchema);

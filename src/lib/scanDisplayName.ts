@@ -111,6 +111,7 @@ function generateFallbackName(scan: ScanRecord): string {
  * Determine the display name for a scan record
  *
  * Priority order:
+ * 0. ocrStructured.title (if present)
  * 1. product_name field (or similar)
  * 2. contract_no / order_no field
  * 3. lot_no / batch field
@@ -120,6 +121,11 @@ function generateFallbackName(scan: ScanRecord): string {
  * 7. Fallback: "Scan #[date-timestamp]"
  */
 export function scanDisplayName(scan: ScanRecord): string {
+  // Priority 0: Use ocrStructured.title if present
+  if (scan.ocrStructured?.title && scan.ocrStructured.title.trim().length > 0) {
+    return scan.ocrStructured.title.trim();
+  }
+
   const fields = scan.ocrStructured?.fields;
 
   // Check if fields array exists and has entries

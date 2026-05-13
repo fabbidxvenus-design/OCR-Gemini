@@ -9,6 +9,7 @@ const BackendOCRStructuredSchema = z.object({
     field: z.string(),
     value: z.string(),
     confidence: z.enum(['high', 'medium', 'low']).optional(),
+    category: z.enum(['main', 'other']).optional(),
   })).optional(),
   sizes: z.array(z.object({
     size: z.string(),

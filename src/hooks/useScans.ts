@@ -9,6 +9,7 @@ function toMobileScan(scan: BackendScanRecord): ScanRecord {
     id: scan.id,
     timestamp: new Date(scan.timestamp),
     imageDataUrl: scan.imageUrl ?? '',
+    ocrRaw: scan.ocrRaw,
     ocrStructured: {
       title: scan.ocrStructured.title,
       fields: scan.ocrStructured.fields || [],
@@ -19,7 +20,7 @@ function toMobileScan(scan: BackendScanRecord): ScanRecord {
     edited: scan.edited,
     tokenUsage: scan.tokenUsage,
     apiKeyIndex: scan.apiKeyIndex,
-    modelTier: undefined,
+    modelTier: scan.modelTier,
   };
 }
 

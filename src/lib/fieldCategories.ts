@@ -6,6 +6,73 @@
 
 export type FieldCategory = 'main' | 'other';
 
+interface CategorizedFieldInput {
+  field: string;
+  value: string;
+  confidence?: 'high' | 'medium' | 'low';
+  category?: FieldCategory;
+}
+
+function isSizeField(fieldName: string): boolean {
+  return /^(size|サイズ|kích\s*thước|kich\s*thuoc)$/i.test(fieldName.trim());
+}
+
+function isQuantityField(fieldName: string): boolean {
+  return /^(quantity|qty|数量|số\s*lượng|so\s*luong|sl)$/i.test(fieldName.trim());
+}
+
+function mergeConfidence(
+  current: CategorizedFieldInput['confidence'],
+  next: CategorizedFieldInput['confidence']
+): CategorizedFieldInput['confidence'] {
+  if (current === 'low' || next === 'low') return 'low';
+  if (current === 'medium' || next === 'medium') return 'medium';
+  return current || next;
+}
+
+export function groupSizeQuantityFields<T extends CategorizedFieldInput>(fields: T[]): T[] {
+  const result: T[] = [];
+  const sizeQuantities: string[] = [];
+  let confidence: CategorizedFieldInput['confidence'];
+  let insertedGroupedField = false;
+
+  for (let index = 0; index < fields.length; index += 1) {
+    const current = fields[index];
+    const next = fields[index + 1];
+
+    if (current && next && isSizeField(current.field) && isQuantityField(next.field)) {
+      sizeQuantities.push(`${current.value}: ${next.value}`);
+      confidence = mergeConfidence(confidence, mergeConfidence(current.confidence, next.confidence));
+
+      if (!insertedGroupedField) {
+        result.push({
+          field: 'サイズ / 数量',
+          value: '',
+          category: 'main',
+        } as T);
+        insertedGroupedField = true;
+      }
+
+      index += 1;
+      continue;
+    }
+
+    result.push(current);
+  }
+
+  if (sizeQuantities.length === 0) return result;
+
+  return result.map((field) => {
+    if (field.field !== 'サイズ / 数量') return field;
+
+    return {
+      ...field,
+      value: sizeQuantities.join(', '),
+      ...(confidence ? { confidence } : {}),
+    };
+  });
+}
+
 /**
  * Regex patterns for main fields (Vietnamese + English + Japanese)
  * Main fields: Barcode, Lot No, Product Name/Code, Quantity/Size, Contract No
@@ -90,11 +157,11 @@ export const MAIN_FIELD_PATTERNS: RegExp[] = [
   /^大きさ$/i,
 
   // Contract No - Anh / Việt / Nhật
-  /^contract\s*no\.?$/i,
+  /^contract[\s_]*no\.?$/i,
   /^contract\s*number$/i,
   /^contract_no$/i,
   /^contract$/i,
-  /^ct_no$/i,
+  /^ct[\s_]*no\.?$/i,
   /^ct_n[oọ]$/i,
   /^số\s*hợp\s*đồng$/i,
   /^so\s*hop\s*dong$/i,
@@ -104,10 +171,12 @@ export const MAIN_FIELD_PATTERNS: RegExp[] = [
   /^hop\s*dong$/i,
   /^đơn\s*hàng$/i,
   /^don\s*hang$/i,
-  /^order\s*no\.?$/i,
+  /^order[\s_]*no\.?$/i,
   /^order\s*number$/i,
   /^order_no$/i,
   /^注文番号$/i,
+  /^契約\s*no\.?$/i,
+  /^契約\s*番号$/i,
   /^order$/i,
 
   // Price / Cost - Anh / Việt / Nhật
@@ -166,15 +235,16 @@ export function categorizeField(fieldName: string): FieldCategory {
 
 /**
  * Categorize multiple fields at once
+ * Prefers existing category from OCR, falls back to regex categorization
  * @param fields - Array of field objects with 'field' property
  * @returns Array of fields with 'category' property added
  */
-export function categorizeFields<T extends { field: string }>(
+export function categorizeFields<T extends { field: string; category?: FieldCategory }>(
   fields: T[]
 ): Array<T & { category: FieldCategory }> {
   return fields.map((field) => ({
     ...field,
-    category: categorizeField(field.field),
+    category: field.category || categorizeField(field.field),
   }));
 }
 
