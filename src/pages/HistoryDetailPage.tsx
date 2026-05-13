@@ -47,7 +47,6 @@ export default function HistoryDetailPage() {
     }
   };
 
-  const fields = scan.ocrStructured?.fields || [];
   const groupedFields = [...categorizedFields.main, ...categorizedFields.other];
   const displayTitle = scanDisplayName(scan);
   const lowConfidenceCount = groupedFields.filter(field => field.confidence === 'low' || !field.value).length;

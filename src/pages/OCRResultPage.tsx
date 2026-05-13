@@ -54,7 +54,6 @@ export default function OCRResultPage() {
     }
   };
 
-  const fields = scan.ocrStructured?.fields || [];
   const groupedFields = [...categorizedFields.main, ...categorizedFields.other];
   const notes = scan.ocrStructured?.notes || [];
   const title = scanDisplayName(scan);
