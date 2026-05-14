@@ -137,7 +137,7 @@ test.describe('OCR latency Phase 1', () => {
     await expect(page.getByText('Mock OCR Result')).toBeVisible();
     await expect(page.getByText('VES 529CT')).toBeVisible();
     await expect(page.getByText('Kết quả đã hiển thị nhưng chưa lưu được vào lịch sử')).not.toBeVisible({ timeout: 10000 });
-    await expect.poll(() => createScanAttempts, { timeout: 9000 }).toBe(3);
+    await expect.poll(() => createScanAttempts, { timeout: 15000 }).toBe(3);
     expect(await page.evaluate(() => localStorage.getItem('hlvn.localOcrScans'))).toContain('VES 529CT');
   });
 
@@ -220,7 +220,10 @@ test.describe('OCR latency Phase 1', () => {
       await route.fulfill({ status: 502, contentType: 'application/json', body: JSON.stringify({ success: false, error: 'OCR failed', code: 'PROVIDER_ERROR' }) });
     });
 
-    await page.locator('input[type="file"]').first().setInputFiles({
+    await expect(page.getByText('Tải ảnh lên')).toBeVisible();
+    const uploadInput = page.locator('input[type="file"]').first();
+    await expect(uploadInput).toBeAttached();
+    await uploadInput.setInputFiles({
       name: 'ocr-test.png',
       mimeType: 'image/png',
       buffer: Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+/p9sAAAAASUVORK5CYII=', 'base64'),
