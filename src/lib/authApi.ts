@@ -37,6 +37,7 @@ export const AuthSessionSchema = z.object({
 export type UserProfile = z.infer<typeof UserProfileSchema>;
 export type ProfileUpdatePayload = z.infer<typeof ProfileUpdatePayloadSchema>;
 export type AuthSession = z.infer<typeof AuthSessionSchema>;
+export type ResetPasswordCredential = { accessToken: string } | { code: string };
 
 export function normalizeProfileUpdatePayload(input: ProfileUpdatePayload): ProfileUpdatePayload {
   return Object.fromEntries(
@@ -56,6 +57,13 @@ export const authApi = {
 
   forgotPassword: (email: string) =>
     apiClient.post<{ success: boolean }>('/api/auth/forgot-password', { email }),
+
+  resetPassword: (password: string, credential: ResetPasswordCredential) =>
+    apiClient.post<{ success: boolean }>(
+      '/api/auth/reset-password',
+      'code' in credential ? { password, code: credential.code } : { password },
+      { accessToken: 'accessToken' in credential ? credential.accessToken : undefined }
+    ),
 
   logout: (accessToken?: string | null) =>
     apiClient.post<void>('/api/auth/logout', undefined, { accessToken }),
