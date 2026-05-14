@@ -2,6 +2,7 @@ import type { OCRResponse, ScanRecord, TokenUsage } from '@/db/schema';
 
 const LOCAL_OCR_SCANS_KEY = 'hlvn.localOcrScans';
 const LOCAL_OCR_SCAN_TTL_MS = 7 * 24 * 60 * 60 * 1000;
+const MAX_LOCAL_OCR_SCANS = 10;
 
 interface LocalOcrScanRecord {
   id: `local-${string}`;
@@ -26,11 +27,16 @@ function readLocalScans(): LocalOcrScanRecord[] {
 }
 
 function writeLocalScans(scans: LocalOcrScanRecord[]): void {
+  const boundedScans = scans.slice(-MAX_LOCAL_OCR_SCANS);
   try {
-    localStorage.setItem(LOCAL_OCR_SCANS_KEY, JSON.stringify(scans));
+    localStorage.setItem(LOCAL_OCR_SCANS_KEY, JSON.stringify(boundedScans));
   } catch {
-    const newestScans = scans.slice(-1);
-    localStorage.setItem(LOCAL_OCR_SCANS_KEY, JSON.stringify(newestScans));
+    try {
+      const newestScans = boundedScans.slice(-1);
+      localStorage.setItem(LOCAL_OCR_SCANS_KEY, JSON.stringify(newestScans));
+    } catch {
+      localStorage.removeItem(LOCAL_OCR_SCANS_KEY);
+    }
   }
 }
 

@@ -26,6 +26,7 @@ import { deleteLocalOcrScan } from '@/lib/localOcrScans';
 import { useSettings } from '@/hooks/useSettings';
 
 const BACKGROUND_SAVE_RETRY_DELAYS_MS = [0, 1000, 3000];
+const LOCAL_SCAN_DELETE_AFTER_SAVE_DELAY_MS = 1000;
 
 async function saveScanInBackground(scanData: Parameters<typeof createScan>[0], localScanId: string) {
   for (let attempt = 0; attempt < BACKGROUND_SAVE_RETRY_DELAYS_MS.length; attempt += 1) {
@@ -36,7 +37,7 @@ async function saveScanInBackground(scanData: Parameters<typeof createScan>[0], 
 
     try {
       await createScan(scanData);
-      deleteLocalOcrScan(localScanId);
+      window.setTimeout(() => deleteLocalOcrScan(localScanId), LOCAL_SCAN_DELETE_AFTER_SAVE_DELAY_MS);
       return;
     } catch {
       continue;

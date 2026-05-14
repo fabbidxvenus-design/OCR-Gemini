@@ -3,7 +3,7 @@ import type { OCRResponse, ScanRecord } from '@/db/schema';
 import { scansApi } from '@/lib/scansApi';
 import { useAuthStore } from '@/store/authStore';
 import type { BackendScanRecord } from '@/lib/apiTypes';
-import { createLocalOcrScan, getLocalOcrScan } from '@/lib/localOcrScans';
+import { cleanupExpiredLocalOcrScans, createLocalOcrScan, getLocalOcrScan } from '@/lib/localOcrScans';
 
 function toMobileScan(scan: BackendScanRecord): ScanRecord {
   return {
@@ -126,6 +126,7 @@ export function useScan(scanId?: string): UseScanResult {
     }
 
     if (scanId.startsWith('local-')) {
+      cleanupExpiredLocalOcrScans();
       const localScan = getLocalOcrScan(scanId);
       setScan(localScan);
       setIsPendingMissing(!localScan);

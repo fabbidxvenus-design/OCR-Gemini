@@ -69,4 +69,13 @@ describe('localOcrScans', () => {
 
     expect(getLocalOcrScan(scanId)).toBeUndefined();
   });
+
+  it('keeps only the newest ten local scans', () => {
+    const scanIds = Array.from({ length: 11 }, (_, index) => createLocalOcrScan(buildScan({
+      ocrRaw: `scan-${index}`,
+    })));
+
+    expect(getLocalOcrScan(scanIds[0])).toBeUndefined();
+    expect(getLocalOcrScan(scanIds[10])?.ocrRaw).toBe('scan-10');
+  });
 });
