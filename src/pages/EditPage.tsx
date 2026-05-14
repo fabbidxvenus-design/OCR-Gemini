@@ -18,7 +18,7 @@ interface EditFormData {
 export default function EditPage() {
   const { scanId } = useParams<{ scanId: string }>();
   const navigate = useNavigate();
-  const scan = useScan(scanId);
+  const { scan } = useScan(scanId);
   const [activeTab, setActiveTab] = useState<'structured' | 'rawText'>('structured');
 
   const { register, control, handleSubmit, reset, watch, formState: { isDirty } } = useForm<EditFormData>();

@@ -14,7 +14,7 @@ export default function Toast({ message, type, onClose, duration = 3000 }: Toast
   }, [duration, onClose]);
 
   return (
-    <div className="fixed top-4 left-4 right-4 z-[100] animate-slide-up">
+    <div className="fixed top-4 left-4 right-4 z-[100] animate-slide-up" role={type === 'error' ? 'alert' : 'status'} aria-live={type === 'error' ? 'assertive' : 'polite'}>
       <div className={`flex items-center gap-3 px-4 py-3 rounded-2xl shadow-card border ${
         type === 'success' ? 'bg-success-light border-success/20' : 'bg-error-light border-error/20'
       }`}>
@@ -34,7 +34,7 @@ export default function Toast({ message, type, onClose, duration = 3000 }: Toast
         <span className={`text-small font-medium flex-1 ${type === 'success' ? 'text-success' : 'text-error'}`}>
           {message}
         </span>
-        <button onClick={onClose} className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-black/5 transition-colors">
+        <button onClick={onClose} aria-label={`Đóng thông báo: ${message}`} className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-black/5 transition-colors">
           <svg className={`w-4 h-4 ${type === 'success' ? 'text-success' : 'text-error'}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
           </svg>

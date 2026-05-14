@@ -32,7 +32,7 @@ const BackendOCRResultSchema = z.object({
 
 type BackendOCRResult = z.infer<typeof BackendOCRResultSchema>;
 
-function blobToDataUrl(imageBlob: Blob): Promise<string> {
+export function blobToDataUrl(imageBlob: Blob): Promise<string> {
   const reader = new FileReader();
 
   return new Promise((resolve, reject) => {

@@ -41,6 +41,7 @@ export interface TokenUsage {
   input: number;
   output: number;
   cost: number;
+  model?: string;
 }
 
 export interface AppSettings {

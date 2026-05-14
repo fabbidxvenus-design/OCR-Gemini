@@ -21,8 +21,29 @@ import ErrorMessage from '@/components/ui/ErrorMessage';
 import { CheckCircle2, Circle, Loader2, X } from 'lucide-react';
 import { processOCR } from '@/lib/gemini';
 import { compressImageForOCR } from '@/lib/compression';
-import { createScan } from '@/hooks/useScans';
+import { createPendingScan, createScan } from '@/hooks/useScans';
 import { useSettings } from '@/hooks/useSettings';
+
+const BACKGROUND_SAVE_RETRY_DELAYS_MS = [0, 1000, 3000];
+
+async function saveScanInBackground(scanData: Parameters<typeof createScan>[0], pendingScanId: string) {
+  for (let attempt = 0; attempt < BACKGROUND_SAVE_RETRY_DELAYS_MS.length; attempt += 1) {
+    const delayMs = BACKGROUND_SAVE_RETRY_DELAYS_MS[attempt] ?? 0;
+    if (delayMs > 0) {
+      await new Promise((resolve) => setTimeout(resolve, delayMs));
+    }
+
+    try {
+      await createScan(scanData);
+      return;
+    } catch {
+      if (attempt === BACKGROUND_SAVE_RETRY_DELAYS_MS.length - 1) {
+        sessionStorage.setItem(`hlvn.pendingScanSaveFailed.${pendingScanId}`, '1');
+        window.dispatchEvent(new CustomEvent('hlvn:scan-save-failed', { detail: { scanId: pendingScanId } }));
+      }
+    }
+  }
+}
 
 function CameraPage() {
   const navigate = useNavigate();
@@ -65,26 +86,22 @@ function CameraPage() {
 
       // Process OCR with user's selected model tier
       const ocrResult = await processOCR(compressedBlob, settings.selectedModelTier);
-      setProgress('Đang lưu kết quả...');
+      setProgress('Hoàn tất!');
 
-      // Create scan record
-      const scanId = await createScan({
+      const scanData = {
         timestamp: new Date(),
-        imageDataUrl: capturedImage.dataUrl,
+        imageDataUrl: '',
         ocrRaw: ocrResult.ocrRaw,
         ocrStructured: ocrResult.structured,
         edited: false,
         tokenUsage: ocrResult.tokenUsage,
         apiKeyIndex: ocrResult.apiKeyIndex,
         modelTier: ocrResult.modelTier,
-      });
+      };
+      const pendingScanId = createPendingScan(scanData);
+      navigate(`/ocr-result/${pendingScanId}`);
 
-      setProgress('Hoàn tất!');
-
-      // Navigate to result page
-      setTimeout(() => {
-        navigate(`/ocr-result/${scanId}`);
-      }, 300);
+      void saveScanInBackground(scanData, pendingScanId);
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Đã xảy ra lỗi không mong muốn';
       setError(errorMessage);
@@ -106,56 +123,61 @@ function CameraPage() {
                 <p className="mt-2 text-body-sm text-text-secondary">Vui lòng chờ trong giây lát</p>
               </div>
 
-              <div className="card-production mb-4 p-4">
+              <div className="card-production mb-4 p-4" role="status" aria-live="polite">
                 <div className="mb-3 flex items-center gap-2 text-caption font-semibold uppercase tracking-[0.12em] text-text-muted">
                   <span className="rounded-full bg-ai-light px-2 py-0.5 text-ai">Gemini Pro</span>
                   <span>~3s</span>
                 </div>
 
-                <div className="space-y-3">
-                  <div className="flex items-center gap-3">
-                    <CheckCircle2 className="h-5 w-5 flex-shrink-0 text-success" />
+                <ol className="space-y-3" aria-label="Tiến trình xử lý OCR">
+                  <li className="flex items-center gap-3">
+                    <CheckCircle2 className="h-5 w-5 flex-shrink-0 text-success" aria-hidden="true" />
                     <span className="text-body text-text-primary">Tải ảnh lên</span>
-                  </div>
-                  <div className="flex items-center gap-3">
+                    <span className="sr-only">Hoàn thành</span>
+                  </li>
+                  <li className="flex items-center gap-3" aria-current={progress.includes('OCR') ? 'step' : undefined}>
                     {progress.includes('OCR') ? (
-                      <Loader2 className="h-5 w-5 flex-shrink-0 animate-spin text-primary" />
+                      <Loader2 className="h-5 w-5 flex-shrink-0 animate-spin text-primary" aria-hidden="true" />
                     ) : progress.includes('lưu') || progress.includes('Hoàn tất') ? (
-                      <CheckCircle2 className="h-5 w-5 flex-shrink-0 text-success" />
+                      <CheckCircle2 className="h-5 w-5 flex-shrink-0 text-success" aria-hidden="true" />
                     ) : (
-                      <Circle className="h-5 w-5 flex-shrink-0 text-text-muted" />
+                      <Circle className="h-5 w-5 flex-shrink-0 text-text-muted" aria-hidden="true" />
                     )}
                     <span className={`text-body ${progress.includes('OCR') ? 'font-medium text-text-primary' : 'text-text-secondary'}`}>
                       Nhận dạng OCR
                     </span>
-                  </div>
-                  <div className="flex items-center gap-3">
+                    <span className="sr-only">{progress.includes('OCR') ? 'Đang xử lý' : progress.includes('Hoàn tất') ? 'Hoàn thành' : 'Chưa bắt đầu'}</span>
+                  </li>
+                  <li className="flex items-center gap-3" aria-current={progress.includes('lưu') ? 'step' : undefined}>
                     {progress.includes('lưu') ? (
-                      <Loader2 className="h-5 w-5 flex-shrink-0 animate-spin text-primary" />
+                      <Loader2 className="h-5 w-5 flex-shrink-0 animate-spin text-primary" aria-hidden="true" />
                     ) : progress.includes('Hoàn tất') ? (
-                      <CheckCircle2 className="h-5 w-5 flex-shrink-0 text-success" />
+                      <CheckCircle2 className="h-5 w-5 flex-shrink-0 text-success" aria-hidden="true" />
                     ) : (
-                      <Circle className="h-5 w-5 flex-shrink-0 text-text-muted" />
+                      <Circle className="h-5 w-5 flex-shrink-0 text-text-muted" aria-hidden="true" />
                     )}
                     <span className={`text-body ${progress.includes('lưu') ? 'font-medium text-text-primary' : 'text-text-secondary'}`}>
                       Chuẩn hóa trường dữ liệu
                     </span>
-                  </div>
-                  <div className="flex items-center gap-3">
+                    <span className="sr-only">{progress.includes('lưu') ? 'Đang xử lý' : progress.includes('Hoàn tất') ? 'Hoàn thành' : 'Chưa bắt đầu'}</span>
+                  </li>
+                  <li className="flex items-center gap-3" aria-current={progress.includes('Hoàn tất') ? 'step' : undefined}>
                     {progress.includes('Hoàn tất') ? (
-                      <CheckCircle2 className="h-5 w-5 flex-shrink-0 text-success" />
+                      <CheckCircle2 className="h-5 w-5 flex-shrink-0 text-success" aria-hidden="true" />
                     ) : (
-                      <Circle className="h-5 w-5 flex-shrink-0 text-text-muted" />
+                      <Circle className="h-5 w-5 flex-shrink-0 text-text-muted" aria-hidden="true" />
                     )}
                     <span className={`text-body ${progress.includes('Hoàn tất') ? 'font-medium text-text-primary' : 'text-text-secondary'}`}>
                       Lưu kết quả
                     </span>
-                  </div>
-                </div>
+                    <span className="sr-only">{progress.includes('Hoàn tất') ? 'Hoàn thành' : 'Chưa bắt đầu'}</span>
+                  </li>
+                </ol>
               </div>
 
               <button
                 onClick={handleRetake}
+                aria-label="Hủy và quay lại chụp ảnh"
                 className="flex w-full items-center justify-center gap-2 rounded-xl border border-card-border bg-card px-4 py-3 text-body font-medium text-text-secondary transition-colors hover:bg-surface hover:text-text-primary"
               >
                 <X className="h-5 w-5" />

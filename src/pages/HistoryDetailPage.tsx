@@ -11,7 +11,7 @@ import { PrimaryButton, Toast, OCRFieldCard } from '@/components/ui';
 export default function HistoryDetailPage() {
   const { scanId } = useParams<{ scanId: string }>();
   const navigate = useNavigate();
-  const scan = useScan(scanId);
+  const { scan } = useScan(scanId);
   const { isExporting, exportScan } = useExport();
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
 

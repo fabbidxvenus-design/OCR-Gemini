@@ -34,11 +34,37 @@ function toBackendOCR(ocr: OCRResponse) {
   };
 }
 
+const PENDING_SCAN_TTL_MS = 10 * 60 * 1000;
+const pendingScans = new Map<string, { scan: ScanRecord; expiresAt: number }>();
+
 function getAccessToken(): string {
   const accessToken = useAuthStore.getState().accessToken;
   if (!accessToken) throw new Error('Bạn cần đăng nhập để xem dữ liệu scan');
   return accessToken;
 }
+
+export function createPendingScan(data: Omit<ScanRecord, 'id'>): string {
+  const scanId = `pending-${crypto.randomUUID()}`;
+  const scan: ScanRecord = { ...data, id: scanId, imageDataUrl: '' };
+  pendingScans.set(scanId, {
+    scan,
+    expiresAt: Date.now() + PENDING_SCAN_TTL_MS,
+  });
+  return scanId;
+}
+
+function getPendingScan(scanId: string): ScanRecord | undefined {
+  const pending = pendingScans.get(scanId);
+  if (!pending) return undefined;
+
+  if (pending.expiresAt <= Date.now()) {
+    pendingScans.delete(scanId);
+    return undefined;
+  }
+
+  return pending.scan;
+}
+
 
 export function useScans(options?: { limit?: number; order?: 'asc' | 'desc' }): ScanRecord[] | undefined {
   const { limit = 100, order = 'desc' } = options || {};
@@ -78,12 +104,32 @@ export function useScans(options?: { limit?: number; order?: 'asc' | 'desc' }): 
   return scans;
 }
 
-export function useScan(scanId?: string): ScanRecord | undefined {
+export interface UseScanResult {
+  scan: ScanRecord | undefined;
+  isPendingMissing: boolean;
+}
+
+export function useScan(scanId?: string): UseScanResult {
   const accessToken = useAuthStore((state) => state.accessToken);
   const [scan, setScan] = useState<ScanRecord | undefined>();
+  const [isPendingMissing, setIsPendingMissing] = useState(false);
 
   useEffect(() => {
-    if (!scanId || !accessToken) {
+    setIsPendingMissing(false);
+
+    if (!scanId) {
+      setScan(undefined);
+      return;
+    }
+
+    if (scanId.startsWith('pending-')) {
+      const pendingScan = getPendingScan(scanId);
+      setScan(pendingScan);
+      setIsPendingMissing(!pendingScan);
+      return;
+    }
+
+    if (!accessToken) {
       setScan(undefined);
       return;
     }
@@ -108,7 +154,7 @@ export function useScan(scanId?: string): ScanRecord | undefined {
     };
   }, [accessToken, scanId]);
 
-  return scan;
+  return { scan, isPendingMissing };
 }
 
 export function useSearchScans(query: string): ScanRecord[] | undefined {
@@ -133,13 +179,13 @@ export function useSearchScans(query: string): ScanRecord[] | undefined {
 
 export async function createScan(data: Omit<ScanRecord, 'id'>): Promise<string> {
   const created = await scansApi.createScan(getAccessToken(), {
-    imageUrl: data.imageDataUrl,
     timestamp: data.timestamp.toISOString(),
     ocrRaw: data.ocrRaw,
     ocrStructured: toBackendOCR(data.ocrStructured),
     tokenUsage: data.tokenUsage,
     apiKeyIndex: data.apiKeyIndex,
     edited: data.edited,
+    modelTier: data.modelTier,
   });
   return created.id;
 }

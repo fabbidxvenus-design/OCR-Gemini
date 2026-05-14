@@ -1,9 +1,10 @@
-import { useState, useMemo } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import Layout from '@/components/layout/Layout';
 import { useScan } from '@/hooks/useScans';
 import { useShare } from '@/hooks/useShare';
 import { Toast, PrimaryButton, OCRFieldCard } from '@/components/ui';
+import ErrorMessage from '@/components/ui/ErrorMessage';
 import { Edit, Copy, Share2, FileText, AlertTriangle, CheckCircle2 } from 'lucide-react';
 import { categorizeFields, groupSizeQuantityFields } from '@/lib/fieldCategories';
 import scanDisplayName from '@/lib/scanDisplayName';
@@ -11,9 +12,31 @@ import scanDisplayName from '@/lib/scanDisplayName';
 export default function OCRResultPage() {
   const { scanId } = useParams<{ scanId: string }>();
   const navigate = useNavigate();
-  const scan = useScan(scanId);
+  const { scan, isPendingMissing } = useScan(scanId);
   const { isSharing, isCopying, shareOCR, copyOCR } = useShare();
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
+
+  useEffect(() => {
+    if (!scanId?.startsWith('pending-')) return;
+
+    const saveFailureKey = `hlvn.pendingScanSaveFailed.${scanId}`;
+    const showSaveFailure = () => {
+      sessionStorage.removeItem(saveFailureKey);
+      setToast({ message: 'Kết quả đã hiển thị nhưng chưa lưu được vào lịch sử', type: 'error' });
+    };
+
+    if (sessionStorage.getItem(saveFailureKey)) {
+      showSaveFailure();
+    }
+
+    const handleSaveFailure = (event: Event) => {
+      const detail = (event as CustomEvent<{ scanId?: string }>).detail;
+      if (detail?.scanId === scanId) showSaveFailure();
+    };
+
+    window.addEventListener('hlvn:scan-save-failed', handleSaveFailure);
+    return () => window.removeEventListener('hlvn:scan-save-failed', handleSaveFailure);
+  }, [scanId]);
 
   const categorizedFields = useMemo(() => {
     const fields = groupSizeQuantityFields(scan?.ocrStructured?.fields || []);
@@ -26,10 +49,18 @@ export default function OCRResultPage() {
 
   if (!scan) {
     return (
-      <Layout title="Đang tải...">
-        <div className="flex h-64 items-center justify-center">
-          <p className="animate-pulse text-text-secondary">Đang tải kết quả...</p>
-        </div>
+      <Layout title={isPendingMissing ? 'Không tìm thấy kết quả' : 'Đang tải...'}>
+        {isPendingMissing ? (
+          <ErrorMessage
+            title="Không thể khôi phục kết quả tạm"
+            message="Kết quả OCR tạm thời chỉ tồn tại trong phiên hiện tại. Vui lòng chụp lại ảnh nếu bạn đã tải lại trang trước khi kết quả được lưu."
+            onRetry={() => navigate('/camera')}
+          />
+        ) : (
+          <div className="flex h-64 items-center justify-center">
+            <p className="animate-pulse text-text-secondary">Đang tải kết quả...</p>
+          </div>
+        )}
       </Layout>
     );
   }
@@ -87,7 +118,11 @@ export default function OCRResultPage() {
               <p className="text-caption text-text-muted">Trường dữ liệu</p>
               <p className="font-display text-heading-sm text-text-primary">{groupedFields.length}</p>
             </div>
-            <div className={`rounded-xl p-3 ${needsReview ? 'bg-warning-light' : 'bg-success-light'}`}>
+            <div
+              className={`rounded-xl p-3 ${needsReview ? 'bg-warning-light' : 'bg-success-light'}`}
+              role="status"
+              aria-label={needsReview ? 'Trạng thái: Cần kiểm tra' : 'Trạng thái: Sẵn sàng'}
+            >
               <p className="text-caption text-text-muted">Trạng thái</p>
               <div className="flex items-center gap-1.5">
                 {needsReview ? <AlertTriangle className="h-4 w-4 text-warning" /> : <CheckCircle2 className="h-4 w-4 text-success" />}

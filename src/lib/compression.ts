@@ -34,8 +34,8 @@ export async function compressImage(
 }
 
 /**
- * Ultra-fast compression for OCR - target <150ms, <50KB output
- * Resizes to 640px max and reduces quality to 0.6
+ * Ultra-fast compression for OCR - target <150ms, <25KB output
+ * Resizes to 480px max and reduces quality to 0.45
  */
 export async function compressImageForOCR(
   fileOrBlob: File | Blob
@@ -43,17 +43,16 @@ export async function compressImageForOCR(
   try {
     const file = fileOrBlob as File;
     const compressedBlob = await imageCompression(file, {
-      maxSizeMB: 0.05, // Target <50KB
-      maxWidthOrHeight: 640, // Ultra reduced from 800
+      maxSizeMB: 0.025,
+      maxWidthOrHeight: 480,
       useWebWorker: true,
       fileType: 'image/jpeg',
-      initialQuality: 0.6, // Lower quality for speed
+      initialQuality: 0.45,
     });
 
     return compressedBlob;
   } catch {
-    // Fallback: try with less aggressive settings
-    return compressImage(fileOrBlob, { maxWidthOrHeight: 640, maxSizeMB: 0.1 });
+    return compressImage(fileOrBlob, { maxWidthOrHeight: 480, maxSizeMB: 0.05 });
   }
 }
 
