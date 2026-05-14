@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { BrowserRouter, Routes, Route, useNavigate } from 'react-router-dom';
 import LoginPage from '@/pages/LoginPage';
 import RegisterPage from '@/pages/RegisterPage';
@@ -57,15 +57,29 @@ function CameraPage() {
   const [error, setError] = useState<string | null>(null);
 
   const handleCapture = (blob: Blob, dataUrl: string) => {
+    if (capturedImage?.dataUrl.startsWith('blob:')) {
+      URL.revokeObjectURL(capturedImage.dataUrl);
+    }
     setCapturedImage({ blob, dataUrl });
     setError(null);
   };
 
   const handleRetake = () => {
+    if (capturedImage?.dataUrl.startsWith('blob:')) {
+      URL.revokeObjectURL(capturedImage.dataUrl);
+    }
     setCapturedImage(null);
     setProgress('');
     setError(null);
   };
+
+  useEffect(() => {
+    return () => {
+      if (capturedImage?.dataUrl.startsWith('blob:')) {
+        URL.revokeObjectURL(capturedImage.dataUrl);
+      }
+    };
+  }, [capturedImage]);
 
   const handleRetry = () => {
     if (capturedImage) {

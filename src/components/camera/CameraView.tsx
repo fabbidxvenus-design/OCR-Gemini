@@ -24,11 +24,16 @@ export default function CameraView({ onCapture }: CameraViewProps) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const handleCapture = () => {
-    const result = captureImage();
-    if (result) {
-      onCapture(result.blob, result.dataUrl);
+  const handleCapture = async () => {
+    try {
+      const result = await captureImage();
+      if (result) {
+        onCapture(result.blob, result.dataUrl);
+        stopCamera();
+      }
+    } catch {
       stopCamera();
+      await startCamera();
     }
   };
 
@@ -53,7 +58,7 @@ export default function CameraView({ onCapture }: CameraViewProps) {
         <label className="btn-touch cursor-pointer bg-primary text-white shadow-camera-control hover:bg-primary-hover">
           <Upload className="mr-2 h-5 w-5" />
           Tải ảnh lên
-          <input type="file" accept="image/*" onChange={handleFileUpload} className="hidden" />
+          <input type="file" accept="image/*" aria-label="Tải ảnh từ thư viện" onChange={handleFileUpload} className="hidden" />
         </label>
       </div>
     );
@@ -116,7 +121,7 @@ export default function CameraView({ onCapture }: CameraViewProps) {
         <div className="mx-auto flex max-w-[300px] items-center justify-center gap-8">
           <label className="touch-target flex cursor-pointer items-center justify-center rounded-full bg-white/15 text-white shadow-camera-control backdrop-blur-md transition-colors hover:bg-white/25">
             <Upload className="h-5 w-5" />
-            <input type="file" accept="image/*" onChange={handleFileUpload} className="hidden" />
+            <input type="file" accept="image/*" aria-label="Tải ảnh từ thư viện" onChange={handleFileUpload} className="hidden" />
           </label>
 
           <button

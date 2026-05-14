@@ -9,21 +9,18 @@ interface UseCameraReturn {
   currentFacingMode: 'user' | 'environment';
   startCamera: (facingMode?: 'user' | 'environment') => Promise<void>;
   stopCamera: () => void;
-  captureImage: () => { blob: Blob; dataUrl: string } | null;
+  captureImage: () => Promise<{ blob: Blob; dataUrl: string } | null>;
   switchCamera: () => Promise<void>;
   isActive: boolean;
 }
 
-function dataURLtoBlob(dataUrl: string): Blob {
-  const arr = dataUrl.split(',');
-  const mime = arr[0].match(/:(.*?);/)?.[1] || 'image/jpeg';
-  const bstr = atob(arr[1]);
-  let n = bstr.length;
-  const u8arr = new Uint8Array(n);
-  while (n--) {
-    u8arr[n] = bstr.charCodeAt(n);
-  }
-  return new Blob([u8arr], { type: mime });
+async function canvasToJpegBlob(canvas: HTMLCanvasElement): Promise<Blob> {
+  const blob = await new Promise<Blob | null>((resolve) => {
+    canvas.toBlob(resolve, 'image/jpeg', 0.82);
+  });
+
+  if (!blob) throw new Error('Không thể chụp ảnh. Vui lòng thử lại.');
+  return blob;
 }
 
 export function useCamera(): UseCameraReturn {
@@ -97,7 +94,7 @@ export function useCamera(): UseCameraReturn {
     }
   }, [stream]);
 
-  const captureImage = useCallback((): { blob: Blob; dataUrl: string } | null => {
+  const captureImage = useCallback(async (): Promise<{ blob: Blob; dataUrl: string } | null> => {
     if (!videoRef.current || !canvasRef.current) return null;
 
     const video = videoRef.current;
@@ -105,17 +102,12 @@ export function useCamera(): UseCameraReturn {
     const context = canvas.getContext('2d');
     if (!context) return null;
 
-    // Set canvas size to video size
-    canvas.width = video.videoWidth || 1920;
-    canvas.height = video.videoHeight || 1080;
-
-    // Draw video frame to canvas
+    canvas.width = video.videoWidth || 1280;
+    canvas.height = video.videoHeight || 720;
     context.drawImage(video, 0, 0, canvas.width, canvas.height);
 
-    // Convert to data URL
-    const dataUrl = canvas.toDataURL('image/jpeg', 0.95);
-
-    return { blob: dataURLtoBlob(dataUrl), dataUrl };
+    const blob = await canvasToJpegBlob(canvas);
+    return { blob, dataUrl: URL.createObjectURL(blob) };
   }, []);
 
   const switchCamera = useCallback(async () => {
