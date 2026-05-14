@@ -254,7 +254,7 @@ test.describe('OCR latency Phase 1', () => {
 
     await page.goto('/ocr-result/local-missing');
     await expect(page.getByText('Không tìm thấy kết quả OCR')).toBeVisible();
-    await expect(page.getByRole('button', { name: 'Thử lại' })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Thử lại' })).toBeFocused();
   });
 
   test('does not show local-only OCR results in History', async ({ page }) => {

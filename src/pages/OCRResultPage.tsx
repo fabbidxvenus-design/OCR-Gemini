@@ -33,6 +33,7 @@ export default function OCRResultPage() {
             title="Không tìm thấy kết quả OCR"
             message="Kết quả OCR cục bộ có thể đã được lưu vào lịch sử hoặc đã hết hạn sau 7 ngày. Vui lòng kiểm tra lịch sử hoặc chụp lại ảnh."
             onRetry={() => navigate('/camera')}
+            autoFocus
           />
         ) : (
           <div className="flex h-64 items-center justify-center">
