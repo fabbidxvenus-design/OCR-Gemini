@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo } from 'react';
+import { useState, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import Layout from '@/components/layout/Layout';
 import { useScan } from '@/hooks/useScans';
@@ -16,28 +16,6 @@ export default function OCRResultPage() {
   const { isSharing, isCopying, shareOCR, copyOCR } = useShare();
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
 
-  useEffect(() => {
-    if (!scanId?.startsWith('pending-')) return;
-
-    const saveFailureKey = `hlvn.pendingScanSaveFailed.${scanId}`;
-    const showSaveFailure = () => {
-      sessionStorage.removeItem(saveFailureKey);
-      setToast({ message: 'Kết quả đã hiển thị nhưng chưa lưu được vào lịch sử', type: 'error' });
-    };
-
-    if (sessionStorage.getItem(saveFailureKey)) {
-      showSaveFailure();
-    }
-
-    const handleSaveFailure = (event: Event) => {
-      const detail = (event as CustomEvent<{ scanId?: string }>).detail;
-      if (detail?.scanId === scanId) showSaveFailure();
-    };
-
-    window.addEventListener('hlvn:scan-save-failed', handleSaveFailure);
-    return () => window.removeEventListener('hlvn:scan-save-failed', handleSaveFailure);
-  }, [scanId]);
-
   const categorizedFields = useMemo(() => {
     const fields = groupSizeQuantityFields(scan?.ocrStructured?.fields || []);
     const withCategories = categorizeFields(fields);
@@ -52,8 +30,8 @@ export default function OCRResultPage() {
       <Layout title={isPendingMissing ? 'Không tìm thấy kết quả' : 'Đang tải...'}>
         {isPendingMissing ? (
           <ErrorMessage
-            title="Không thể khôi phục kết quả tạm"
-            message="Kết quả OCR tạm thời chỉ tồn tại trong phiên hiện tại. Vui lòng chụp lại ảnh nếu bạn đã tải lại trang trước khi kết quả được lưu."
+            title="Không tìm thấy kết quả OCR"
+            message="Kết quả OCR cục bộ có thể đã được lưu vào lịch sử hoặc đã hết hạn sau 7 ngày. Vui lòng kiểm tra lịch sử hoặc chụp lại ảnh."
             onRetry={() => navigate('/camera')}
           />
         ) : (

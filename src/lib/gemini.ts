@@ -3,7 +3,10 @@ import { apiClient } from './apiClient';
 import { useAuthStore } from '@/store/authStore';
 import { z } from 'zod';
 
-const BackendOCRStructuredSchema = z.object({
+const OCRModelTierSchema = z.enum(['free', 'default', 'high']);
+type OCRModelTier = z.infer<typeof OCRModelTierSchema>;
+
+const OCRStructuredSchema = z.object({
   title: z.string().optional(),
   fields: z.array(z.object({
     field: z.string(),
@@ -16,21 +19,49 @@ const BackendOCRStructuredSchema = z.object({
     quantity: z.number(),
   })).optional(),
   rawText: z.string().optional(),
+  raw_text: z.string().optional(),
   notes: z.array(z.string()).optional(),
 });
 
-const BackendOCRResultSchema = z.object({
+const OCRResultSchema = z.object({
   ocrRaw: z.string(),
-  ocrStructured: BackendOCRStructuredSchema,
+  ocrStructured: OCRStructuredSchema,
   tokenUsage: z.object({
     input: z.number(),
     output: z.number(),
     cost: z.number(),
+    model: z.string().optional(),
   }),
   apiKeyIndex: z.number(),
 });
 
-type BackendOCRResult = z.infer<typeof BackendOCRResultSchema>;
+type OCRResult = z.infer<typeof OCRResultSchema>;
+
+type ProcessOCRResult = {
+  structured: OCRResponse;
+  ocrRaw: string;
+  tokenUsage: TokenUsage;
+  apiKeyIndex: number;
+  modelTier: OCRModelTier;
+};
+
+const GEMINI_MODEL = 'gemini-2.5-flash-lite';
+const GEMINI_INPUT_COST_PER_MILLION = 0.10;
+const GEMINI_OUTPUT_COST_PER_MILLION = 0.40;
+const GEMINI_MAX_OUTPUT_TOKENS = 1536;
+const GEMINI_ATTEMPT_TIMEOUT_MS = 8000;
+const DEFAULT_SYSTEM_PROMPT = `Extract text from the document image and return only valid JSON.
+Schema: {"title":"string","fields":[{"field":"string","value":"string","confidence":"high|medium|low","category":"main|other"}],"sizes":[{"size":"string","quantity":number}],"notes":["string"]}
+Use category "main" for barcode, product/code, lot, contract/order, quantity, size, price, date, unit. Use "other" for supplementary metadata or notes.
+Only output fields with a readable label and matching value; never use the label as its own value. Put unlabeled values in notes.
+Combine repeated size/quantity rows into one main field like {"field":"サイズ / 数量","value":"M: 10, L: 10","confidence":"high","category":"main"} and also populate sizes.
+Omit unreadable empty fields or use low confidence with empty value. Category is required for every field. No markdown or explanation.`;
+const DEFAULT_USER_PROMPT = 'Extract OCR fields from this image. JSON only.';
+const GEMINI_DIRECT_ENABLED = import.meta.env.VITE_USE_DIRECT_GEMINI === 'true';
+const DIRECT_GEMINI_KEYS = [
+  import.meta.env.VITE_GEMINI_API_KEY,
+  import.meta.env.VITE_GEMINI_API_KEY_2,
+].filter((key): key is string => typeof key === 'string' && key.length > 0);
 
 export function blobToDataUrl(imageBlob: Blob): Promise<string> {
   const reader = new FileReader();
@@ -42,42 +73,145 @@ export function blobToDataUrl(imageBlob: Blob): Promise<string> {
   });
 }
 
-function toMobileOCRResponse(result: BackendOCRResult): OCRResponse {
+function toMobileOCRResponse(result: OCRResult): OCRResponse {
   return {
     title: result.ocrStructured.title,
     fields: result.ocrStructured.fields || [],
     sizes: result.ocrStructured.sizes || [],
-    raw_text: result.ocrStructured.rawText ?? result.ocrRaw,
+    raw_text: result.ocrStructured.rawText ?? result.ocrStructured.raw_text ?? result.ocrRaw,
     notes: result.ocrStructured.notes || [],
   };
 }
 
-export async function processOCR(
-  imageBlob: Blob,
-  tierOverride?: 'free' | 'default' | 'high'
-): Promise<{
-  structured: OCRResponse;
-  ocrRaw: string;
-  tokenUsage: TokenUsage;
-  apiKeyIndex: number;
-  modelTier: 'free' | 'default' | 'high';
-}> {
-  // Model tier is now handled by the UI/Settings and passed here.
-  // Default to 'default' if not provided.
-  const tier = tierOverride || 'default';
+function calculateEstimatedCost(inputTokens: number, outputTokens: number): number {
+  return (inputTokens / 1_000_000) * GEMINI_INPUT_COST_PER_MILLION + (outputTokens / 1_000_000) * GEMINI_OUTPUT_COST_PER_MILLION;
+}
+
+function getImageData(dataUrl: string): { mimeType: string; data: string } {
+  const match = dataUrl.match(/^data:([^;,]+);base64,(.+)$/);
+  return {
+    mimeType: match?.[1] ?? 'image/jpeg',
+    data: match?.[2] ?? dataUrl,
+  };
+}
+
+function extractJsonObject(text: string): unknown {
+  const trimmed = text.trim();
+  const fenced = trimmed.match(/^```(?:json)?\s*([\s\S]*?)\s*```$/i)?.[1];
+  const candidate = fenced ?? trimmed;
+  const start = candidate.indexOf('{');
+  const end = candidate.lastIndexOf('}');
+
+  if (start === -1 || end === -1 || end <= start) {
+    throw new Error('OCR provider returned an invalid JSON response');
+  }
+
+  try {
+    return JSON.parse(candidate.slice(start, end + 1)) as unknown;
+  } catch {
+    throw new Error('OCR provider returned an invalid JSON response');
+  }
+}
+
+async function fetchDirectGeminiResult(imageBlob: Blob): Promise<OCRResult> {
+  if (DIRECT_GEMINI_KEYS.length === 0) {
+    throw new Error('VITE_GEMINI_API_KEY chưa được cấu hình');
+  }
+
+  const image = getImageData(await blobToDataUrl(imageBlob));
+  const body = {
+    contents: [
+      {
+        role: 'user',
+        parts: [
+          { inlineData: { mimeType: image.mimeType, data: image.data } },
+          { text: `${DEFAULT_SYSTEM_PROMPT}\n\n${DEFAULT_USER_PROMPT}` },
+        ],
+      },
+    ],
+    generationConfig: {
+      temperature: 0.1,
+      maxOutputTokens: GEMINI_MAX_OUTPUT_TOKENS,
+      responseMimeType: 'application/json',
+    },
+  };
+
+  for (let index = 0; index < DIRECT_GEMINI_KEYS.length; index += 1) {
+    const apiKey = DIRECT_GEMINI_KEYS[index];
+    const controller = new AbortController();
+    const timeout = window.setTimeout(() => controller.abort(), GEMINI_ATTEMPT_TIMEOUT_MS);
+
+    try {
+      const response = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'x-goog-api-key': apiKey,
+          },
+          body: JSON.stringify(body),
+          signal: controller.signal,
+        }
+      );
+
+      if (!response.ok) {
+        if ([401, 403, 429].includes(response.status) && index < DIRECT_GEMINI_KEYS.length - 1) continue;
+        throw new Error('Gemini OCR request failed');
+      }
+
+      const data = await response.json() as {
+        candidates?: Array<{ content?: { parts?: Array<{ text?: string }> } }>;
+        usageMetadata?: { promptTokenCount?: number; candidatesTokenCount?: number };
+      };
+      const rawText = data.candidates?.[0]?.content?.parts?.map((part) => part.text ?? '').join('').trim() ?? '';
+      const structured = OCRStructuredSchema.parse(extractJsonObject(rawText));
+      const inputTokens = data.usageMetadata?.promptTokenCount ?? 0;
+      const outputTokens = data.usageMetadata?.candidatesTokenCount ?? 0;
+
+      return OCRResultSchema.parse({
+        ocrRaw: structured.rawText ?? structured.raw_text ?? rawText,
+        ocrStructured: structured,
+        tokenUsage: {
+          input: inputTokens,
+          output: outputTokens,
+          cost: calculateEstimatedCost(inputTokens, outputTokens),
+          model: GEMINI_MODEL,
+        },
+        apiKeyIndex: index + 1,
+      });
+    } finally {
+      window.clearTimeout(timeout);
+    }
+  }
+
+  throw new Error('Gemini OCR request failed');
+}
+
+async function fetchBackendOCRResult(imageBlob: Blob, tier: OCRModelTier): Promise<OCRResult> {
   const accessToken = useAuthStore.getState().accessToken;
 
   if (!accessToken) {
     throw new Error('Bạn cần đăng nhập để xử lý OCR');
   }
 
-  const result = await apiClient.post<BackendOCRResult>('/api/ocr/process', {
+  return apiClient.post<OCRResult>('/api/ocr/process', {
     imageBase64: await blobToDataUrl(imageBlob),
     modelTier: tier,
   }, {
     accessToken,
-    schema: BackendOCRResultSchema
+    schema: OCRResultSchema,
   });
+}
+
+export async function processOCR(
+  imageBlob: Blob,
+  tierOverride?: OCRModelTier
+): Promise<ProcessOCRResult> {
+  const tier = OCRModelTierSchema.catch('default').parse(tierOverride);
+  const result = GEMINI_DIRECT_ENABLED
+    ? await fetchDirectGeminiResult(imageBlob)
+    : await fetchBackendOCRResult(imageBlob, tier);
 
   return {
     structured: toMobileOCRResponse(result),

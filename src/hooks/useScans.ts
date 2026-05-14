@@ -3,6 +3,7 @@ import type { OCRResponse, ScanRecord } from '@/db/schema';
 import { scansApi } from '@/lib/scansApi';
 import { useAuthStore } from '@/store/authStore';
 import type { BackendScanRecord } from '@/lib/apiTypes';
+import { createLocalOcrScan, getLocalOcrScan } from '@/lib/localOcrScans';
 
 function toMobileScan(scan: BackendScanRecord): ScanRecord {
   return {
@@ -52,6 +53,8 @@ export function createPendingScan(data: Omit<ScanRecord, 'id'>): string {
   });
   return scanId;
 }
+
+export { createLocalOcrScan };
 
 function getPendingScan(scanId: string): ScanRecord | undefined {
   const pending = pendingScans.get(scanId);
@@ -119,6 +122,13 @@ export function useScan(scanId?: string): UseScanResult {
 
     if (!scanId) {
       setScan(undefined);
+      return;
+    }
+
+    if (scanId.startsWith('local-')) {
+      const localScan = getLocalOcrScan(scanId);
+      setScan(localScan);
+      setIsPendingMissing(!localScan);
       return;
     }
 

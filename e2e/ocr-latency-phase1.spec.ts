@@ -106,10 +106,11 @@ test.describe('OCR latency Phase 1', () => {
     expect(await page.evaluate(() => localStorage.getItem('auth-storage'))).toContain('test-token');
     await page.getByRole('button', { name: /xác nhận/i }).click();
 
-    await expect(page).toHaveURL(/\/ocr-result\/pending-/);
+    await expect(page).toHaveURL(/\/ocr-result\/local-/);
     await expect(page.getByText('Mock OCR Result')).toBeVisible();
     await expect(page.getByText('VES 529CT')).toBeVisible();
-    await expect(page.getByText('Kết quả đã hiển thị nhưng chưa lưu được vào lịch sử')).toBeVisible({ timeout: 10000 });
-    expect(createScanAttempts).toBe(3);
+    await expect(page.getByText('Kết quả đã hiển thị nhưng chưa lưu được vào lịch sử')).not.toBeVisible({ timeout: 10000 });
+    expect(createScanAttempts).toBeGreaterThan(0);
+    expect(await page.evaluate(() => localStorage.getItem('hlvn.localOcrScans'))).toContain('VES 529CT');
   });
 });

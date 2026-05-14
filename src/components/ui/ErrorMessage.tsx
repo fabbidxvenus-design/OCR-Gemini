@@ -14,12 +14,12 @@ export default function ErrorMessage({
   className = ''
 }: ErrorMessageProps) {
   return (
-    <div className={`flex flex-col items-center justify-center p-6 text-center ${className}`}>
+    <div className={`flex flex-col items-center justify-center p-6 text-center ${className}`} role="alert">
       <div className="w-12 h-12 rounded-full bg-error/10 flex items-center justify-center mb-4">
-        <AlertTriangle className="w-6 h-6 text-error" />
+        <AlertTriangle className="w-6 h-6 text-error" aria-hidden="true" />
       </div>
       {title && (
-        <h3 className="text-lg font-semibold text-gray-900 mb-2">{title}</h3>
+        <h3 className="text-lg font-semibold text-text-primary mb-2">{title}</h3>
       )}
       <p className="text-neutral text-sm mb-4">{message}</p>
       {onRetry && (
@@ -27,7 +27,7 @@ export default function ErrorMessage({
           onClick={onRetry}
           className="flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-lg font-medium hover:bg-primary/90 transition-colors"
         >
-          <RefreshCw className="w-4 h-4" />
+          <RefreshCw className="w-4 h-4" aria-hidden="true" />
           Thử lại
         </button>
       )}

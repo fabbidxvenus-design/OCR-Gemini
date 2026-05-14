@@ -21,12 +21,13 @@ import ErrorMessage from '@/components/ui/ErrorMessage';
 import { CheckCircle2, Circle, Loader2, X } from 'lucide-react';
 import { processOCR } from '@/lib/gemini';
 import { compressImageForOCR } from '@/lib/compression';
-import { createPendingScan, createScan } from '@/hooks/useScans';
+import { createLocalOcrScan, createScan } from '@/hooks/useScans';
+import { deleteLocalOcrScan } from '@/lib/localOcrScans';
 import { useSettings } from '@/hooks/useSettings';
 
 const BACKGROUND_SAVE_RETRY_DELAYS_MS = [0, 1000, 3000];
 
-async function saveScanInBackground(scanData: Parameters<typeof createScan>[0], pendingScanId: string) {
+async function saveScanInBackground(scanData: Parameters<typeof createScan>[0], localScanId: string) {
   for (let attempt = 0; attempt < BACKGROUND_SAVE_RETRY_DELAYS_MS.length; attempt += 1) {
     const delayMs = BACKGROUND_SAVE_RETRY_DELAYS_MS[attempt] ?? 0;
     if (delayMs > 0) {
@@ -35,12 +36,10 @@ async function saveScanInBackground(scanData: Parameters<typeof createScan>[0], 
 
     try {
       await createScan(scanData);
+      deleteLocalOcrScan(localScanId);
       return;
     } catch {
-      if (attempt === BACKGROUND_SAVE_RETRY_DELAYS_MS.length - 1) {
-        sessionStorage.setItem(`hlvn.pendingScanSaveFailed.${pendingScanId}`, '1');
-        window.dispatchEvent(new CustomEvent('hlvn:scan-save-failed', { detail: { scanId: pendingScanId } }));
-      }
+      continue;
     }
   }
 }
@@ -98,10 +97,10 @@ function CameraPage() {
         apiKeyIndex: ocrResult.apiKeyIndex,
         modelTier: ocrResult.modelTier,
       };
-      const pendingScanId = createPendingScan(scanData);
-      navigate(`/ocr-result/${pendingScanId}`);
+      const localScanId = createLocalOcrScan(scanData);
+      navigate(`/ocr-result/${localScanId}`);
 
-      void saveScanInBackground(scanData, pendingScanId);
+      void saveScanInBackground(scanData, localScanId);
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Đã xảy ra lỗi không mong muốn';
       setError(errorMessage);
