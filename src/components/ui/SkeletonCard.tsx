@@ -1,11 +1,14 @@
 interface SkeletonCardProps {
   showImage?: boolean;
   className?: string;
+  'data-testid'?: string;
 }
 
-export default function SkeletonCard({ showImage = true, className = '' }: SkeletonCardProps) {
+export default function SkeletonCard({ showImage = true, className = '', 'data-testid': testId }: SkeletonCardProps) {
+  const testProps = testId ? { 'data-testid': testId } : {};
+
   return (
-    <div className={`bg-card rounded-2xl border border-card-border p-card shadow-card animate-pulse ${className}`}>
+    <div className={`bg-card rounded-2xl border border-card-border p-card shadow-card animate-pulse ${className}`} {...testProps}>
       <div className="flex gap-3">
         {showImage && (
           <div className="w-20 h-20 bg-surface rounded-xl flex-shrink-0" />

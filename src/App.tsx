@@ -21,6 +21,8 @@ import ErrorMessage from '@/components/ui/ErrorMessage';
 import { CheckCircle2, Circle, Loader2, X } from 'lucide-react';
 import { processOCR } from '@/lib/gemini';
 import { compressImageForOCR } from '@/lib/compression';
+import { scansApi } from '@/lib/scansApi';
+import { useAuthStore } from '@/store/authStore';
 import { createLocalOcrScan, createScan, updateScan } from '@/hooks/useScans';
 import { deleteLocalOcrScan, getLocalOcrScan, setLocalOcrScanRemoteId } from '@/lib/localOcrScans';
 import { useSettings } from '@/hooks/useSettings';
@@ -28,7 +30,37 @@ import { useSettings } from '@/hooks/useSettings';
 const BACKGROUND_SAVE_RETRY_DELAYS_MS = [0, 1000, 3000];
 const LOCAL_SCAN_DELETE_AFTER_SAVE_DELAY_MS = 1000;
 
-async function saveScanInBackground(scanData: Parameters<typeof createScan>[0], localScanId: string) {
+async function uploadScanThumbnail(blob: Blob, accessToken: string): Promise<string | undefined> {
+  try {
+    const contentType = blob.type || 'image/jpeg';
+    const upload = await scansApi.createScanUploadUrl(accessToken, {
+      fileName: `scan-thumbnail-${crypto.randomUUID()}.jpg`,
+      contentType,
+      sizeBytes: blob.size,
+    });
+    await scansApi.uploadScanThumbnail(upload.uploadUrl, blob);
+    return upload.storagePath;
+  } catch {
+    return undefined;
+  }
+}
+
+async function saveScanInBackground(
+  scanData: Parameters<typeof createScan>[0],
+  localScanId: string,
+  thumbnailBlob?: Blob,
+) {
+  const accessToken = useAuthStore.getState().accessToken;
+  let uploadedStoragePath: string | undefined;
+
+  if (accessToken && thumbnailBlob) {
+    uploadedStoragePath = await uploadScanThumbnail(thumbnailBlob, accessToken);
+  }
+
+  const persistedScanData = uploadedStoragePath
+    ? { ...scanData, imageDataUrl: uploadedStoragePath }
+    : scanData;
+
   for (let attempt = 0; attempt < BACKGROUND_SAVE_RETRY_DELAYS_MS.length; attempt += 1) {
     const delayMs = BACKGROUND_SAVE_RETRY_DELAYS_MS[attempt] ?? 0;
     if (delayMs > 0) {
@@ -37,7 +69,7 @@ async function saveScanInBackground(scanData: Parameters<typeof createScan>[0], 
 
     try {
       const latestLocalScan = getLocalOcrScan(localScanId);
-      const savedScan = latestLocalScan ?? scanData;
+      const savedScan = latestLocalScan ? { ...latestLocalScan, imageDataUrl: persistedScanData.imageDataUrl } : persistedScanData;
       const remoteScanId = await createScan(savedScan);
       setLocalOcrScanRemoteId(localScanId, remoteScanId);
       const currentLocalScanAfterSave = getLocalOcrScan(localScanId);
@@ -137,7 +169,7 @@ function CameraPage() {
       const localScanId = createLocalOcrScan(scanData);
       navigate(`/ocr-result/${localScanId}`);
 
-      void saveScanInBackground(scanData, localScanId);
+      void saveScanInBackground(scanData, localScanId, compressedBlob);
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Đã xảy ra lỗi không mong muốn';
       setError(errorMessage);
