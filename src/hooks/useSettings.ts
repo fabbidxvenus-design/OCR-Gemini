@@ -4,7 +4,7 @@ import { settingsApi, type AppSettings } from '@/lib/settingsApi';
 
 const DEFAULT_SETTINGS: AppSettings = {
   id: 'app-settings',
-  selectedModelTier: 'default',
+  selectedModelTier: 'free',
 };
 
 export function useSettings() {
