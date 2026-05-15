@@ -26,4 +26,12 @@ describe('PrimaryButton', () => {
     expect(button.className).toContain('opacity-50');
     expect(button.className).toContain('cursor-not-allowed');
   });
+
+  it('shows a disabled button with a loading spinner', () => {
+    render(<PrimaryButton loading>Save</PrimaryButton>);
+    const button = screen.getByRole('button');
+    expect(button).toBeDisabled();
+    expect(screen.getByTestId('primary-button-loading-spinner')).toHaveAttribute('aria-label', 'Đang tải');
+    expect(screen.getByText('Save')).toBeTruthy();
+  });
 });

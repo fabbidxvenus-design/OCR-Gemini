@@ -1,10 +1,10 @@
 import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Layout from '@/components/layout/Layout';
-import { useScans } from '@/hooks/useScans';
+import { useScansState } from '@/hooks/useScans';
 import { useExport } from '@/hooks/useExport';
 import { useDebounce } from '@/hooks/useDebounce';
-import { Toast, PrimaryButton } from '@/components/ui';
+import { SkeletonCard, Toast, PrimaryButton } from '@/components/ui';
 import scanDisplayName from '@/lib/scanDisplayName';
 import { Search, Calendar, Edit3, CheckSquare, X, Download, ArrowUpDown, FileText, Camera, AlertTriangle, CheckCircle2 } from 'lucide-react';
 import type { ScanRecord } from '@/db/schema';
@@ -75,9 +75,9 @@ function ScanCard({ scan, selected, selectMode, onClick }: { scan: ScanRecord; s
       <div className="flex gap-3 p-3">
         <div className="relative h-20 w-20 flex-shrink-0 overflow-hidden rounded-2xl bg-surface">
           {scan.imageDataUrl ? (
-            <img src={scan.imageDataUrl} alt="" className="h-full w-full object-cover" />
+            <img src={scan.imageDataUrl} alt="" className="h-full w-full object-cover" data-testid="history-scan-thumbnail" />
           ) : (
-            <div className="flex h-full w-full items-center justify-center">
+            <div className="flex h-full w-full items-center justify-center" data-testid="history-scan-image-fallback">
               <FileText className="h-7 w-7 text-text-muted" />
             </div>
           )}
@@ -130,7 +130,7 @@ const SORT_OPTIONS: { value: SortOption; label: string }[] = [
 
 export default function HistoryPage() {
   const navigate = useNavigate();
-  const allScans = useScans({ limit: 100, order: 'desc' });
+  const { scans: scanList, isLoading } = useScansState({ limit: 100, order: 'desc' });
   const { isExporting, exportMultiple } = useExport();
   const [searchQuery, setSearchQuery] = useState('');
   const [activeFilter, setActiveFilter] = useState<FilterType>('all');
@@ -140,7 +140,6 @@ export default function HistoryPage() {
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
   const debouncedQuery = useDebounce(searchQuery, 300);
-  const scanList = allScans ?? [];
 
   const scans = useMemo(() => {
     const query = debouncedQuery.trim().toLowerCase();
@@ -206,7 +205,9 @@ export default function HistoryPage() {
           <div className="mb-4 flex items-start justify-between gap-3">
             <div>
               <p className="text-caption font-semibold uppercase tracking-[0.14em] text-text-muted">Kho hồ sơ OCR</p>
-              <h2 className="mt-1 font-display text-heading text-text-primary">{scanList.length} lượt quét</h2>
+              <h2 className="mt-1 font-display text-heading text-text-primary">
+                {isLoading ? 'Đang tải lịch sử' : `${scanList.length} lượt quét`}
+              </h2>
             </div>
             <button
               onClick={() => {
@@ -240,7 +241,7 @@ export default function HistoryPage() {
               <ArrowUpDown className="h-4 w-4" />
               {SORT_OPTIONS.find(option => option.value === sortBy)?.label}
             </button>
-            {filterOptions.map(option => (
+            {!isLoading && filterOptions.map(option => (
               <button
                 key={option.value}
                 onClick={() => setActiveFilter(option.value)}
@@ -270,7 +271,13 @@ export default function HistoryPage() {
           </div>
         )}
 
-        {scans.length > 0 ? (
+        {isLoading ? (
+          <div className="space-y-3" aria-label="Đang tải lịch sử">
+            {Array.from({ length: 4 }).map((_, index) => (
+              <SkeletonCard key={index} data-testid="history-skeleton-card" />
+            ))}
+          </div>
+        ) : scans.length > 0 ? (
           <div className="space-y-3">
             {scans.map(scan => (
               <ScanCard

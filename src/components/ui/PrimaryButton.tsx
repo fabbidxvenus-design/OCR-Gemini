@@ -1,12 +1,14 @@
 import { ButtonHTMLAttributes, forwardRef } from 'react';
+import Spinner from './Spinner';
 
 interface PrimaryButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: 'primary' | 'secondary' | 'danger';
   size?: 'md' | 'lg';
+  loading?: boolean;
 }
 
 const PrimaryButton = forwardRef<HTMLButtonElement, PrimaryButtonProps>(
-  ({ className = '', variant = 'primary', size = 'md', children, disabled, ...props }, ref) => {
+  ({ className = '', variant = 'primary', size = 'md', loading = false, children, disabled, ...props }, ref) => {
     const baseStyles = 'inline-flex items-center justify-center font-semibold transition-all duration-200 active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed';
 
     const variantStyles = {
@@ -23,10 +25,11 @@ const PrimaryButton = forwardRef<HTMLButtonElement, PrimaryButtonProps>(
     return (
       <button
         ref={ref}
-        disabled={disabled}
+        disabled={disabled || loading}
         className={`${baseStyles} ${variantStyles[variant]} ${sizeStyles[size]} ${className}`}
         {...props}
       >
+        {loading && <Spinner size="sm" className="mr-2 border-current border-t-transparent" data-testid="primary-button-loading-spinner" />}
         {children}
       </button>
     );

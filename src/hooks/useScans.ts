@@ -69,18 +69,26 @@ function getPendingScan(scanId: string): ScanRecord | undefined {
 }
 
 
-export function useScans(options?: { limit?: number; order?: 'asc' | 'desc' }): ScanRecord[] | undefined {
+export interface UseScansStateResult {
+  scans: ScanRecord[];
+  isLoading: boolean;
+}
+
+export function useScansState(options?: { limit?: number; order?: 'asc' | 'desc' }): UseScansStateResult {
   const { limit = 100, order = 'desc' } = options || {};
   const accessToken = useAuthStore((state) => state.accessToken);
-  const [scans, setScans] = useState<ScanRecord[] | undefined>();
+  const [scans, setScans] = useState<ScanRecord[]>([]);
+  const [isLoading, setIsLoading] = useState(Boolean(accessToken));
 
   useEffect(() => {
     if (!accessToken) {
       setScans([]);
+      setIsLoading(false);
       return;
     }
 
     let cancelled = false;
+    setIsLoading(true);
 
     async function loadScans() {
       if (!accessToken) return;
@@ -94,6 +102,8 @@ export function useScans(options?: { limit?: number; order?: 'asc' | 'desc' }): 
       } catch (err) {
         console.error('Failed to load scans:', err);
         if (!cancelled) setScans([]);
+      } finally {
+        if (!cancelled) setIsLoading(false);
       }
     }
 
@@ -104,7 +114,12 @@ export function useScans(options?: { limit?: number; order?: 'asc' | 'desc' }): 
     };
   }, [accessToken, limit, order]);
 
-  return scans;
+  return { scans, isLoading };
+}
+
+export function useScans(options?: { limit?: number; order?: 'asc' | 'desc' }): ScanRecord[] | undefined {
+  const { scans, isLoading } = useScansState(options);
+  return isLoading ? undefined : scans;
 }
 
 export interface UseScanResult {
