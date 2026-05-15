@@ -1,6 +1,6 @@
 import { apiClient } from './apiClient';
-import { BackendScanSchema, BackendScanListSchema, ApiKeyUsageStatsSchema, ScanUploadUrlSchema } from './apiTypes';
-import type { BackendScanRecord, ScanUploadUrl } from './apiTypes';
+import { BackendScanSchema, BackendScanListSchema, ApiKeyUsageStatsSchema, ScanUploadSchema, ScanUploadUrlSchema } from './apiTypes';
+import type { BackendScanRecord, ScanUpload, ScanUploadUrl } from './apiTypes';
 import type { z } from 'zod';
 
 const UPLOAD_TIMEOUT_MS = 30_000;
@@ -50,17 +50,15 @@ export const scansApi = {
       schema: ScanUploadUrlSchema,
     }),
 
-  uploadScanThumbnail: async (uploadUrl: string, image: Blob): Promise<void> => {
-    const response = await fetch(uploadUrl, {
-      method: 'PUT',
-      headers: { 'Content-Type': image.type || 'application/octet-stream' },
-      body: image,
+  uploadScanThumbnail: async (accessToken: string, image: Blob): Promise<ScanUpload> => {
+    const formData = new FormData();
+    formData.append('image', image, `scan-thumbnail-${crypto.randomUUID()}.jpg`);
+
+    return apiClient.postForm<ScanUpload>('/api/scans/upload', formData, {
+      accessToken,
+      schema: ScanUploadSchema,
       signal: AbortSignal.timeout(UPLOAD_TIMEOUT_MS),
     });
-
-    if (!response.ok) {
-      throw new Error('Không thể tải ảnh thumbnail lên storage');
-    }
   },
 
   getScans: (accessToken: string, options?: { limit?: number; order?: 'asc' | 'desc' }) =>

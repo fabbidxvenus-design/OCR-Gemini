@@ -58,19 +58,27 @@ describe('scansApi thumbnail persistence', () => {
     })).rejects.toThrow('Dữ liệu từ server không đúng định dạng');
   });
 
-  it('uploads the thumbnail blob directly to the signed storage URL', async () => {
-    fetchMock.mockResolvedValueOnce(new Response(null, { status: 200 }));
+  it('uploads the thumbnail blob through the authenticated server endpoint', async () => {
+    fetchMock.mockResolvedValueOnce(new Response(JSON.stringify({
+      success: true,
+      data: {
+        storagePath: 'scans/user-1/thumb.webp',
+        expiresAt: '2026-05-15T10:00:00.000Z',
+      },
+    }), { status: 200, headers: { 'Content-Type': 'application/json' } }));
     const thumbnail = new Blob(['thumbnail'], { type: 'image/webp' });
 
-    await scansApi.uploadScanThumbnail('https://storage.example.test/upload-token', thumbnail);
+    const result = await scansApi.uploadScanThumbnail('access-token', thumbnail);
 
-    expect(fetchMock).toHaveBeenCalledWith('https://storage.example.test/upload-token', expect.objectContaining({
-      method: 'PUT',
-      body: thumbnail,
+    expect(fetchMock).toHaveBeenCalledWith('http://localhost:3001/api/scans/upload', expect.objectContaining({
+      method: 'POST',
+      body: expect.any(FormData),
       headers: expect.objectContaining({
-        'Content-Type': 'image/webp',
+        Authorization: 'Bearer access-token',
+        Accept: 'application/json',
       }),
     }));
+    expect(result.storagePath).toBe('scans/user-1/thumb.webp');
   });
 
   it('sends imageUrl without imageDataUrl when creating scan history', async () => {

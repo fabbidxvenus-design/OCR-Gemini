@@ -79,18 +79,26 @@ export const BackendScanSchema = z.object({
 
 export const BackendScanListSchema = z.array(BackendScanSchema);
 
+export const ScanStoragePathSchema = z
+  .string()
+  .regex(/^scans\/[^/]+\/.+$/, 'storagePath must be under scans/<userId>/')
+  .refine((value) => !value.includes('..'), 'storagePath cannot contain path traversal');
+
 export const ScanUploadUrlSchema = z.object({
   uploadUrl: z.string(),
-  storagePath: z
-    .string()
-    .regex(/^scans\/[^/]+\/.+$/, 'storagePath must be under scans/<userId>/')
-    .refine((value) => !value.includes('..'), 'storagePath cannot contain path traversal'),
+  storagePath: ScanStoragePathSchema,
+  expiresAt: z.string(),
+});
+
+export const ScanUploadSchema = z.object({
+  storagePath: ScanStoragePathSchema,
   expiresAt: z.string(),
 });
 
 
 export type BackendScanRecord = z.infer<typeof BackendScanSchema>;
 export type ScanUploadUrl = z.infer<typeof ScanUploadUrlSchema>;
+export type ScanUpload = z.infer<typeof ScanUploadSchema>;
 
 // Example schema for a single scan
 export const ScanSchema = z.object({

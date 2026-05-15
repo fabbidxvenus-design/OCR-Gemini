@@ -3,7 +3,6 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const processOCRMock = vi.fn();
 const compressImageForOCRMock = vi.fn();
-const createScanUploadUrlMock = vi.fn();
 const uploadScanThumbnailMock = vi.fn();
 const createLocalOcrScanMock = vi.fn();
 const createScanMock = vi.fn();
@@ -25,7 +24,6 @@ vi.mock('@/lib/compression', () => ({
 
 vi.mock('@/lib/scansApi', () => ({
   scansApi: {
-    createScanUploadUrl: (...args: unknown[]) => createScanUploadUrlMock(...args),
     uploadScanThumbnail: (...args: unknown[]) => uploadScanThumbnailMock(...args),
   },
 }));
@@ -121,12 +119,10 @@ function setup() {
 
   const compressedBlob = new Blob(['compressed'], { type: 'image/jpeg' });
   compressImageForOCRMock.mockResolvedValue(compressedBlob);
-  createScanUploadUrlMock.mockResolvedValue({
-    uploadUrl: 'https://storage.example.test/upload',
+  uploadScanThumbnailMock.mockResolvedValue({
     storagePath: 'scans/user-1/thumb.jpg',
     expiresAt: '2026-05-15T10:00:00.000Z',
   });
-  uploadScanThumbnailMock.mockResolvedValue(undefined);
 
   createLocalOcrScanMock.mockReturnValue('local-1');
   createScanMock.mockResolvedValue('remote-1');
@@ -155,7 +151,6 @@ describe('CameraPage latency flow', () => {
     expect(localScanPayload.imageDataUrl).toBe('');
 
     await waitFor(() => {
-      expect(createScanUploadUrlMock).toHaveBeenCalledTimes(1);
       expect(uploadScanThumbnailMock).toHaveBeenCalledTimes(1);
       expect(createScanMock).toHaveBeenCalledTimes(1);
     });
@@ -178,7 +173,7 @@ describe('CameraPage latency flow', () => {
   });
 
   it('saves scan without imageUrl when thumbnail upload fails', async () => {
-    createScanUploadUrlMock.mockRejectedValue(new Error('Upload failed'));
+    uploadScanThumbnailMock.mockRejectedValue(new Error('Upload failed'));
 
     window.history.pushState({}, '', '/camera');
     const { default: App } = await import('@/App');

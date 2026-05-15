@@ -32,9 +32,12 @@ async function request<T>(
   }
 
   const defaultHeaders: Record<string, string> = {
-    'Content-Type': 'application/json',
     'Accept': 'application/json',
   };
+
+  if (!(options?.body instanceof FormData)) {
+    defaultHeaders['Content-Type'] = 'application/json';
+  }
 
   if (options?.accessToken) {
     defaultHeaders['Authorization'] = `Bearer ${options.accessToken}`;
@@ -109,6 +112,13 @@ export const apiClient = {
     request<T>('POST', path, {
       ...options,
       body: body ? JSON.stringify(body) : undefined,
+    }),
+
+  postForm: <T>(path: string, body: FormData, options?: Omit<Parameters<typeof request>[2], 'body' | 'headers'>) =>
+    request<T>('POST', path, {
+      ...options,
+      body,
+      headers: { 'Accept': 'application/json' },
     }),
 
   patch: <T, B = unknown>(path: string, body?: B, options?: Omit<Parameters<typeof request>[2], 'body'>) =>

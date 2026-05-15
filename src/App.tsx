@@ -32,13 +32,7 @@ const LOCAL_SCAN_DELETE_AFTER_SAVE_DELAY_MS = 1000;
 
 async function uploadScanThumbnail(blob: Blob, accessToken: string): Promise<string | undefined> {
   try {
-    const contentType = blob.type || 'image/jpeg';
-    const upload = await scansApi.createScanUploadUrl(accessToken, {
-      fileName: `scan-thumbnail-${crypto.randomUUID()}.jpg`,
-      contentType,
-      sizeBytes: blob.size,
-    });
-    await scansApi.uploadScanThumbnail(upload.uploadUrl, blob);
+    const upload = await scansApi.uploadScanThumbnail(accessToken, blob);
     return upload.storagePath;
   } catch {
     return undefined;
