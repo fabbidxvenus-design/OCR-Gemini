@@ -148,15 +148,14 @@ describe('CameraPage latency flow', () => {
     });
 
     const localScanPayload = createLocalOcrScanMock.mock.calls[0]?.[0] as { imageDataUrl: string };
-    expect(localScanPayload.imageDataUrl).toBe('');
+    expect(localScanPayload.imageDataUrl).toMatch(/^data:image\/jpeg;base64,/);
 
     await waitFor(() => {
-      expect(uploadScanThumbnailMock).toHaveBeenCalledTimes(1);
       expect(createScanMock).toHaveBeenCalledTimes(1);
     });
   });
 
-  it('reuses the compressed OCR blob for thumbnail upload', async () => {
+  it('stores thumbnail in localStorage instead of uploading', async () => {
     window.history.pushState({}, '', '/camera');
     const { default: App } = await import('@/App');
     render(<App />);
@@ -165,16 +164,14 @@ describe('CameraPage latency flow', () => {
     fireEvent.click(screen.getByRole('button', { name: 'mock-confirm' }));
 
     await waitFor(() => {
-      expect(uploadScanThumbnailMock).toHaveBeenCalledTimes(1);
+      expect(createLocalOcrScanMock).toHaveBeenCalledTimes(1);
     });
 
-    const compressedBlob = await compressImageForOCRMock.mock.results[0]?.value;
-    expect(uploadScanThumbnailMock.mock.calls[0]?.[1]).toBe(compressedBlob);
+    const localScanPayload = createLocalOcrScanMock.mock.calls[0]?.[0] as { imageDataUrl: string };
+    expect(localScanPayload.imageDataUrl).toMatch(/^data:image\/jpeg;base64,/);
   });
 
-  it('saves scan without imageUrl when thumbnail upload fails', async () => {
-    uploadScanThumbnailMock.mockRejectedValue(new Error('Upload failed'));
-
+  it('saves scan with imageDataUrl from localStorage', async () => {
     window.history.pushState({}, '', '/camera');
     const { default: App } = await import('@/App');
     render(<App />);
@@ -187,6 +184,6 @@ describe('CameraPage latency flow', () => {
     });
 
     const savedScan = createScanMock.mock.calls[0]?.[0] as { imageDataUrl: string };
-    expect(savedScan.imageDataUrl).toBe('');
+    expect(savedScan.imageDataUrl).toMatch(/^data:image\/jpeg;base64,/);
   });
 });

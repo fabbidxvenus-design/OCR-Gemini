@@ -21,8 +21,6 @@ import ErrorMessage from '@/components/ui/ErrorMessage';
 import { CheckCircle2, Circle, Loader2, X } from 'lucide-react';
 import { processOCR } from '@/lib/gemini';
 import { compressImageForOCR } from '@/lib/compression';
-import { scansApi } from '@/lib/scansApi';
-import { useAuthStore } from '@/store/authStore';
 import { createLocalOcrScan, createScan, updateScan } from '@/hooks/useScans';
 import { deleteLocalOcrScan, getLocalOcrScan, setLocalOcrScanRemoteId } from '@/lib/localOcrScans';
 import { useSettings } from '@/hooks/useSettings';
@@ -30,31 +28,10 @@ import { useSettings } from '@/hooks/useSettings';
 const BACKGROUND_SAVE_RETRY_DELAYS_MS = [0, 1000, 3000];
 const LOCAL_SCAN_DELETE_AFTER_SAVE_DELAY_MS = 1000;
 
-async function uploadScanThumbnail(blob: Blob, accessToken: string): Promise<string | undefined> {
-  try {
-    const upload = await scansApi.uploadScanThumbnail(accessToken, blob);
-    return upload.storagePath;
-  } catch {
-    return undefined;
-  }
-}
-
 async function saveScanInBackground(
   scanData: Parameters<typeof createScan>[0],
   localScanId: string,
-  thumbnailBlob?: Blob,
 ) {
-  const accessToken = useAuthStore.getState().accessToken;
-  let uploadedStoragePath: string | undefined;
-
-  if (accessToken && thumbnailBlob) {
-    uploadedStoragePath = await uploadScanThumbnail(thumbnailBlob, accessToken);
-  }
-
-  const persistedScanData = uploadedStoragePath
-    ? { ...scanData, imageDataUrl: uploadedStoragePath }
-    : scanData;
-
   for (let attempt = 0; attempt < BACKGROUND_SAVE_RETRY_DELAYS_MS.length; attempt += 1) {
     const delayMs = BACKGROUND_SAVE_RETRY_DELAYS_MS[attempt] ?? 0;
     if (delayMs > 0) {
@@ -63,7 +40,7 @@ async function saveScanInBackground(
 
     try {
       const latestLocalScan = getLocalOcrScan(localScanId);
-      const savedScan = latestLocalScan ? { ...latestLocalScan, imageDataUrl: persistedScanData.imageDataUrl } : persistedScanData;
+      const savedScan = latestLocalScan || scanData;
       const remoteScanId = await createScan(savedScan);
       setLocalOcrScanRemoteId(localScanId, remoteScanId);
       const currentLocalScanAfterSave = getLocalOcrScan(localScanId);
@@ -146,13 +123,21 @@ function CameraPage() {
       const compressedBlob = await compressImageForOCR(capturedImage.blob);
       setProgress('Đang xử lý OCR...');
 
+      // Convert compressed blob to base64 for localStorage
+      const reader = new FileReader();
+      const imageDataUrl = await new Promise<string>((resolve, reject) => {
+        reader.onload = () => resolve(reader.result as string);
+        reader.onerror = reject;
+        reader.readAsDataURL(compressedBlob);
+      });
+
       // Process OCR with user's selected model tier
       const ocrResult = await processOCR(compressedBlob, settings.selectedModelTier);
       setProgress('Hoàn tất!');
 
       const scanData = {
         timestamp: new Date(),
-        imageDataUrl: '',
+        imageDataUrl,
         ocrRaw: ocrResult.ocrRaw,
         ocrStructured: ocrResult.structured,
         edited: false,
@@ -163,7 +148,7 @@ function CameraPage() {
       const localScanId = createLocalOcrScan(scanData);
       navigate(`/ocr-result/${localScanId}`);
 
-      void saveScanInBackground(scanData, localScanId, compressedBlob);
+      void saveScanInBackground(scanData, localScanId);
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Đã xảy ra lỗi không mong muốn';
       setError(errorMessage);

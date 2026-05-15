@@ -9,6 +9,7 @@ interface LocalOcrScanRecord {
   id: `local-${string}`;
   timestamp: string;
   expiresAt: string;
+  imageDataUrl?: string;
   ocrRaw: string;
   ocrStructured: OCRResponse;
   edited: boolean;
@@ -91,7 +92,7 @@ function toScanRecord(scan: LocalOcrScanRecord): ScanRecord {
   return {
     id: scan.id,
     timestamp: new Date(scan.timestamp),
-    imageDataUrl: '',
+    imageDataUrl: scan.imageDataUrl || '',
     ocrRaw: scan.ocrRaw,
     ocrStructured: scan.ocrStructured,
     edited: scan.edited,
@@ -107,6 +108,7 @@ export function createLocalOcrScan(data: Omit<ScanRecord, 'id'>): string {
     id,
     timestamp: data.timestamp.toISOString(),
     expiresAt: new Date(Date.now() + LOCAL_OCR_SCAN_TTL_MS).toISOString(),
+    imageDataUrl: data.imageDataUrl,
     ocrRaw: data.ocrRaw,
     ocrStructured: data.ocrStructured,
     edited: data.edited,

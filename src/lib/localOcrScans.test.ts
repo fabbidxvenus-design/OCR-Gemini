@@ -43,17 +43,17 @@ describe('localOcrScans', () => {
     expect(scanId).toMatch(/^local-/);
     expect(getLocalOcrScan(scanId)).toMatchObject({
       id: scanId,
-      imageDataUrl: '',
+      imageDataUrl: 'data:image/png;base64,should-not-persist',
       ocrRaw: '商品名 VES 529CT',
       apiKeyIndex: 1,
       modelTier: 'default',
     });
   });
 
-  it('does not persist image data in localStorage', () => {
+  it('persists image data in localStorage', () => {
     createLocalOcrScan(buildScan());
 
-    expect(localStorage.getItem('hlvn.localOcrScans')).not.toContain('should-not-persist');
+    expect(localStorage.getItem('hlvn.localOcrScans')).toContain('should-not-persist');
   });
 
   it('updates a local scan without losing cache metadata', () => {
@@ -72,7 +72,7 @@ describe('localOcrScans', () => {
 
     expect(updatedScan).toMatchObject({
       id: scanId,
-      imageDataUrl: '',
+      imageDataUrl: 'data:image/png;base64,should-not-persist',
       edited: true,
       ocrRaw: '商品名 VES 529CT',
       ocrStructured: {

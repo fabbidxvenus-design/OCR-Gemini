@@ -184,7 +184,7 @@ describe('useScan local OCR results', () => {
 
     await waitFor(() => expect(result.current.scan?.id).toBe(scanId));
     expect(result.current.scan).toMatchObject({
-      imageDataUrl: '',
+      imageDataUrl: 'data:image/png;base64,should-not-persist',
       ocrRaw: '商品名 VES 529CT',
     });
     expect(result.current.isPendingMissing).toBe(false);
