@@ -75,10 +75,7 @@ export const scansApi = {
     }),
 
   createScan: async (accessToken: string, data: CreateScanPayload): Promise<{ id: string }> => {
-    const payload = Object.fromEntries(
-      Object.entries(data).filter(([key]) => key !== 'imageDataUrl')
-    ) as Omit<CreateScanPayload, 'imageDataUrl'>;
-    const created = await apiClient.post<BackendScanRecord>('/api/scans', payload, {
+    const created = await apiClient.post<BackendScanRecord>('/api/scans', data, {
       accessToken,
       schema: BackendScanSchema,
     });

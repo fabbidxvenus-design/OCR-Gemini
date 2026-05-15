@@ -217,15 +217,10 @@ export function useSearchScans(query: string): ScanRecord[] | undefined {
   });
 }
 
-function isStoragePath(value: string): boolean {
-  return /^scans\/[^/]+\/.+$/.test(value) && !value.includes('..');
-}
-
 export async function createScan(data: Omit<ScanRecord, 'id'>): Promise<string> {
-  const shouldSendImageUrl = Boolean(data.imageDataUrl) && isStoragePath(data.imageDataUrl);
   const created = await scansApi.createScan(getAccessToken(), {
     timestamp: data.timestamp.toISOString(),
-    ...(shouldSendImageUrl ? { imageUrl: data.imageDataUrl } : {}),
+    imageDataUrl: data.imageDataUrl || undefined,
     ocrRaw: data.ocrRaw,
     ocrStructured: toBackendOCR(data.ocrStructured),
     tokenUsage: data.tokenUsage,
