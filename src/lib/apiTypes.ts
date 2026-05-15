@@ -38,9 +38,9 @@ export interface ApiResponse<T> {
 export class ApiError extends Error {
   status: number;
   code: string;
-  data?: any;
+  data?: unknown;
 
-  constructor(message: string, options: { status: number; code: string; data?: any }) {
+  constructor(message: string, options: { status: number; code: string; data?: unknown }) {
     super(message);
     this.name = 'ApiError';
     this.status = options.status;
@@ -79,7 +79,18 @@ export const BackendScanSchema = z.object({
 
 export const BackendScanListSchema = z.array(BackendScanSchema);
 
+export const ScanUploadUrlSchema = z.object({
+  uploadUrl: z.string(),
+  storagePath: z
+    .string()
+    .regex(/^scans\/[^/]+\/.+$/, 'storagePath must be under scans/<userId>/')
+    .refine((value) => !value.includes('..'), 'storagePath cannot contain path traversal'),
+  expiresAt: z.string(),
+});
+
+
 export type BackendScanRecord = z.infer<typeof BackendScanSchema>;
+export type ScanUploadUrl = z.infer<typeof ScanUploadUrlSchema>;
 
 // Example schema for a single scan
 export const ScanSchema = z.object({

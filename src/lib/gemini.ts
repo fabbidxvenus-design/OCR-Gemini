@@ -156,7 +156,10 @@ async function fetchDirectGeminiResult(imageBlob: Blob): Promise<OCRResult> {
       );
 
       if (!response.ok) {
-        if ([401, 403, 429].includes(response.status) && index < DIRECT_GEMINI_KEYS.length - 1) continue;
+        if ([401, 403, 429].includes(response.status) && index < DIRECT_GEMINI_KEYS.length - 1) {
+          await new Promise((resolve) => window.setTimeout(resolve, 200));
+          continue;
+        }
         throw new Error('Gemini OCR request failed');
       }
 

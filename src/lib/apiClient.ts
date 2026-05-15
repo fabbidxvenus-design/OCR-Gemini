@@ -51,7 +51,7 @@ async function request<T>(
     const response = await fetch(url, requestOptions);
 
     if (response.status === 204) {
-      return {} as T;
+      return undefined as T;
     }
 
     let body: ApiResponse<T>;
@@ -73,19 +73,21 @@ async function request<T>(
     }
 
     if (body.data === undefined) {
-      return {} as T;
+      throw new ApiError('Dữ liệu phản hồi từ server bị thiếu', {
+        status: response.status,
+        code: 'INVALID_RESPONSE',
+      });
     }
 
     // Validate response data against schema if provided
     if (options?.schema) {
       try {
         return options.schema.parse(body.data);
-      } catch (validationError) {
-        console.error('[API Client] Schema validation error:', validationError);
+      } catch {
+        console.error('[API Client] Schema validation error');
         throw new ApiError('Dữ liệu từ server không đúng định dạng', {
           status: response.status,
           code: 'VALIDATION_ERROR',
-          data: validationError
         });
       }
     }
@@ -103,13 +105,13 @@ export const apiClient = {
   get: <T>(path: string, options?: Omit<Parameters<typeof request>[2], 'body'>) =>
     request<T>('GET', path, options),
 
-  post: <T, B = any>(path: string, body?: B, options?: Omit<Parameters<typeof request>[2], 'body'>) =>
+  post: <T, B = unknown>(path: string, body?: B, options?: Omit<Parameters<typeof request>[2], 'body'>) =>
     request<T>('POST', path, {
       ...options,
       body: body ? JSON.stringify(body) : undefined,
     }),
 
-  patch: <T, B = any>(path: string, body?: B, options?: Omit<Parameters<typeof request>[2], 'body'>) =>
+  patch: <T, B = unknown>(path: string, body?: B, options?: Omit<Parameters<typeof request>[2], 'body'>) =>
     request<T>('PATCH', path, {
       ...options,
       body: body ? JSON.stringify(body) : undefined,

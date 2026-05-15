@@ -69,18 +69,30 @@ function getPendingScan(scanId: string): ScanRecord | undefined {
 }
 
 
-export function useScans(options?: { limit?: number; order?: 'asc' | 'desc' }): ScanRecord[] | undefined {
+export interface UseScansStateResult {
+  scans: ScanRecord[];
+  isLoading: boolean;
+}
+
+export function useScansState(options?: { limit?: number; order?: 'asc' | 'desc' }): UseScansStateResult {
   const { limit = 100, order = 'desc' } = options || {};
   const accessToken = useAuthStore((state) => state.accessToken);
-  const [scans, setScans] = useState<ScanRecord[] | undefined>();
+  const [scans, setScans] = useState<ScanRecord[]>([]);
+  const [isLoading, setIsLoading] = useState(Boolean(accessToken));
 
   useEffect(() => {
     if (!accessToken) {
-      setScans([]);
+      queueMicrotask(() => {
+        setScans([]);
+        setIsLoading(false);
+      });
       return;
     }
 
     let cancelled = false;
+    queueMicrotask(() => {
+      setIsLoading(true);
+    });
 
     async function loadScans() {
       if (!accessToken) return;
@@ -94,6 +106,8 @@ export function useScans(options?: { limit?: number; order?: 'asc' | 'desc' }): 
       } catch (err) {
         console.error('Failed to load scans:', err);
         if (!cancelled) setScans([]);
+      } finally {
+        if (!cancelled) setIsLoading(false);
       }
     }
 
@@ -104,7 +118,12 @@ export function useScans(options?: { limit?: number; order?: 'asc' | 'desc' }): 
     };
   }, [accessToken, limit, order]);
 
-  return scans;
+  return { scans, isLoading };
+}
+
+export function useScans(options?: { limit?: number; order?: 'asc' | 'desc' }): ScanRecord[] | undefined {
+  const { scans, isLoading } = useScansState(options);
+  return isLoading ? undefined : scans;
 }
 
 export interface UseScanResult {
@@ -118,30 +137,40 @@ export function useScan(scanId?: string): UseScanResult {
   const [isPendingMissing, setIsPendingMissing] = useState(false);
 
   useEffect(() => {
-    setIsPendingMissing(false);
+    queueMicrotask(() => {
+      setIsPendingMissing(false);
+    });
 
     if (!scanId) {
-      setScan(undefined);
+      queueMicrotask(() => {
+        setScan(undefined);
+      });
       return;
     }
 
     if (scanId.startsWith('local-')) {
       cleanupExpiredLocalOcrScans();
       const localScan = getLocalOcrScan(scanId);
-      setScan(localScan);
-      setIsPendingMissing(!localScan);
+      queueMicrotask(() => {
+        setScan(localScan);
+        setIsPendingMissing(!localScan);
+      });
       return;
     }
 
     if (scanId.startsWith('pending-')) {
       const pendingScan = getPendingScan(scanId);
-      setScan(pendingScan);
-      setIsPendingMissing(!pendingScan);
+      queueMicrotask(() => {
+        setScan(pendingScan);
+        setIsPendingMissing(!pendingScan);
+      });
       return;
     }
 
     if (!accessToken) {
-      setScan(undefined);
+      queueMicrotask(() => {
+        setScan(undefined);
+      });
       return;
     }
 
@@ -188,9 +217,15 @@ export function useSearchScans(query: string): ScanRecord[] | undefined {
   });
 }
 
+function isStoragePath(value: string): boolean {
+  return /^scans\/[^/]+\/.+$/.test(value) && !value.includes('..');
+}
+
 export async function createScan(data: Omit<ScanRecord, 'id'>): Promise<string> {
+  const shouldSendImageUrl = Boolean(data.imageDataUrl) && isStoragePath(data.imageDataUrl);
   const created = await scansApi.createScan(getAccessToken(), {
     timestamp: data.timestamp.toISOString(),
+    ...(shouldSendImageUrl ? { imageUrl: data.imageDataUrl } : {}),
     ocrRaw: data.ocrRaw,
     ocrStructured: toBackendOCR(data.ocrStructured),
     tokenUsage: data.tokenUsage,
