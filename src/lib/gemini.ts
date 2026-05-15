@@ -124,7 +124,7 @@ async function fetchDirectGeminiResult(imageBlob: Blob): Promise<OCRResult> {
       {
         role: 'user',
         parts: [
-          { inlineData: { mimeType: image.mimeType, data: image.data } },
+          { inline_data: { mime_type: image.mimeType, data: image.data } },
           { text: `${DEFAULT_SYSTEM_PROMPT}\n\n${DEFAULT_USER_PROMPT}` },
         ],
       },
@@ -132,7 +132,7 @@ async function fetchDirectGeminiResult(imageBlob: Blob): Promise<OCRResult> {
     generationConfig: {
       temperature: 0.1,
       maxOutputTokens: GEMINI_MAX_OUTPUT_TOKENS,
-      responseMimeType: 'application/json',
+      response_mime_type: 'application/json',
     },
   };
 
@@ -165,11 +165,15 @@ async function fetchDirectGeminiResult(imageBlob: Blob): Promise<OCRResult> {
         usageMetadata?: { promptTokenCount?: number; candidatesTokenCount?: number };
       };
       const rawText = data.candidates?.[0]?.content?.parts?.map((part) => part.text ?? '').join('').trim() ?? '';
-      const structured = OCRStructuredSchema.parse(extractJsonObject(rawText));
+      const structuredResult = OCRStructuredSchema.safeParse(extractJsonObject(rawText));
+      if (!structuredResult.success) {
+        throw new Error('OCR provider returned an invalid JSON response');
+      }
+      const structured = structuredResult.data;
       const inputTokens = data.usageMetadata?.promptTokenCount ?? 0;
       const outputTokens = data.usageMetadata?.candidatesTokenCount ?? 0;
 
-      return OCRResultSchema.parse({
+      const result = OCRResultSchema.safeParse({
         ocrRaw: structured.rawText ?? structured.raw_text ?? rawText,
         ocrStructured: structured,
         tokenUsage: {
@@ -180,6 +184,11 @@ async function fetchDirectGeminiResult(imageBlob: Blob): Promise<OCRResult> {
         },
         apiKeyIndex: index + 1,
       });
+      if (!result.success) {
+        throw new Error('OCR provider returned an invalid JSON response');
+      }
+
+      return result.data;
     } finally {
       window.clearTimeout(timeout);
     }

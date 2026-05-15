@@ -10,9 +10,9 @@ describe('BottomNav', () => {
         <BottomNav />
       </BrowserRouter>
     );
-    expect(screen.getByText('Chụp ảnh')).toBeTruthy();
+    expect(screen.getByText('Quét')).toBeTruthy();
     expect(screen.getByText('Lịch sử')).toBeTruthy();
-    expect(screen.getByText('Thống kê')).toBeTruthy();
+    expect(screen.getByText('Phân tích')).toBeTruthy();
     expect(screen.getByText('Cài đặt')).toBeTruthy();
   });
 
@@ -22,9 +22,9 @@ describe('BottomNav', () => {
         <BottomNav />
       </BrowserRouter>
     );
-    expect(screen.getByRole('link', { name: /chụp ảnh/i })).toBeTruthy();
+    expect(screen.getByRole('link', { name: /quét/i })).toBeTruthy();
     expect(screen.getByRole('link', { name: /lịch sử/i })).toBeTruthy();
-    expect(screen.getByRole('link', { name: /thống kê/i })).toBeTruthy();
+    expect(screen.getByRole('link', { name: /phân tích/i })).toBeTruthy();
     expect(screen.getByRole('link', { name: /cài đặt/i })).toBeTruthy();
   });
 });

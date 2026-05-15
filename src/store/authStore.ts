@@ -7,6 +7,7 @@ import {
   type ProfileUpdatePayload,
   type UserProfile,
 } from '@/lib/authApi';
+import { clearLocalOcrScans } from '@/lib/localOcrScans';
 
 interface AuthStore {
   isAuthenticated: boolean;
@@ -38,6 +39,7 @@ export const useAuthStore = create<AuthStore>()(
         set({ isLoading: true, error: null });
         try {
           const session = await authApi.login(email, pin);
+          clearLocalOcrScans();
           set({
             isAuthenticated: true,
             user: session.user,
@@ -57,6 +59,7 @@ export const useAuthStore = create<AuthStore>()(
       },
 
       setSession: (session) => {
+        clearLocalOcrScans();
         set({
           isAuthenticated: true,
           user: session.user,
@@ -93,6 +96,7 @@ export const useAuthStore = create<AuthStore>()(
           }
         }
 
+        clearLocalOcrScans();
         set({
           isAuthenticated: false,
           user: null,

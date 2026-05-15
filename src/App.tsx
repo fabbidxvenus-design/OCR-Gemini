@@ -21,8 +21,8 @@ import ErrorMessage from '@/components/ui/ErrorMessage';
 import { CheckCircle2, Circle, Loader2, X } from 'lucide-react';
 import { processOCR } from '@/lib/gemini';
 import { compressImageForOCR } from '@/lib/compression';
-import { createLocalOcrScan, createScan } from '@/hooks/useScans';
-import { deleteLocalOcrScan } from '@/lib/localOcrScans';
+import { createLocalOcrScan, createScan, updateScan } from '@/hooks/useScans';
+import { deleteLocalOcrScan, getLocalOcrScan, setLocalOcrScanRemoteId } from '@/lib/localOcrScans';
 import { useSettings } from '@/hooks/useSettings';
 
 const BACKGROUND_SAVE_RETRY_DELAYS_MS = [0, 1000, 3000];
@@ -36,8 +36,30 @@ async function saveScanInBackground(scanData: Parameters<typeof createScan>[0], 
     }
 
     try {
-      await createScan(scanData);
-      window.setTimeout(() => deleteLocalOcrScan(localScanId), LOCAL_SCAN_DELETE_AFTER_SAVE_DELAY_MS);
+      const latestLocalScan = getLocalOcrScan(localScanId);
+      const savedScan = latestLocalScan ?? scanData;
+      const remoteScanId = await createScan(savedScan);
+      setLocalOcrScanRemoteId(localScanId, remoteScanId);
+      const currentLocalScanAfterSave = getLocalOcrScan(localScanId);
+      const hasUnsyncedLocalEdit = Boolean(
+        currentLocalScanAfterSave &&
+        (currentLocalScanAfterSave.ocrRaw !== savedScan.ocrRaw ||
+          JSON.stringify(currentLocalScanAfterSave.ocrStructured) !== JSON.stringify(savedScan.ocrStructured))
+      );
+      const syncedScan = currentLocalScanAfterSave && hasUnsyncedLocalEdit ? currentLocalScanAfterSave : savedScan;
+      if (currentLocalScanAfterSave && hasUnsyncedLocalEdit) {
+        await updateScan(localScanId, { ocrStructured: currentLocalScanAfterSave.ocrStructured });
+      }
+      window.setTimeout(() => {
+        const currentLocalScan = getLocalOcrScan(localScanId);
+        if (
+          !currentLocalScan ||
+          (currentLocalScan.ocrRaw === syncedScan.ocrRaw &&
+            JSON.stringify(currentLocalScan.ocrStructured) === JSON.stringify(syncedScan.ocrStructured))
+        ) {
+          deleteLocalOcrScan(localScanId);
+        }
+      }, LOCAL_SCAN_DELETE_AFTER_SAVE_DELAY_MS);
       return;
     } catch {
       continue;

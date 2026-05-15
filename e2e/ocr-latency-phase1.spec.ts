@@ -38,6 +38,18 @@ function buildLocalScan(id = LOCAL_SCAN_ID) {
   };
 }
 
+async function uploadOcrTestImage(page: Page) {
+  await expect(page.getByText('Tải ảnh lên', { exact: true })).toBeVisible();
+  const uploadInput = page.locator('input[type="file"]').first();
+  await expect(uploadInput).toBeAttached();
+  await uploadInput.setInputFiles({
+    name: 'ocr-test.png',
+    mimeType: 'image/png',
+    buffer: Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+/p9sAAAAASUVORK5CYII=', 'base64'),
+  });
+  await expect(page.getByRole('button', { name: /xác nhận/i })).toBeVisible();
+}
+
 async function login(page: Page) {
   const expiresAt = new Date(Date.now() + 8 * 60 * 60 * 1000).toISOString();
   await page.route('**/api/auth/login', async (route) => {
@@ -69,7 +81,11 @@ test.describe('OCR latency Phase 1', () => {
       Object.defineProperty(navigator, 'mediaDevices', {
         value: {
           enumerateDevices: async () => [],
-          getUserMedia: async () => new MediaStream(),
+          getUserMedia: async () => {
+            const error = new Error('No camera in E2E');
+            error.name = 'NotFoundError';
+            throw error;
+          },
         },
         configurable: true,
       });
@@ -120,16 +136,7 @@ test.describe('OCR latency Phase 1', () => {
       });
     });
 
-    await expect(page.getByText('Tải ảnh lên')).toBeVisible();
-    const uploadInput = page.locator('input[type="file"]').first();
-    await expect(uploadInput).toBeAttached();
-    await uploadInput.setInputFiles({
-      name: 'ocr-test.png',
-      mimeType: 'image/png',
-      buffer: Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+/p9sAAAAASUVORK5CYII=', 'base64'),
-    });
-
-    await expect(page.getByText('Xác nhận ảnh chụp')).toBeVisible();
+    await uploadOcrTestImage(page);
     expect(await page.evaluate(() => localStorage.getItem('auth-storage'))).toContain('test-token');
     const confirmStartedAt = Date.now();
     await page.getByRole('button', { name: /xác nhận/i }).click();
@@ -148,7 +155,11 @@ test.describe('OCR latency Phase 1', () => {
       Object.defineProperty(navigator, 'mediaDevices', {
         value: {
           enumerateDevices: async () => [],
-          getUserMedia: async () => new MediaStream(),
+          getUserMedia: async () => {
+            const error = new Error('No camera in E2E');
+            error.name = 'NotFoundError';
+            throw error;
+          },
         },
         configurable: true,
       });
@@ -185,15 +196,7 @@ test.describe('OCR latency Phase 1', () => {
       });
     });
 
-    await expect(page.getByText('Tải ảnh lên')).toBeVisible();
-    const uploadInput = page.locator('input[type="file"]').first();
-    await expect(uploadInput).toBeAttached();
-    await uploadInput.setInputFiles({
-      name: 'ocr-test.png',
-      mimeType: 'image/png',
-      buffer: Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+/p9sAAAAASUVORK5CYII=', 'base64'),
-    });
-    await expect(page.getByText('Xác nhận ảnh chụp')).toBeVisible();
+    await uploadOcrTestImage(page);
     await page.getByRole('button', { name: /xác nhận/i }).click();
 
     await expect(page).toHaveURL(/\/ocr-result\/local-/);
@@ -206,7 +209,11 @@ test.describe('OCR latency Phase 1', () => {
       Object.defineProperty(navigator, 'mediaDevices', {
         value: {
           enumerateDevices: async () => [],
-          getUserMedia: async () => new MediaStream(),
+          getUserMedia: async () => {
+            const error = new Error('No camera in E2E');
+            error.name = 'NotFoundError';
+            throw error;
+          },
         },
         configurable: true,
       });
@@ -222,15 +229,7 @@ test.describe('OCR latency Phase 1', () => {
       await route.fulfill({ status: 502, contentType: 'application/json', body: JSON.stringify({ success: false, error: 'OCR failed', code: 'PROVIDER_ERROR' }) });
     });
 
-    await expect(page.getByText('Tải ảnh lên')).toBeVisible();
-    const uploadInput = page.locator('input[type="file"]').first();
-    await expect(uploadInput).toBeAttached();
-    await uploadInput.setInputFiles({
-      name: 'ocr-test.png',
-      mimeType: 'image/png',
-      buffer: Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+/p9sAAAAASUVORK5CYII=', 'base64'),
-    });
-    await expect(page.getByText('Xác nhận ảnh chụp')).toBeVisible();
+    await uploadOcrTestImage(page);
     await page.getByRole('button', { name: /xác nhận/i }).click();
 
     await expect(page.getByText('Xử lý thất bại')).toBeVisible();

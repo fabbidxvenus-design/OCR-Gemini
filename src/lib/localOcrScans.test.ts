@@ -5,6 +5,9 @@ import {
   createLocalOcrScan,
   deleteLocalOcrScan,
   getLocalOcrScan,
+  getLocalOcrScanRemoteId,
+  setLocalOcrScanRemoteId,
+  updateLocalOcrScan,
 } from './localOcrScans';
 
 function buildScan(overrides: Partial<Omit<ScanRecord, 'id'>> = {}): Omit<ScanRecord, 'id'> {
@@ -53,21 +56,59 @@ describe('localOcrScans', () => {
     expect(localStorage.getItem('hlvn.localOcrScans')).not.toContain('should-not-persist');
   });
 
-  it('deletes a local scan after backend save succeeds', () => {
+  it('updates a local scan without losing cache metadata', () => {
     const scanId = createLocalOcrScan(buildScan());
+
+    const updatedScan = updateLocalOcrScan(scanId, {
+      ocrStructured: {
+        title: 'Edited OCR Result',
+        fields: [{ field: '商品名', value: 'Edited VES 529CT', confidence: 'high', category: 'main' }],
+        sizes: [],
+        raw_text: '商品名 Edited VES 529CT',
+        notes: [],
+      },
+      edited: true,
+    });
+
+    expect(updatedScan).toMatchObject({
+      id: scanId,
+      imageDataUrl: '',
+      edited: true,
+      ocrRaw: '商品名 VES 529CT',
+      ocrStructured: {
+        title: 'Edited OCR Result',
+      },
+    });
+    expect(getLocalOcrScan(scanId)?.ocrStructured.fields?.[0].value).toBe('Edited VES 529CT');
+  });
+
+  it('stores the backend id for a locally created scan', () => {
+    const scanId = createLocalOcrScan(buildScan());
+
+    setLocalOcrScanRemoteId(scanId, 'remote-scan-1');
+
+    expect(getLocalOcrScanRemoteId(scanId)).toBe('remote-scan-1');
+  });
+
+  it('deletes a local scan and its backend id mapping after backend save succeeds', () => {
+    const scanId = createLocalOcrScan(buildScan());
+    setLocalOcrScanRemoteId(scanId, 'remote-scan-1');
 
     deleteLocalOcrScan(scanId);
 
     expect(getLocalOcrScan(scanId)).toBeUndefined();
+    expect(getLocalOcrScanRemoteId(scanId)).toBeUndefined();
   });
 
-  it('expires local scans after seven days', () => {
+  it('expires local scans and their backend id mappings after seven days', () => {
     const scanId = createLocalOcrScan(buildScan());
+    setLocalOcrScanRemoteId(scanId, 'remote-scan-1');
 
     vi.setSystemTime(new Date('2026-05-21T10:00:00.001Z'));
     cleanupExpiredLocalOcrScans();
 
     expect(getLocalOcrScan(scanId)).toBeUndefined();
+    expect(getLocalOcrScanRemoteId(scanId)).toBeUndefined();
   });
 
   it('keeps only the newest ten local scans', () => {

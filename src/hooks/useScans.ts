@@ -3,7 +3,7 @@ import type { OCRResponse, ScanRecord } from '@/db/schema';
 import { scansApi } from '@/lib/scansApi';
 import { useAuthStore } from '@/store/authStore';
 import type { BackendScanRecord } from '@/lib/apiTypes';
-import { cleanupExpiredLocalOcrScans, createLocalOcrScan, getLocalOcrScan } from '@/lib/localOcrScans';
+import { cleanupExpiredLocalOcrScans, createLocalOcrScan, getLocalOcrScan, getLocalOcrScanRemoteId, updateLocalOcrScan } from '@/lib/localOcrScans';
 
 function toMobileScan(scan: BackendScanRecord): ScanRecord {
   return {
@@ -207,6 +207,17 @@ export async function getApiKeyUsageStats(): Promise<{ key1Count: number; key2Co
 
 export async function updateScan(scanId: string, updates: Partial<ScanRecord>): Promise<void> {
   if (!updates.ocrStructured) return;
+
+  if (scanId.startsWith('local-')) {
+    const remoteScanId = getLocalOcrScanRemoteId(scanId);
+    updateLocalOcrScan(scanId, {
+      ocrStructured: updates.ocrStructured,
+      edited: true,
+    });
+    if (!remoteScanId) return;
+    scanId = remoteScanId;
+  }
+
   await scansApi.updateScan(getAccessToken(), scanId, {
     ocrStructured: toBackendOCR(updates.ocrStructured),
   });

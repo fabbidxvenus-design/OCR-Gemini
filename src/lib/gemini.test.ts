@@ -69,6 +69,12 @@ describe('processOCR strategy', () => {
     const fetchMock = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
       expect(input.toString()).toContain('generativelanguage.googleapis.com');
       expect(input.toString()).not.toContain('test-gemini-key');
+      expect(init?.body?.toString()).not.toContain('test-gemini-key');
+      expect(init?.body?.toString()).toContain('inline_data');
+      expect(init?.body?.toString()).toContain('mime_type');
+      expect(init?.body?.toString()).toContain('response_mime_type');
+      expect(init?.body?.toString()).not.toContain('inlineData');
+      expect(init?.body?.toString()).not.toContain('responseMimeType');
       expect((init?.headers as Record<string, string>)['x-goog-api-key']).toBe('test-gemini-key');
       return new Response(JSON.stringify({
         candidates: [{ content: { parts: [{ text: JSON.stringify(OCR_RESPONSE.ocrStructured) }] } }],
