@@ -82,13 +82,17 @@ export function useScansState(options?: { limit?: number; order?: 'asc' | 'desc'
 
   useEffect(() => {
     if (!accessToken) {
-      setScans([]);
-      setIsLoading(false);
+      queueMicrotask(() => {
+        setScans([]);
+        setIsLoading(false);
+      });
       return;
     }
 
     let cancelled = false;
-    setIsLoading(true);
+    queueMicrotask(() => {
+      setIsLoading(true);
+    });
 
     async function loadScans() {
       if (!accessToken) return;
@@ -133,30 +137,40 @@ export function useScan(scanId?: string): UseScanResult {
   const [isPendingMissing, setIsPendingMissing] = useState(false);
 
   useEffect(() => {
-    setIsPendingMissing(false);
+    queueMicrotask(() => {
+      setIsPendingMissing(false);
+    });
 
     if (!scanId) {
-      setScan(undefined);
+      queueMicrotask(() => {
+        setScan(undefined);
+      });
       return;
     }
 
     if (scanId.startsWith('local-')) {
       cleanupExpiredLocalOcrScans();
       const localScan = getLocalOcrScan(scanId);
-      setScan(localScan);
-      setIsPendingMissing(!localScan);
+      queueMicrotask(() => {
+        setScan(localScan);
+        setIsPendingMissing(!localScan);
+      });
       return;
     }
 
     if (scanId.startsWith('pending-')) {
       const pendingScan = getPendingScan(scanId);
-      setScan(pendingScan);
-      setIsPendingMissing(!pendingScan);
+      queueMicrotask(() => {
+        setScan(pendingScan);
+        setIsPendingMissing(!pendingScan);
+      });
       return;
     }
 
     if (!accessToken) {
-      setScan(undefined);
+      queueMicrotask(() => {
+        setScan(undefined);
+      });
       return;
     }
 
@@ -203,9 +217,15 @@ export function useSearchScans(query: string): ScanRecord[] | undefined {
   });
 }
 
+function isStoragePath(value: string): boolean {
+  return /^scans\/[^/]+\/.+$/.test(value) && !value.includes('..');
+}
+
 export async function createScan(data: Omit<ScanRecord, 'id'>): Promise<string> {
+  const shouldSendImageUrl = Boolean(data.imageDataUrl) && isStoragePath(data.imageDataUrl);
   const created = await scansApi.createScan(getAccessToken(), {
     timestamp: data.timestamp.toISOString(),
+    ...(shouldSendImageUrl ? { imageUrl: data.imageDataUrl } : {}),
     ocrRaw: data.ocrRaw,
     ocrStructured: toBackendOCR(data.ocrStructured),
     tokenUsage: data.tokenUsage,

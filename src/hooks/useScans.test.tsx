@@ -4,7 +4,7 @@ import type { ScanRecord } from '@/db/schema';
 import { createLocalOcrScan, getLocalOcrScan, setLocalOcrScanRemoteId } from '@/lib/localOcrScans';
 import { scansApi } from '@/lib/scansApi';
 import { useAuthStore } from '@/store/authStore';
-import { updateScan, useScan, useScansState } from './useScans';
+import { createScan, updateScan, useScan, useScansState } from './useScans';
 
 vi.mock('@/lib/scansApi', async (importOriginal) => {
   const actual = await importOriginal<typeof import('@/lib/scansApi')>();
@@ -14,6 +14,7 @@ vi.mock('@/lib/scansApi', async (importOriginal) => {
       ...actual.scansApi,
       getScans: vi.fn(),
       getScan: vi.fn(),
+      createScan: vi.fn(),
       updateScan: vi.fn(),
     },
   };
@@ -119,6 +120,53 @@ describe('useScansState', () => {
     await waitFor(() => expect(result.current.isLoading).toBe(false));
     expect(result.current.scans[0].imageDataUrl).toBe('https://example.test/scan.jpg');
     expect(result.current.scans[1].imageDataUrl).toBe('');
+  });
+});
+
+describe('createScan', () => {
+  beforeEach(() => {
+    localStorage.clear();
+    vi.clearAllMocks();
+    resetAuthStore();
+  });
+
+  it('forwards imageUrl when the background thumbnail upload produced a storage path', async () => {
+    useAuthStore.setState({ accessToken: 'access-token' });
+    vi.mocked(scansApi.createScan).mockResolvedValue({ id: 'remote-scan-1' });
+
+    await createScan({
+      ...buildScan(),
+      imageDataUrl: 'scans/user-1/thumb.webp',
+    });
+
+    expect(scansApi.createScan).toHaveBeenCalledWith('access-token', expect.objectContaining({
+      imageUrl: 'scans/user-1/thumb.webp',
+    }));
+  });
+
+  it('does not forward imageUrl for arbitrary external URLs', async () => {
+    useAuthStore.setState({ accessToken: 'access-token' });
+    vi.mocked(scansApi.createScan).mockResolvedValue({ id: 'remote-scan-1' });
+
+    await createScan({
+      ...buildScan(),
+      imageDataUrl: 'https://storage.example.test/scans/user-1/thumb.webp',
+    });
+
+    expect(scansApi.createScan).toHaveBeenCalledWith('access-token', expect.not.objectContaining({
+      imageUrl: expect.anything(),
+    }));
+  });
+
+  it('does not send base64 imageDataUrl to scan history persistence', async () => {
+    useAuthStore.setState({ accessToken: 'access-token' });
+    vi.mocked(scansApi.createScan).mockResolvedValue({ id: 'remote-scan-1' });
+
+    await createScan(buildScan());
+
+    const [, payload] = vi.mocked(scansApi.createScan).mock.calls[0];
+    expect(payload).not.toHaveProperty('imageDataUrl');
+    expect(payload).not.toHaveProperty('imageUrl');
   });
 });
 
