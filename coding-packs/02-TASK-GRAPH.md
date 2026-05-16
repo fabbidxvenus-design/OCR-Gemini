@@ -187,6 +187,7 @@ Week 5: Polish & Testing
 | TIP-082 | Add Error State to HistoryPage | — | P1 | 1 | 10 | DONE |
 | TIP-083 | Button Hierarchy in Action Bars | — | P1 | 1 | 10 | DONE |
 | TIP-084 | A11y Fixes: CollapsibleSection Unicode + Header aria-label | — | P2 | 0.5 | 10 | DONE |
+| TIP-085 | A11y Fixes: ViewModeToggle aria-label + InputField error linking | — | P2 | 0.5 | 10 | DONE |
 
 **Legend**:
 - **TBD**: To be done

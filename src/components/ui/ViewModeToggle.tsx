@@ -19,7 +19,7 @@ export default function ViewModeToggle({ viewMode, onChange }: ViewModeTogglePro
         <button
           key={mode}
           onClick={() => onChange(mode)}
-          title={label}
+          aria-label={label}
           className={`p-2 rounded-md transition-colors ${
             viewMode === mode
               ? 'bg-primary text-white'

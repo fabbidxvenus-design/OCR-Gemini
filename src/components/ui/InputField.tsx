@@ -26,7 +26,7 @@ export const InputField = forwardRef<HTMLInputElement, InputFieldProps>(
         <input
           ref={ref}
           id={inputId}
-          aria-invalid={!!hasError}
+aria-invalid={!!hasError}
           aria-describedby={hasError ? errorId : undefined}
           className={`
             w-full h-btn px-4 bg-card border rounded-sm text-body text-text-primary placeholder:text-text-placeholder
@@ -40,7 +40,7 @@ export const InputField = forwardRef<HTMLInputElement, InputFieldProps>(
           {...props}
         />
         {hasError && (
-          <div
+<div
             id={errorId}
             className="flex items-center gap-2 mt-2 px-3 py-2 bg-error-light border border-error-border rounded-sm"
             role="alert"
