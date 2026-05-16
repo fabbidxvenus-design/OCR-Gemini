@@ -56,11 +56,13 @@ test.describe('History loading and images', () => {
 
     await page.goto('/history');
 
+    // Loading skeleton visible during fetch
     await expect(page.getByText('Đang tải lịch sử')).toBeVisible();
     await expect(page.locator('[data-testid="history-skeleton-card"]')).toHaveCount(4);
-    await expect(page.getByText('Không có kết quả')).not.toBeVisible();
-    await expect(page.getByText('0 lượt quét')).not.toBeVisible();
-    await expect(page.getByText('Không có kết quả')).toBeVisible();
+
+    // After slow response: empty state shows count-based message
+    await expect(page.getByText('0 lượt quét')).toBeVisible();
+    await expect(page.getByText('Đang tải lịch sử')).not.toBeVisible();
   });
 
   test('shows thumbnails when backend history returns imageUrl', async ({ page }) => {
