@@ -34,7 +34,6 @@ async function seedAuthSession(page: Page) {
  * Run with: npx playwright test e2e/ocr-result.spec.ts --project=mobile
  */
 test.describe('OCR Result Page - Unit-level categorization', () => {
-
   test('categorizeField: Japanese main fields match "main" category', async ({ page }) => {
     await seedAuthSession(page);
 
@@ -73,7 +72,7 @@ test.describe('OCR Result Page - Unit-level categorization', () => {
         /^ngay\s*san\s*xuat$/i, /^sx$/i, /^mfg$/i, /^exp$/i, /^hạn\s*sử\s*dụng$/i, /^han\s*su\s*dung$/i,
         /^期限$/i, /^有効期限$/i, /^製造日$/i,
         // Unit
-        /^unit$/i, /^đơn\s*vị$/i, /^don\s*vi$/i, /^đv$/i, /^dv$/i, /^ واحد$/i, /^单位$/i,
+        /^unit$/i, /^đơn\s*vị$/i, /^don\s*vi$/i, /^đv$/i, /^dv$/i, /^ 一$/i, /^单位$/i,
       ];
 
       function categorizeField(name: string) {
@@ -121,19 +120,16 @@ test.describe('OCR Result Page - Unit-level categorization', () => {
     const failures = results.filter(r => !r.pass);
     expect(failures, `Failed fields: ${failures.map(r => `"${r.name}"`).join(', ')}`).toHaveLength(0);
   });
-
 });
 
 /**
  * E2E test for OCR result page rendering.
  * Requires the dev server running at http://localhost:5173.
  *
- * Reproduction for the reported issue:
- * - "main has repeated 商品名/サイズ/数量 with identical values"
- * - "other has 契約No., CT No., numeric values as fields"
+ * Updated to use ScanFieldsTable UI (table rows) instead of legacy card/section UI.
  */
-test.describe('OCR Result Page - E2E rendering', () => {
-  test('renders fields and verifies "契約No." and "CT No." are NOT misplaced in "other"', async ({ page }) => {
+test.describe('OCR Result Page - E2E rendering (ScanFieldsTable)', () => {
+  test('renders fixed fields and action buttons', async ({ page }) => {
     const mockScanId = 'repro-scan-001';
 
     // Seed auth so ProtectedRoute passes
@@ -208,8 +204,7 @@ test.describe('OCR Result Page - E2E rendering', () => {
       await expect(loading).not.toBeVisible({ timeout: 10000 });
     }
 
-    // Screenshot for debug
-    await page.screenshot({ path: 'e2e/screenshots/ocr-result-repro.png', fullPage: true });
+    // ── Assertions for ScanFieldsTable ──────────────────────────────────────────────────────
 
     // Wait for the scan card to appear (indicates data loaded successfully)
     await expect(page.getByText('Thông tin chính')).toBeVisible({ timeout: 10000 });
@@ -241,7 +236,7 @@ test.describe('OCR Result Page - E2E rendering', () => {
     await expect(quantityRow).toBeVisible();
   });
 
-  test('verify field card renders correct label and value', async ({ page }) => {
+  test('verifies product row for second test case', async ({ page }) => {
     await seedAuthSession(page);
 
     const mockScanId = 'field-card-test';

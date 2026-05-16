@@ -26,6 +26,7 @@ async function canvasToJpegBlob(canvas: HTMLCanvasElement): Promise<Blob> {
 export function useCamera(): UseCameraReturn {
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  const streamRef = useRef<MediaStream | null>(null);
   const [stream, setStream] = useState<MediaStream | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [hasMultipleCameras, setHasMultipleCameras] = useState(false);

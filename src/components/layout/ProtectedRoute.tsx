@@ -10,6 +10,7 @@ export default function ProtectedRoute({ children }: ProtectedRouteProps) {
   const location = useLocation();
   useAuthStore();
   const [hasHydrated, setHasHydrated] = useState(useAuthStore.persist.hasHydrated());
+  const [isValidSession, setIsValidSession] = useState<boolean | null>(null);
 
   // Set up hydration listener only once
   useEffect(() => {
@@ -21,6 +22,13 @@ export default function ProtectedRoute({ children }: ProtectedRouteProps) {
 
   // Pure function to check session validity (no state modification)
   const isSessionValid = useAuthStore().checkSession();
+
+  useEffect(() => {
+    if (!hasHydrated) return;
+    // checkSession calls Date.now() inside the store method, not during render
+    const valid = useAuthStore.getState().checkSession();
+    queueMicrotask(() => setIsValidSession(valid));
+  }, [hasHydrated, isAuthenticated, expiresAt]);
 
   if (!hasHydrated) {
     return (

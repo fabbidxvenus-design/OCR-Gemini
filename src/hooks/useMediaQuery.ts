@@ -1,5 +1,10 @@
 import { useState, useEffect } from 'react';
 
+function getMatches(query: string): boolean {
+  if (typeof window === 'undefined') return false;
+  return window.matchMedia(query).matches;
+}
+
 export function useMediaQuery(query: string): boolean {
   // Lazy initialization reads matches synchronously once at mount — no effect needed.
   // This avoids synchronous setState inside useEffect.

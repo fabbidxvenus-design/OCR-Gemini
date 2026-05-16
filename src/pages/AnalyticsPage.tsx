@@ -128,6 +128,48 @@ export default function AnalyticsPage() {
     { value: 'all' as DateRange, label: 'Tất cả' },
   ];
 
+  if (isLoading) {
+    return (
+      <Layout title="Phân tích">
+        <div className="space-y-4">
+          <div className="card-production p-4">
+            <div className="mb-3 h-5 w-24 rounded bg-surface animate-pulse" />
+            <div className="grid grid-cols-2 gap-2 md:grid-cols-4">
+              {[1, 2, 3, 4].map(i => (
+                <SkeletonBlock key={i} className="h-12 rounded-xl" />
+              ))}
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
+            {[1, 2, 3, 4].map(i => (
+              <div key={i} className="card-production p-4">
+                <div className="flex items-center gap-4">
+                  <SkeletonBlock className="h-12 w-12 rounded-2xl" />
+                  <div className="flex-1 space-y-2">
+                    <SkeletonLine width="60%" />
+                    <SkeletonLine width="40%" />
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+          <div className="card-production p-4">
+            <SkeletonLine width="30%" className="mb-4" />
+            {[1, 2, 3].map(i => (
+              <div key={i} className="mb-3">
+                <div className="mb-2 flex justify-between">
+                  <SkeletonLine width="50%" />
+                  <SkeletonLine width="20%" />
+                </div>
+                <SkeletonBlock className="h-2 w-full" />
+              </div>
+            ))}
+          </div>
+        </div>
+      </Layout>
+    );
+  }
+
   return (
     <Layout title="Phân tích">
       <div className="space-y-4 pb-24">
