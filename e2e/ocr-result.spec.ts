@@ -209,7 +209,8 @@ test.describe('OCR Result Page - E2E rendering (ScanFieldsTable)', () => {
     // Wait for the scan card to appear (indicates data loaded successfully)
     await expect(page.getByText('Thông tin chính')).toBeVisible({ timeout: 10000 });
 
-    // ── Assertions ──────────────────────────────────────────────────────────
+    // Locate the table body rows
+    const tableRows = page.locator('table tbody tr');
 
     // ScanFieldsTable renders ALL 5 fixed fields as table rows (<table><tbody><tr>)
     // with labels from SCAN_FIELDS.labelVi: no section headings, no .rounded-2xl cards.

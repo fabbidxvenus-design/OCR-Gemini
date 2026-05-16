@@ -30,6 +30,13 @@ export default function ProtectedRoute({ children }: ProtectedRouteProps) {
     queueMicrotask(() => setIsValidSession(valid));
   }, [hasHydrated, isAuthenticated, expiresAt]);
 
+  useEffect(() => {
+    if (!hasHydrated) return;
+    // checkSession calls Date.now() inside the store method, not during render
+    const valid = useAuthStore.getState().checkSession();
+    queueMicrotask(() => setIsValidSession(valid));
+  }, [hasHydrated, isAuthenticated, expiresAt]);
+
   if (!hasHydrated) {
     return (
       <main className="flex min-h-screen items-center justify-center bg-surface" role="status" aria-live="polite">
