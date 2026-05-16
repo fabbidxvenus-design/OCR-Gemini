@@ -100,7 +100,7 @@ export default function CameraView({ onCapture }: CameraViewProps) {
         </div>
         <button
           onClick={() => setShowOverlay(!showOverlay)}
-          className="touch-target flex items-center justify-center rounded-full bg-white/15 text-white backdrop-blur-md transition-colors hover:bg-white/25 focus:outline-none focus:ring-2 focus:ring-primary"
+          className="touch-target flex items-center justify-center rounded-full bg-white/15 text-white backdrop-blur-md transition-colors hover:bg-white/25 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
           aria-label="Bật tắt khung hướng dẫn"
         >
           <Settings className="h-5 w-5" />
@@ -108,18 +108,21 @@ export default function CameraView({ onCapture }: CameraViewProps) {
       </div>
 
       {showOverlay && (
-        <div className="pointer-events-none absolute left-1/2 top-[calc(46%+150px)] w-full -translate-x-1/2 px-8 text-center">
-          <p className="font-display text-heading-sm text-white">Đặt tài liệu trong khung</p>
-          <div className="mt-3 flex justify-center gap-2">
-            <span className="rounded-full bg-white/15 px-3 py-1.5 text-caption font-semibold text-white backdrop-blur-sm">Ánh sáng tốt</span>
-            <span className="rounded-full bg-white/15 px-3 py-1.5 text-caption font-semibold text-white backdrop-blur-sm">Giữ máy ổn định</span>
+        <div className="pointer-events-none absolute left-1/2 top-[calc(46%+150px)] w-full -translate-x-1/2 px-6 text-center">
+          <div className="mx-auto max-w-[320px] rounded-2xl border border-white/15 bg-ink/45 p-3 shadow-camera-control backdrop-blur-md">
+            <p className="font-display text-heading-sm text-white">Canh nhãn trong khung</p>
+            <div className="mt-3 grid grid-cols-3 gap-2 text-caption font-semibold text-white">
+              <span className="rounded-full bg-white/15 px-2 py-1.5">Đủ sáng</span>
+              <span className="rounded-full bg-white/15 px-2 py-1.5">Không rung</span>
+              <span className="rounded-full bg-white/15 px-2 py-1.5">Rõ chữ</span>
+            </div>
           </div>
         </div>
       )}
 
       <div className="absolute bottom-8 left-0 right-0 px-6 safe-area-bottom">
         <div className="mx-auto flex max-w-[300px] items-center justify-center gap-8">
-          <label className="touch-target flex cursor-pointer items-center justify-center rounded-full bg-white/15 text-white shadow-camera-control backdrop-blur-md transition-colors hover:bg-white/25">
+          <label className="touch-target flex cursor-pointer items-center justify-center rounded-full bg-white/15 text-white shadow-camera-control backdrop-blur-md transition-colors hover:bg-white/25 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2">
             <Upload className="h-5 w-5" />
             <input type="file" accept="image/*" aria-label="Tải ảnh từ thư viện" onChange={handleFileUpload} className="hidden" />
           </label>

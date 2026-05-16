@@ -3,9 +3,10 @@ import { useParams, useNavigate } from 'react-router-dom';
 import Layout from '@/components/layout/Layout';
 import { useScan } from '@/hooks/useScans';
 import { useShare } from '@/hooks/useShare';
-import { Toast, PrimaryButton, OCRFieldCard } from '@/components/ui';
+import { Toast, PrimaryButton, SkeletonLine, SkeletonBlock } from '@/components/ui';
 import ErrorMessage from '@/components/ui/ErrorMessage';
-import { Edit, Copy, Share2, FileText, AlertTriangle, CheckCircle2 } from 'lucide-react';
+import ScanFieldsTable from '@/components/ui/ScanFieldsTable';
+import { Edit, Copy, Share2, FileText, AlertTriangle, CheckCircle2, Camera } from 'lucide-react';
 import { categorizeFields, groupSizeQuantityFields } from '@/lib/fieldCategories';
 import scanDisplayName from '@/lib/scanDisplayName';
 
@@ -16,8 +17,51 @@ export default function OCRResultPage() {
   const { isSharing, isCopying, shareOCR, copyOCR } = useShare();
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
 
+  if (isPendingMissing) {
+    return (
+      <Layout title="Không tìm thấy kết quả">
+        <ErrorMessage
+          title="Không tìm thấy kết quả OCR"
+          message="Kết quả OCR cục bộ có thể đã được lưu vào lịch sử hoặc đã hết hạn sau 7 ngày. Vui lòng kiểm tra lịch sử hoặc chụp lại ảnh."
+          onRetry={() => navigate('/camera')}
+          autoFocus
+        />
+      </Layout>
+    );
+  }
+
+  if (!scan) {
+    return (
+      <Layout title="Đang tải...">
+        <div className="space-y-4">
+          <div className="card-production p-4">
+            <div className="flex items-start gap-3">
+              <div className="h-12 w-12 rounded-2xl bg-surface animate-pulse" />
+              <div className="flex-1 space-y-2">
+                <SkeletonLine width="60%" />
+                <SkeletonLine width="40%" />
+              </div>
+            </div>
+            <div className="mt-4 grid grid-cols-2 gap-3">
+              <SkeletonBlock className="h-16 rounded-xl" />
+              <SkeletonBlock className="h-16 rounded-xl" />
+            </div>
+          </div>
+          <div className="card-production p-4 space-y-3">
+            {[1, 2, 3, 4, 5].map(i => (
+              <div key={i} className="flex items-center justify-between">
+                <SkeletonLine width="30%" />
+                <SkeletonLine width="50%" />
+              </div>
+            ))}
+          </div>
+        </div>
+      </Layout>
+    );
+  }
+
   const categorizedFields = useMemo(() => {
-    const fields = groupSizeQuantityFields(scan?.ocrStructured?.fields || []);
+    const fields = groupSizeQuantityFields(scan.ocrStructured?.fields || []);
     const withCategories = categorizeFields(fields);
     return {
       main: withCategories.filter(f => f.category === 'main'),
@@ -25,26 +69,8 @@ export default function OCRResultPage() {
     };
   }, [scan]);
 
-  if (!scan) {
-    return (
-      <Layout title={isPendingMissing ? 'Không tìm thấy kết quả' : 'Đang tải...'}>
-        {isPendingMissing ? (
-          <ErrorMessage
-            title="Không tìm thấy kết quả OCR"
-            message="Kết quả OCR cục bộ có thể đã được lưu vào lịch sử hoặc đã hết hạn sau 7 ngày. Vui lòng kiểm tra lịch sử hoặc chụp lại ảnh."
-            onRetry={() => navigate('/camera')}
-            autoFocus
-          />
-        ) : (
-          <div className="flex h-64 items-center justify-center">
-            <p className="animate-pulse text-text-secondary">Đang tải kết quả...</p>
-          </div>
-        )}
-      </Layout>
-    );
-  }
-
   const handleEdit = () => navigate(`/edit/${scanId}`);
+  const handleRetake = () => navigate('/camera');
 
   const handleCopy = async () => {
     try {
@@ -71,8 +97,19 @@ export default function OCRResultPage() {
   const needsReview = groupedFields.length === 0 || lowConfidenceCount > 0;
 
   return (
-    <Layout title="Kết quả OCR">
-      <div className="space-y-4 pb-36">
+    <Layout title="Kết quả OCR" showBottomNav={false}>
+      <div className="space-y-4 pb-40">
+        {scan.imageDataUrl && (
+          <section className="card-production overflow-hidden animate-fade-in">
+            <div className="relative bg-surface">
+              <img src={scan.imageDataUrl} alt="Scan" className="h-auto max-h-[34vh] w-full object-contain" />
+              <div className="absolute left-3 top-3 rounded-full bg-ink/60 px-3 py-1 text-caption font-semibold text-white backdrop-blur-sm">
+                Ảnh đã quét
+              </div>
+            </div>
+          </section>
+        )}
+
         <section className="card-production animate-fade-in p-4">
           <div className="mb-4 flex items-start gap-3">
             <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-2xl bg-primary-light">
@@ -92,10 +129,14 @@ export default function OCRResultPage() {
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-3 gap-2">
             <div className="rounded-xl bg-surface p-3">
-              <p className="text-caption text-text-muted">Trường dữ liệu</p>
+              <p className="text-caption text-text-muted">Trường</p>
               <p className="font-display text-heading-sm text-text-primary">{groupedFields.length}</p>
+            </div>
+            <div className="rounded-xl bg-surface p-3">
+              <p className="text-caption text-text-muted">Cần sửa</p>
+              <p className={`font-display text-heading-sm ${lowConfidenceCount > 0 ? 'text-warning' : 'text-success'}`}>{lowConfidenceCount}</p>
             </div>
             <div
               className={`rounded-xl p-3 ${needsReview ? 'bg-warning-light' : 'bg-success-light'}`}
@@ -105,41 +146,25 @@ export default function OCRResultPage() {
               <p className="text-caption text-text-muted">Trạng thái</p>
               <div className="flex items-center gap-1.5">
                 {needsReview ? <AlertTriangle className="h-4 w-4 text-warning" /> : <CheckCircle2 className="h-4 w-4 text-success" />}
-                <p className={`text-small font-semibold ${needsReview ? 'text-warning' : 'text-success'}`}>
-                  {groupedFields.length === 0 ? 'Không có trường' : lowConfidenceCount > 0 ? `Cần kiểm tra ${lowConfidenceCount}` : 'Sẵn sàng'}
+                <p className={`truncate text-small font-semibold ${needsReview ? 'text-warning' : 'text-success'}`}>
+                  {groupedFields.length === 0 ? 'Thiếu' : lowConfidenceCount > 0 ? 'Kiểm tra' : 'OK'}
                 </p>
               </div>
             </div>
           </div>
         </section>
 
-        {categorizedFields.main.length > 0 && (
-          <section className="space-y-3">
-            <div className="flex items-center justify-between">
-              <h3 className="font-display text-heading-sm text-text-primary">Thông tin chính</h3>
-              <span className="text-caption font-semibold text-text-muted">{categorizedFields.main.length} trường</span>
-            </div>
-            {categorizedFields.main.map((field, index) => <OCRFieldCard key={`${field.field}-${index}`} field={field} />)}
-          </section>
-        )}
-
-        {categorizedFields.other.length > 0 && (
-          <section className="space-y-3">
-            <div className="flex items-center justify-between">
-              <h3 className="font-display text-heading-sm text-text-primary">Thông tin khác</h3>
-              <span className="text-caption font-semibold text-text-muted">{categorizedFields.other.length} trường</span>
-            </div>
-            {categorizedFields.other.map((field, index) => <OCRFieldCard key={`${field.field}-${index}`} field={field} />)}
-          </section>
-        )}
-
+        <ScanFieldsTable
+          fields={groupedFields}
+          editable={false}
+        />
 
         {notes.length > 0 && (
           <section className="card-production p-4">
             <h3 className="mb-3 font-display text-heading-sm text-text-primary">Ghi chú</h3>
             <div className="space-y-2">
-              {notes.map((note, index) => (
-                <div key={index} className="flex gap-2 text-small text-text-secondary">
+              {notes.map((note) => (
+                <div key={note} className="flex gap-2 text-small text-text-secondary">
                   <span className="text-primary">•</span>
                   <p className="leading-relaxed">{note}</p>
                 </div>
@@ -150,17 +175,21 @@ export default function OCRResultPage() {
       </div>
 
       <div className="fixed bottom-bottom-nav left-0 right-0 border-t border-card-border bg-surface/95 p-screen safe-area-bottom backdrop-blur-xl md:left-sidebar">
-        <div className="mx-auto flex max-w-content gap-2">
-          <PrimaryButton variant="secondary" className="flex-1" onClick={handleEdit}>
-            <Edit className="mr-2 h-5 w-5" />
+        <div className="mx-auto grid max-w-content grid-cols-4 gap-2">
+          <PrimaryButton variant="secondary" className="px-2" onClick={handleRetake}>
+            <Camera className="mr-1.5 h-5 w-5" />
+            Chụp
+          </PrimaryButton>
+          <PrimaryButton variant="secondary" className="px-2" onClick={handleEdit}>
+            <Edit className="mr-1.5 h-5 w-5" />
             Sửa
           </PrimaryButton>
-          <PrimaryButton variant="secondary" className="flex-1" onClick={handleCopy} disabled={isCopying}>
-            <Copy className="mr-2 h-5 w-5" />
+          <PrimaryButton variant="secondary" className="px-2" onClick={handleCopy} disabled={isCopying}>
+            <Copy className="mr-1.5 h-5 w-5" />
             Copy
           </PrimaryButton>
-          <PrimaryButton className="flex-1" onClick={handleShare} disabled={isSharing}>
-            <Share2 className="mr-2 h-5 w-5" />
+          <PrimaryButton className="px-2" onClick={handleShare} disabled={isSharing}>
+            <Share2 className="mr-1.5 h-5 w-5" />
             Chia sẻ
           </PrimaryButton>
         </div>

@@ -51,7 +51,7 @@ describe('HistoryPage', () => {
   });
 
   it('shows loading feedback instead of an empty result while history loads', () => {
-    vi.mocked(useScansState).mockReturnValue({ scans: [], isLoading: true });
+    vi.mocked(useScansState).mockReturnValue({ scans: [], isLoading: true, error: null });
 
     renderHistoryPage();
 
@@ -62,19 +62,20 @@ describe('HistoryPage', () => {
   });
 
   it('shows the loaded empty state only after loading completes', () => {
-    vi.mocked(useScansState).mockReturnValue({ scans: [], isLoading: false });
+    vi.mocked(useScansState).mockReturnValue({ scans: [], isLoading: false, error: null });
 
     renderHistoryPage();
 
     expect(screen.queryByText('Đang tải lịch sử')).toBeNull();
     expect(screen.getByText('0 lượt quét')).toBeTruthy();
-    expect(screen.getByText('Không có kết quả')).toBeTruthy();
+    expect(screen.getByText('Chưa có lượt quét')).toBeTruthy();
   });
 
   it('renders a history thumbnail when a scan has image data', async () => {
     vi.mocked(useScansState).mockReturnValue({
       scans: [buildScan({ imageDataUrl: 'https://example.test/scan.jpg' })],
       isLoading: false,
+      error: null,
     });
 
     renderHistoryPage();
@@ -83,7 +84,7 @@ describe('HistoryPage', () => {
   });
 
   it('uses the fallback visual when a scan has no image', () => {
-    vi.mocked(useScansState).mockReturnValue({ scans: [buildScan()], isLoading: false });
+    vi.mocked(useScansState).mockReturnValue({ scans: [buildScan()], isLoading: false, error: null });
 
     renderHistoryPage();
 

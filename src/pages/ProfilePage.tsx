@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import Layout from '@/components/layout/Layout';
-import { InputField, PrimaryButton, Toast } from '@/components/ui';
+import { InputField, PrimaryButton, Toast, SkeletonLine, SkeletonBlock } from '@/components/ui';
 import { useAuthStore } from '@/store/authStore';
 import type { ProfileUpdatePayload, UserProfile } from '@/lib/authApi';
 import { Briefcase, RotateCcw, Save, UserRound } from 'lucide-react';
@@ -65,6 +65,32 @@ export default function ProfilePage() {
   const [form, setForm] = useState<ProfileFormState>(persistedForm);
   const [errors, setErrors] = useState<Partial<Record<keyof ProfileFormState, string>>>({});
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
+
+  if (!user && isLoading) {
+    return (
+      <Layout title="Hồ sơ" showBack>
+        <div className="space-y-4">
+          <div className="card-production overflow-hidden p-5">
+            <div className="flex items-center gap-4">
+              <SkeletonBlock className="h-16 w-16 rounded-2xl" />
+              <div className="flex-1 space-y-2">
+                <SkeletonLine width="60%" />
+                <SkeletonLine width="40%" />
+              </div>
+            </div>
+          </div>
+          <div className="card-production p-4 space-y-4">
+            {[1, 2, 3].map(i => (
+              <div key={i} className="space-y-2">
+                <SkeletonLine width="30%" />
+                <SkeletonBlock className="h-12 w-full rounded-lg" />
+              </div>
+            ))}
+          </div>
+        </div>
+      </Layout>
+    );
+  }
 
   const initials = (user?.displayName || user?.email || 'U').trim().slice(0, 1).toUpperCase();
 

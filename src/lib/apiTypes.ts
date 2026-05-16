@@ -1,5 +1,13 @@
 import { z } from 'zod';
 
+// OCR field structure
+export interface OCRField {
+  field: string;
+  value: string;
+  confidence?: 'high' | 'medium' | 'low';
+  category?: 'main' | 'other';
+}
+
 const BackendOCRStructuredSchema = z.object({
   title: z.string().optional(),
   fields: z.array(

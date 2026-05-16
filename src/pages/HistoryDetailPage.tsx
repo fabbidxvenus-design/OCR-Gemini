@@ -4,14 +4,15 @@ import Layout from '@/components/layout/Layout';
 import { useScan, deleteScan } from '@/hooks/useScans';
 import { useExport } from '@/hooks/useExport';
 import { Edit, Trash2, FileText, AlertTriangle, Download, Loader2, CheckCircle2 } from 'lucide-react';
-import { categorizeFields, groupSizeQuantityFields } from '@/lib/fieldCategories';
 import scanDisplayName from '@/lib/scanDisplayName';
-import { PrimaryButton, Toast, OCRFieldCard } from '@/components/ui';
+import { PrimaryButton, Toast, SkeletonLine, SkeletonBlock } from '@/components/ui';
+import ScanFieldsTable from '@/components/ui/ScanFieldsTable';
+import { categorizeFields, groupSizeQuantityFields } from '@/lib/fieldCategories';
 
 export default function HistoryDetailPage() {
   const { scanId } = useParams<{ scanId: string }>();
   const navigate = useNavigate();
-  const { scan } = useScan(scanId);
+  const { scan, isLoading } = useScan(scanId);
   const { isExporting, exportScan } = useExport();
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
 
@@ -23,6 +24,37 @@ export default function HistoryDetailPage() {
       other: withCategories.filter(f => f.category === 'other'),
     };
   }, [scan]);
+
+  if (!scan && isLoading) {
+    return (
+      <Layout title="Chi tiết scan" showBack>
+        <div className="space-y-4">
+          <SkeletonBlock className="h-40 w-full rounded-none" />
+          <div className="card-production p-4">
+            <div className="flex items-start gap-3">
+              <div className="h-12 w-12 rounded-2xl bg-surface animate-pulse" />
+              <div className="flex-1 space-y-2">
+                <SkeletonLine width="60%" />
+                <SkeletonLine width="40%" />
+              </div>
+            </div>
+            <div className="mt-4 grid grid-cols-2 gap-3">
+              <SkeletonBlock className="h-16 rounded-xl" />
+              <SkeletonBlock className="h-16 rounded-xl" />
+            </div>
+          </div>
+          <div className="card-production p-4 space-y-3">
+            {[1, 2, 3, 4, 5].map(i => (
+              <div key={i} className="flex items-center justify-between">
+                <SkeletonLine width="30%" />
+                <SkeletonLine width="50%" />
+              </div>
+            ))}
+          </div>
+        </div>
+      </Layout>
+    );
+  }
 
   if (!scan) {
     return (
@@ -52,7 +84,7 @@ export default function HistoryDetailPage() {
   const lowConfidenceCount = groupedFields.filter(field => field.confidence === 'low' || !field.value).length;
 
   return (
-    <Layout title="Chi tiết scan" showBack>
+    <Layout title="Chi tiết scan" showBack showBottomNav={false}>
       <div className="space-y-4 pb-40">
         <section className="card-production overflow-hidden animate-fade-in">
           {scan.imageDataUrl ? (
@@ -81,17 +113,21 @@ export default function HistoryDetailPage() {
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-3 gap-2">
             <div className="rounded-xl bg-surface p-3">
-              <p className="text-caption text-text-muted">Trường dữ liệu</p>
+              <p className="text-caption text-text-muted">Trường</p>
               <p className="font-display text-heading-sm text-text-primary">{groupedFields.length}</p>
+            </div>
+            <div className="rounded-xl bg-surface p-3">
+              <p className="text-caption text-text-muted">Cần sửa</p>
+              <p className={`font-display text-heading-sm ${lowConfidenceCount > 0 ? 'text-warning' : 'text-success'}`}>{lowConfidenceCount}</p>
             </div>
             <div className={`rounded-xl p-3 ${lowConfidenceCount > 0 ? 'bg-warning-light' : 'bg-success-light'}`}>
               <p className="text-caption text-text-muted">Trạng thái</p>
               <div className="flex items-center gap-1.5">
                 {lowConfidenceCount > 0 ? <AlertTriangle className="h-4 w-4 text-warning" /> : <CheckCircle2 className="h-4 w-4 text-success" />}
-                <p className={`text-small font-semibold ${lowConfidenceCount > 0 ? 'text-warning' : 'text-success'}`}>
-                  {lowConfidenceCount > 0 ? `Cần kiểm tra ${lowConfidenceCount}` : 'Sẵn sàng'}
+                <p className={`truncate text-small font-semibold ${lowConfidenceCount > 0 ? 'text-warning' : 'text-success'}`}>
+                  {lowConfidenceCount > 0 ? 'Kiểm tra' : 'OK'}
                 </p>
               </div>
             </div>
@@ -105,25 +141,10 @@ export default function HistoryDetailPage() {
           </div>
         )}
 
-        {categorizedFields.main.length > 0 && (
-          <section className="space-y-3">
-            <div className="flex items-center justify-between">
-              <h3 className="font-display text-heading-sm text-text-primary">Thông tin chính</h3>
-              <span className="text-caption font-semibold text-text-muted">{categorizedFields.main.length} trường</span>
-            </div>
-            {categorizedFields.main.map((field, index) => <OCRFieldCard key={`${field.field}-${index}`} field={field} />)}
-          </section>
-        )}
-
-        {categorizedFields.other.length > 0 && (
-          <section className="space-y-3">
-            <div className="flex items-center justify-between">
-              <h3 className="font-display text-heading-sm text-text-primary">Thông tin khác</h3>
-              <span className="text-caption font-semibold text-text-muted">{categorizedFields.other.length} trường</span>
-            </div>
-            {categorizedFields.other.map((field, index) => <OCRFieldCard key={`${field.field}-${index}`} field={field} />)}
-          </section>
-        )}
+        <ScanFieldsTable
+          fields={groupedFields}
+          editable={false}
+        />
 
         <section className="card-production p-4">
           <h3 className="mb-3 text-caption font-semibold uppercase tracking-[0.14em] text-text-muted">Chi tiết kỹ thuật</h3>

@@ -72,6 +72,7 @@ function getPendingScan(scanId: string): ScanRecord | undefined {
 export interface UseScansStateResult {
   scans: ScanRecord[];
   isLoading: boolean;
+  error: string | null;
 }
 
 export function useScansState(options?: { limit?: number; order?: 'asc' | 'desc' }): UseScansStateResult {
@@ -79,11 +80,13 @@ export function useScansState(options?: { limit?: number; order?: 'asc' | 'desc'
   const accessToken = useAuthStore((state) => state.accessToken);
   const [scans, setScans] = useState<ScanRecord[]>([]);
   const [isLoading, setIsLoading] = useState(Boolean(accessToken));
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!accessToken) {
       queueMicrotask(() => {
         setScans([]);
+        setError(null);
         setIsLoading(false);
       });
       return;
@@ -92,6 +95,7 @@ export function useScansState(options?: { limit?: number; order?: 'asc' | 'desc'
     let cancelled = false;
     queueMicrotask(() => {
       setIsLoading(true);
+      setError(null);
     });
 
     async function loadScans() {
@@ -102,10 +106,15 @@ export function useScansState(options?: { limit?: number; order?: 'asc' | 'desc'
         const ordered = order === 'desc'
           ? mapped.sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime())
           : mapped.sort((a, b) => a.timestamp.getTime() - b.timestamp.getTime());
-        if (!cancelled) setScans(ordered);
+        if (!cancelled) {
+          setScans(ordered);
+          setError(null);
+        }
       } catch (err) {
-        console.error('Failed to load scans:', err);
-        if (!cancelled) setScans([]);
+        if (!cancelled) {
+          setScans([]);
+          setError('Không thể tải lịch sử. Vui lòng thử lại.');
+        }
       } finally {
         if (!cancelled) setIsLoading(false);
       }
@@ -118,7 +127,7 @@ export function useScansState(options?: { limit?: number; order?: 'asc' | 'desc'
     };
   }, [accessToken, limit, order]);
 
-  return { scans, isLoading };
+  return { scans, isLoading, error };
 }
 
 export function useScans(options?: { limit?: number; order?: 'asc' | 'desc' }): ScanRecord[] | undefined {
@@ -129,12 +138,14 @@ export function useScans(options?: { limit?: number; order?: 'asc' | 'desc' }): 
 export interface UseScanResult {
   scan: ScanRecord | undefined;
   isPendingMissing: boolean;
+  isLoading: boolean;
 }
 
 export function useScan(scanId?: string): UseScanResult {
   const accessToken = useAuthStore((state) => state.accessToken);
   const [scan, setScan] = useState<ScanRecord | undefined>();
   const [isPendingMissing, setIsPendingMissing] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
     queueMicrotask(() => {
@@ -175,6 +186,7 @@ export function useScan(scanId?: string): UseScanResult {
     }
 
     let cancelled = false;
+    queueMicrotask(() => setIsLoading(true));
 
     async function loadScan() {
       if (!accessToken || !scanId) return;
@@ -184,6 +196,8 @@ export function useScan(scanId?: string): UseScanResult {
       } catch (err) {
         console.error('Failed to load scan:', err);
         if (!cancelled) setScan(undefined);
+      } finally {
+        if (!cancelled) setIsLoading(false);
       }
     }
 
@@ -194,7 +208,7 @@ export function useScan(scanId?: string): UseScanResult {
     };
   }, [accessToken, scanId]);
 
-  return { scan, isPendingMissing };
+  return { scan, isPendingMissing, isLoading };
 }
 
 export function useSearchScans(query: string): ScanRecord[] | undefined {

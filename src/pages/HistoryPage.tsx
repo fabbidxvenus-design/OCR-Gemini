@@ -70,7 +70,7 @@ function ScanCard({ scan, selected, selectMode, onClick }: { scan: ScanRecord; s
   return (
     <button
       onClick={onClick}
-      className={`card-production w-full overflow-hidden text-left transition-all hover:shadow-elevated active:scale-[0.99] ${selected ? 'border-primary ring-2 ring-primary/20' : ''}`}
+      className={`card-production w-full overflow-hidden text-left transition-all hover:shadow-elevated active:scale-[0.99] focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 ${selected ? 'border-primary ring-2 ring-primary/20' : ''}`}
     >
       <div className="flex gap-3 p-3">
         <div className="relative h-20 w-20 flex-shrink-0 overflow-hidden rounded-2xl bg-surface">
@@ -214,7 +214,7 @@ export default function HistoryPage() {
                 setIsSelectMode(!isSelectMode);
                 setSelectedIds(new Set());
               }}
-              className={`touch-target flex items-center justify-center rounded-xl transition-colors ${isSelectMode ? 'bg-error-light text-error' : 'bg-surface text-text-secondary hover:text-primary'}`}
+              className={`touch-target flex items-center justify-center rounded-xl transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 ${isSelectMode ? 'bg-error-light text-error' : 'bg-surface text-text-secondary hover:text-primary'}`}
             >
               {isSelectMode ? <X className="h-5 w-5" /> : <CheckSquare className="h-5 w-5" />}
             </button>
@@ -236,7 +236,7 @@ export default function HistoryPage() {
           <div className="flex min-w-max items-center gap-2.5 pr-screen">
             <button
               onClick={() => setShowSortMenu(true)}
-              className="flex flex-shrink-0 items-center gap-1.5 rounded-full border border-card-border bg-card px-4 py-2 text-small font-semibold text-text-primary shadow-card"
+              className="flex flex-shrink-0 items-center gap-1.5 rounded-full border border-card-border bg-card px-4 py-2 text-small font-semibold text-text-primary shadow-card focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
             >
               <ArrowUpDown className="h-4 w-4" />
               {SORT_OPTIONS.find(option => option.value === sortBy)?.label}
@@ -245,7 +245,7 @@ export default function HistoryPage() {
               <button
                 key={option.value}
                 onClick={() => setActiveFilter(option.value)}
-                className={`flex-shrink-0 rounded-full border px-4 py-2 text-small font-semibold transition-all ${
+                className={`flex-shrink-0 rounded-full border px-4 py-2 text-small font-semibold transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 ${
                   activeFilter === option.value
                     ? 'border-primary bg-primary text-white shadow-md'
                     : 'border-card-border bg-card text-text-secondary hover:border-primary hover:text-primary'
@@ -261,10 +261,10 @@ export default function HistoryPage() {
           <div className="flex items-center justify-between rounded-2xl border border-primary/20 bg-primary-light p-3 animate-fade-in">
             <span className="text-small font-semibold text-primary">Đã chọn {selectedIds.size}</span>
             <div className="flex gap-4 text-small font-semibold">
-              <button onClick={() => setSelectedIds(new Set(scans.map(scan => scan.id).filter(Boolean) as string[]))} className="text-primary hover:underline">
+              <button onClick={() => setSelectedIds(new Set(scans.map(scan => scan.id).filter(Boolean) as string[]))} className="text-primary hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 rounded">
                 Chọn tất cả
               </button>
-              <button onClick={() => setSelectedIds(new Set())} className="text-text-secondary hover:underline">
+              <button onClick={() => setSelectedIds(new Set())} className="text-text-secondary hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 rounded">
                 Bỏ chọn
               </button>
             </div>
@@ -290,12 +290,22 @@ export default function HistoryPage() {
             ))}
           </div>
         ) : (
-          <div className="flex flex-col items-center justify-center py-16 text-center">
-            <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-surface">
-              <Search className="h-8 w-8 text-text-muted" />
+          <div className="card-production flex flex-col items-center justify-center px-5 py-14 text-center">
+            <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-primary-light">
+              {scanList.length === 0 ? <Camera className="h-8 w-8 text-primary" /> : <Search className="h-8 w-8 text-text-muted" />}
             </div>
-            <h3 className="font-display text-heading-sm text-text-primary">Không có kết quả</h3>
-            <p className="mt-1 text-small text-text-secondary">Thử thay đổi bộ lọc hoặc từ khóa</p>
+            <h3 className="font-display text-heading-sm text-text-primary">
+              {scanList.length === 0 ? 'Chưa có lượt quét' : 'Không có kết quả'}
+            </h3>
+            <p className="mt-2 max-w-[260px] text-small text-text-secondary">
+              {scanList.length === 0 ? 'Chụp nhãn đầu tiên để tạo kho hồ sơ OCR.' : 'Thử đổi từ khóa, bộ lọc hoặc sắp xếp để tìm lại hồ sơ.'}
+            </p>
+            {scanList.length === 0 && (
+              <PrimaryButton className="mt-5" onClick={() => navigate('/camera')}>
+                <Camera className="mr-2 h-5 w-5" />
+                Bắt đầu quét
+              </PrimaryButton>
+            )}
           </div>
         )}
 
@@ -311,7 +321,7 @@ export default function HistoryPage() {
                       setSortBy(option.value);
                       setShowSortMenu(false);
                     }}
-                    className={`w-full rounded-xl p-4 text-left font-medium transition-colors ${sortBy === option.value ? 'bg-primary-light text-primary' : 'text-text-primary hover:bg-surface'}`}
+                    className={`w-full rounded-xl p-4 text-left font-medium transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 ${sortBy === option.value ? 'bg-primary-light text-primary' : 'text-text-primary hover:bg-surface'}`}
                   >
                     {option.label}
                   </button>

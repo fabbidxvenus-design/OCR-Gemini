@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useSettings } from '@/hooks/useSettings';
 import { MODEL_CONFIGS } from '@/lib/models';
 import Layout from '@/components/layout/Layout';
-import { Spinner, PrimaryButton, Toast } from '@/components/ui';
+import { PrimaryButton, Toast, SkeletonBlock, SkeletonLine } from '@/components/ui';
 import { Check, Info, Shield, LogOut, Zap, Activity } from 'lucide-react';
 import { useAuthStore } from '@/store/authStore';
 import { useNavigate } from 'react-router-dom';
@@ -39,8 +39,22 @@ export default function SettingsPage() {
   if (isLoading) {
     return (
       <Layout title="Cài đặt">
-        <div className="flex h-64 items-center justify-center">
-          <Spinner size="lg" />
+        <div className="space-y-4">
+          <div className="card-production p-4">
+            <SkeletonBlock className="h-5 w-32 mb-4" />
+            <div className="space-y-3">
+              {[1, 2, 3].map(i => (
+                <div key={i} className="rounded-2xl border border-card-border p-4">
+                  <div className="mb-2 flex justify-between">
+                    <SkeletonBlock className="h-6 w-24" />
+                    <SkeletonBlock className="h-6 w-6 rounded-full" />
+                  </div>
+                  <SkeletonLine width="80%" className="mb-3" />
+                  <SkeletonBlock className="h-6 w-20 rounded-full" />
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
       </Layout>
     );

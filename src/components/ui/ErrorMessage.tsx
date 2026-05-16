@@ -41,7 +41,7 @@ export default function ErrorMessage({
         <button
           ref={retryButtonRef}
           onClick={onRetry}
-          className="flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-lg font-medium hover:bg-primary/90 transition-colors"
+          className="flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-lg font-medium hover:bg-primary/90 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
         >
           <RefreshCw className="w-4 h-4" aria-hidden="true" />
           Thử lại

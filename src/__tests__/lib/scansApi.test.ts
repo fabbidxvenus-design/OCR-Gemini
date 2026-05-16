@@ -81,7 +81,7 @@ describe('scansApi thumbnail persistence', () => {
     expect(result.storagePath).toBe('scans/user-1/thumb.webp');
   });
 
-  it('sends imageUrl without imageDataUrl when creating scan history', async () => {
+  it('sends imageUrl and imageDataUrl when creating scan history', async () => {
     fetchMock.mockResolvedValueOnce(new Response(JSON.stringify({
       success: true,
       data: {
@@ -109,7 +109,7 @@ describe('scansApi thumbnail persistence', () => {
     await scansApi.createScan('access-token', {
       timestamp: '2026-05-15T10:00:00.000Z',
       imageUrl: 'scans/user-1/thumb.webp',
-      imageDataUrl: 'data:image/png;base64,should-not-send',
+      imageDataUrl: 'data:image/png;base64,should-send',
       ocrRaw: 'raw',
       ocrStructured: {
         title: 'Mock OCR',
@@ -123,6 +123,6 @@ describe('scansApi thumbnail persistence', () => {
     const [, request] = fetchMock.mock.calls[0];
     const body = JSON.parse(request.body as string);
     expect(body.imageUrl).toBe('scans/user-1/thumb.webp');
-    expect(body).not.toHaveProperty('imageDataUrl');
+    expect(body.imageDataUrl).toBe('data:image/png;base64,should-send');
   });
 });
