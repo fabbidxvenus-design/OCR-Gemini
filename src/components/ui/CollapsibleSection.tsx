@@ -36,9 +36,6 @@ export default function CollapsibleSection({
       >
         <div className="flex items-center gap-3">
           <span className="text-label uppercase tracking-wide text-text-secondary">
-            {isExpanded ? '▼' : '▶'}
-          </span>
-          <span className="text-label uppercase tracking-wide text-text-secondary">
             {title} ({count})
           </span>
         </div>
