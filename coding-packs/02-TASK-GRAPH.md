@@ -182,6 +182,9 @@ Week 5: Polish & Testing
 | TIP-071 | Single Scan Error State Handling | TIP-017, TIP-069 | P0 | S | 11 | READY |
 | TIP-070 | Fix Japanese Field Categorization (契約No/CT No.) | TIP-038 | P0 | S | 11 | DONE |
 | TIP-069 | Phase 1 Critical Bugfixes (Lint/Silent Failures/E2E Headings) | TIP-017, TIP-038, TIP-068 | P0 | 1 | 10 | DONE |
+| TIP-080 | Fix E2E Test Quality Issues (Stale Assertions) | — | P0 | 2 | 10 | DONE |
+| TIP-081 | Fix React Hooks Violations (Conditional useMemo) | — | P0 | 2 | 10 | DONE |
+| TIP-082 | Add Error State to HistoryPage | — | P1 | 1 | 10 | DONE |
 
 **Legend**:
 - **TBD**: To be done

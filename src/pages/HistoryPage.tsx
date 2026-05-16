@@ -130,7 +130,7 @@ const SORT_OPTIONS: { value: SortOption; label: string }[] = [
 
 export default function HistoryPage() {
   const navigate = useNavigate();
-  const { scans: scanList, isLoading } = useScansState({ limit: 100, order: 'desc' });
+  const { scans: scanList, isLoading, error } = useScansState({ limit: 100, order: 'desc' });
   const { isExporting, exportMultiple } = useExport();
   const [searchQuery, setSearchQuery] = useState('');
   const [activeFilter, setActiveFilter] = useState<FilterType>('all');
@@ -227,6 +227,10 @@ export default function HistoryPage() {
     }
   };
 
+  const handleRetry = useCallback(() => {
+    window.location.reload();
+  }, []);
+
   const filterOptions = useMemo<{ value: FilterType; label: string; count: number }[]>(() => [
     { value: 'all', label: 'Tất cả', count: scanList.length },
     { value: 'needs_review', label: 'Cần kiểm tra', count: scanList.filter(needsReview).length },
@@ -313,6 +317,17 @@ export default function HistoryPage() {
             {Array.from({ length: 4 }).map((_, index) => (
               <SkeletonCard key={index} data-testid="history-skeleton-card" />
             ))}
+          </div>
+        ) : error ? (
+          <div className="card-production flex flex-col items-center justify-center px-5 py-10 text-center">
+            <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-error-light">
+              <AlertTriangle className="h-7 w-7 text-error" />
+            </div>
+            <h3 className="font-display text-heading-sm text-text-primary">Tải lịch sử thất bại</h3>
+            <p className="mt-2 max-w-[260px] text-small text-text-secondary">{error}</p>
+            <PrimaryButton className="mt-5" onClick={handleRetry}>
+              Thử lại
+            </PrimaryButton>
           </div>
         ) : scans.length > 0 ? (
           <div className="space-y-3">
