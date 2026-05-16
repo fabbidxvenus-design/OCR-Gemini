@@ -53,19 +53,6 @@ async function checkTouchTargets(page: Page, selector: string, minPx = 44) {
   return failures;
 }
 
-// ─── Keyboard focus helper ────────────────────────────────────────────────────
-
-async function checkFocusRing(page: Page, selector: string) {
-  const el = page.locator(selector).first();
-  await el.focus();
-  const ring = await el.evaluate((e) => {
-    const s = window.getComputedStyle(e);
-    return s.outlineColor !== 'rgba(0, 0, 0, 0)' ||
-      e.classList.contains('focus:ring') ||
-      e.closest('[class*="focus:ring"]') !== null;
-  });
-  return ring;
-}
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // PROFILE PAGE TESTS
