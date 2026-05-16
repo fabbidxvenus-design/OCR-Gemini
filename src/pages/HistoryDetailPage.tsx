@@ -5,7 +5,7 @@ import { useScan, deleteScan } from '@/hooks/useScans';
 import { useExport } from '@/hooks/useExport';
 import { Edit, Trash2, FileText, AlertTriangle, Download, Loader2, CheckCircle2 } from 'lucide-react';
 import scanDisplayName from '@/lib/scanDisplayName';
-import { PrimaryButton, Toast, SkeletonLine, SkeletonBlock, ErrorMessage, ScanFieldsTable } from '@/components/ui';
+import { Toast, SkeletonLine, SkeletonBlock, ErrorMessage, ScanFieldsTable } from '@/components/ui';
 import { categorizeFields, groupSizeQuantityFields } from '@/lib/fieldCategories';
 
 export default function HistoryDetailPage() {
@@ -177,18 +177,18 @@ export default function HistoryDetailPage() {
         </section>
       </div>
 
-      <div className="fixed bottom-bottom-nav left-0 right-0 z-50 border-t border-card-border bg-surface/95 px-4 safe-area-bottom backdrop-blur-xl md:px-6 md:left-sidebar">
+<div className="fixed bottom-bottom-nav left-0 right-0 z-50 border-t border-card-border bg-surface/95 px-4 safe-area-bottom backdrop-blur-xl md:px-6 md:left-sidebar">
         <div className="mx-auto grid max-w-content grid-cols-3 gap-2">
-          <PrimaryButton variant="secondary" onClick={handleEdit}>
-            <Edit className="mr-2 h-5 w-5" /> Sửa
-          </PrimaryButton>
-          <PrimaryButton variant="secondary" onClick={handleExport} disabled={isExporting}>
-            {isExporting ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : <Download className="mr-2 h-5 w-5" />}
+          <button onClick={handleEdit} className="flex items-center justify-center gap-2 rounded-xl border border-card-border bg-card p-3 text-small font-semibold text-text-primary transition-colors hover:bg-surface active:scale-[0.98] focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2">
+            <Edit className="h-5 w-5" /> Sửa
+          </button>
+          <button onClick={handleExport} disabled={isExporting} className="flex items-center justify-center gap-2 rounded-xl border border-card-border bg-card p-3 text-small font-semibold text-text-primary transition-colors hover:bg-surface active:scale-[0.98] focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-40">
+            {isExporting ? <Loader2 className="h-5 w-5 animate-spin" /> : <Download className="h-5 w-5" />}
             Xuất
-          </PrimaryButton>
-          <PrimaryButton variant="danger" onClick={handleDelete}>
-            <Trash2 className="mr-2 h-5 w-5" /> Xóa
-          </PrimaryButton>
+          </button>
+          <button onClick={handleDelete} className="flex items-center justify-center gap-2 rounded-xl border border-error/30 bg-error-light p-3 text-small font-semibold text-error transition-colors hover:bg-error/10 active:scale-[0.98] focus:outline-none focus-visible:ring-2 focus-visible:ring-error focus-visible:ring-offset-2">
+            <Trash2 className="h-5 w-5" /> Xóa
+          </button>
         </div>
       </div>
 

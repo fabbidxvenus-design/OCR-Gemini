@@ -67,7 +67,7 @@ export default function OCRResultPage() {
     );
   }
 
-  if (error) {
+if (error) {
     return (
       <Layout title="Không thể tải kết quả">
         <ErrorMessage
@@ -79,7 +79,6 @@ export default function OCRResultPage() {
       </Layout>
     );
   }
-
   const handleEdit = () => navigate(`/edit/${scanId}`);
   const handleRetake = () => navigate('/camera');
 
@@ -198,20 +197,20 @@ export default function OCRResultPage() {
         )}
       </div>
 
-      <div className="fixed bottom-bottom-nav left-0 right-0 border-t border-card-border bg-surface/95 px-4 safe-area-bottom backdrop-blur-xl z-50 md:px-6 md:left-sidebar">
+<div className="fixed bottom-bottom-nav left-0 right-0 z-50 border-t border-card-border bg-surface/95 px-4 safe-area-bottom backdrop-blur-xl md:px-6 md:left-sidebar">
         <div className="mx-auto grid max-w-content grid-cols-4 gap-2">
-          <PrimaryButton variant="secondary" className="px-2" onClick={handleRetake}>
-            <Camera className="mr-1.5 h-5 w-5" />
-            Chụp
-          </PrimaryButton>
-          <PrimaryButton variant="secondary" className="px-2" onClick={handleEdit}>
-            <Edit className="mr-1.5 h-5 w-5" />
-            Sửa
-          </PrimaryButton>
-          <PrimaryButton variant="secondary" className="px-2" onClick={handleCopy} disabled={isCopying}>
-            <Copy className="mr-1.5 h-5 w-5" />
-            Copy
-          </PrimaryButton>
+          <button onClick={handleRetake} className="flex flex-col items-center gap-1 rounded-xl p-2 text-text-muted transition-colors hover:bg-surface hover:text-text-primary active:scale-95 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2">
+            <Camera className="h-5 w-5" />
+            <span className="text-caption font-medium">Chụp</span>
+          </button>
+          <button onClick={handleEdit} className="flex flex-col items-center gap-1 rounded-xl p-2 text-text-muted transition-colors hover:bg-surface hover:text-text-primary active:scale-95 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2">
+            <Edit className="h-5 w-5" />
+            <span className="text-caption font-medium">Sửa</span>
+          </button>
+          <button onClick={handleCopy} disabled={isCopying} className="flex flex-col items-center gap-1 rounded-xl p-2 text-text-muted transition-colors hover:bg-surface hover:text-text-primary active:scale-95 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-40">
+            <Copy className="h-5 w-5" />
+            <span className="text-caption font-medium">Copy</span>
+          </button>
           <PrimaryButton className="px-2" onClick={handleShare} disabled={isSharing}>
             <Share2 className="mr-1.5 h-5 w-5" />
             Chia sẻ
