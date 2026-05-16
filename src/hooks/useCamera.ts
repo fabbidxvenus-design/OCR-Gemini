@@ -37,13 +37,15 @@ export function useCamera(): UseCameraReturn {
       const videoDevices = devices.filter((device) => device.kind === 'videoinput');
       setHasMultipleCameras(videoDevices.length > 1);
     });
+  }, []);
 
+  useEffect(() => {
     return () => {
       if (stream) {
         stream.getTracks().forEach((track) => track.stop());
       }
     };
-  }, []);
+  }, [stream]);
 
   const startCamera = useCallback(async (facingMode: 'user' | 'environment' = 'environment') => {
     try {

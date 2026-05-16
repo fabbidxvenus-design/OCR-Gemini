@@ -1,0 +1,24 @@
+{
+  "pipeline": "TIP-070-Japanese-Field-Categorization",
+  "planDir": "D:\\scripts\\HLVN\\ocr-mobile-web\\coding-packs\\plans\\TIP-070-fix-japanese-field-categorization",
+  "tip": "TIP-070",
+  "tipFile": "D:\\scripts\\HLVN\\ocr-mobile-web\\coding-packs\\tips\\TIP-070-fix-japanese-field-categorization.md",
+  "mode": "plan",
+  "phase": "COMPLETE",
+  "status": "COMPLETE",
+  "tier": "LIGHT",
+  "complexityScore": 12,
+  "fixCount": 0,
+  "startedAt": "2026-05-16T17:20:00Z",
+  "completedAt": "2026-05-16T17:35:00Z",
+  "lastEvent": "VERIFIED: build/type/lint/vitest PASS. E2E unit categorization PASS; broader E2E rendering failures are outside TIP-070 and tracked for next PHASE 1 issue.",
+  "verification": {
+    "build": "PASS",
+    "typecheck": "PASS",
+    "lint": "PASS",
+    "vitest": "PASS (111 tests)",
+    "e2eCategorization": "PASS",
+    "e2eFullSpec": "PARTIAL (broader rendering/mock failures remain)",
+    "review": "PASS (no CRITICAL/HIGH findings)"
+  }
+}

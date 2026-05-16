@@ -22,8 +22,8 @@ vi.mock('react-router-dom', async () => {
   };
 });
 
-function mockUseScan(scan: ScanRecord | undefined, isPendingMissing = false, isLoading = false) {
-  return { scan, isPendingMissing, isLoading };
+function mockUseScan(scan: ScanRecord | undefined, isPendingMissing = false, isLoading = false, error: string | null = null) {
+  return { scan, isPendingMissing, isLoading, error };
 }
 
 function buildScan(overrides: Partial<ScanRecord> = {}): ScanRecord {
@@ -199,6 +199,10 @@ describe('EditPage - All 5 required fields always editable', () => {
 });
 
 describe('EditPage - save persistence', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
   it('calls updateScan on save', async () => {
     const { updateScan } = await import('@/hooks/useScans');
     const user = userEvent.setup();
@@ -211,5 +215,55 @@ describe('EditPage - save persistence', () => {
     await waitFor(() => {
       expect(updateScan).toHaveBeenCalled();
     });
+  });
+});
+
+describe('EditPage - save error feedback', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it('shows error and does not navigate when updateScan rejects', async () => {
+    const { updateScan } = await import('@/hooks/useScans');
+    vi.mocked(updateScan).mockRejectedValueOnce(new Error('Network error'));
+    const user = userEvent.setup();
+    vi.mocked(useScan).mockReturnValue(mockUseScan(buildScan(), false, false));
+    renderEditPage();
+
+    const saveButton = screen.getByRole('button', { name: /lưu/i });
+    await user.click(saveButton);
+
+    // Error message should be visible
+    await waitFor(() => {
+      expect(screen.getByRole('alert')).toBeInTheDocument();
+    });
+
+    // Error message text
+    expect(screen.getByText(/không thể lưu/i)).toBeInTheDocument();
+
+    // Should NOT have navigated
+    expect(mockNavigate).not.toHaveBeenCalledWith(expect.stringContaining('/ocr-result/'));
+  });
+
+  it('disables save button while isSaving is true', async () => {
+    let resolveUpdateScan!: () => void;
+    const { updateScan } = await import('@/hooks/useScans');
+    vi.mocked(updateScan).mockImplementation(
+      () => new Promise((resolve) => { resolveUpdateScan = resolve; })
+    );
+    const user = userEvent.setup();
+    vi.mocked(useScan).mockReturnValue(mockUseScan(buildScan(), false, false));
+    renderEditPage();
+
+    const saveButton = screen.getByRole('button', { name: /lưu/i });
+    await user.click(saveButton);
+
+    // Button should be disabled while saving
+    await waitFor(() => {
+      expect(saveButton).toBeDisabled();
+    });
+
+    // Resolve the save to clean up
+    resolveUpdateScan();
   });
 });

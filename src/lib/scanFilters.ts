@@ -95,10 +95,11 @@ export function filterAndSortScans(
         return scanDisplayName(a).localeCompare(scanDisplayName(b));
       case 'name_za':
         return scanDisplayName(b).localeCompare(scanDisplayName(a));
-      case 'fields_count':
+      case 'fields_count': {
         const countA = (a.ocrStructured?.fields?.length || 0) + (a.ocrStructured?.sizes?.length || 0);
         const countB = (b.ocrStructured?.fields?.length || 0) + (b.ocrStructured?.sizes?.length || 0);
         return countB - countA;
+      }
       case 'date_desc':
       default:
         return new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime();

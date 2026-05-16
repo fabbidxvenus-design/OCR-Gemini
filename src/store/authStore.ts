@@ -48,9 +48,9 @@ export const useAuthStore = create<AuthStore>()(
             expiresAt: session.expiresAt,
             isLoading: false,
           });
-        } catch (err: any) {
+        } catch (err) {
           set({
-            error: err.message || 'Đăng nhập thất bại',
+            error: err instanceof Error ? err.message : 'Đăng nhập thất bại',
             isLoading: false,
             isAuthenticated: false,
           });

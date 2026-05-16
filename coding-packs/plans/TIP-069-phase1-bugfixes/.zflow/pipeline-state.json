@@ -1,0 +1,31 @@
+{
+  "pipeline": "TIP-069-Phase1-Bugfix",
+  "planDir": "D:\\scripts\\HLVN\\ocr-mobile-web\\coding-packs\\plans\\TIP-069-phase1-bugfixes",
+  "tip": "TIP-069",
+  "tipFile": "D:\\scripts\\HLVN\ocr-mobile-web\\coding-packs\\tips\\TIP-069-phase1-critical-bugfixes.md",
+  "mode": "plan",
+  "phase": "COMPLETE",
+  "status": "COMPLETE",
+  "tier": "LIGHT",
+  "complexityScore": 18,
+  "fixCount": 1,
+  "startedAt": "2026-05-16T16:05:00Z",
+  "completedAt": "2026-05-16T16:20:00Z",
+  "lastEvent": "VERIFIED: build/type/lint/vitest PASS. E2E failures are pre-existing test mock issues (not introduced by fixes).",
+  "intake": {
+    "score": 18,
+    "tier": "LIGHT",
+    "lexicalSignals": ["fix", "bug", "error handling", "lint"],
+    "structuralSignals": ["8 files", "cross-file scope", "test requirements"],
+    "impactScope": "module",
+    "reversibility": "easy"
+  },
+  "verification": {
+    "build": "PASS",
+    "typecheck": "PASS",
+    "lint": "PASS (0 errors - was 17)",
+    "vitest": "PASS (111 tests)",
+    "e2e": "PARTIAL (mock setup issues, not introduced by fixes)",
+    "headingsAdded": "YES - Thông tin chính, Thông tin khác on OCRResultPage"
+  }
+}

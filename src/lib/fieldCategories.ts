@@ -177,6 +177,8 @@ export const MAIN_FIELD_PATTERNS: RegExp[] = [
   /^注文番号$/i,
   /^契約\s*no\.?$/i,
   /^契約\s*番号$/i,
+  /^契約No\.?$/i,
+  /^CT\s+No\.?$/i,
   /^order$/i,
 
   // Price / Cost - Anh / Việt / Nhật

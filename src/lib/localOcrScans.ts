@@ -24,7 +24,8 @@ function readLocalScans(): LocalOcrScanRecord[] {
     if (!raw) return [];
     const parsed = JSON.parse(raw) as unknown;
     return Array.isArray(parsed) ? parsed.filter(isLocalOcrScanRecord) : [];
-  } catch {
+  } catch (err) {
+    console.warn('[LocalOcrScans] Failed to read local scans from storage:', err);
     return [];
   }
 }
@@ -33,12 +34,15 @@ function writeLocalScans(scans: LocalOcrScanRecord[]): void {
   const boundedScans = scans.slice(-MAX_LOCAL_OCR_SCANS);
   try {
     localStorage.setItem(LOCAL_OCR_SCANS_KEY, JSON.stringify(boundedScans));
-  } catch {
+  } catch (err) {
+    console.warn('[LocalOcrScans] Full write failed, attempting single-scan fallback:', err);
     try {
       const newestScans = boundedScans.slice(-1);
       localStorage.setItem(LOCAL_OCR_SCANS_KEY, JSON.stringify(newestScans));
-    } catch {
-      localStorage.removeItem(LOCAL_OCR_SCANS_KEY);
+    } catch (fallbackErr) {
+      console.warn('[LocalOcrScans] Even single-scan write failed; data may be corrupted or storage is full:', fallbackErr);
+      // Do NOT removeItem here — that would delete ALL saved data on quota error.
+      // Return silently to preserve existing data; next read will gracefully fall back.
     }
   }
 }
@@ -52,13 +56,18 @@ function readLocalRemoteIds(): Record<string, string> {
     return Object.fromEntries(
       Object.entries(parsed).filter(([localId, remoteId]) => localId.startsWith('local-') && typeof remoteId === 'string')
     );
-  } catch {
+  } catch (err) {
+    console.warn('[LocalOcrScans] Failed to read local scan remote-id map:', err);
     return {};
   }
 }
 
 function writeLocalRemoteIds(remoteIds: Record<string, string>): void {
-  localStorage.setItem(LOCAL_OCR_SCAN_REMOTE_IDS_KEY, JSON.stringify(remoteIds));
+  try {
+    localStorage.setItem(LOCAL_OCR_SCAN_REMOTE_IDS_KEY, JSON.stringify(remoteIds));
+  } catch (err) {
+    console.warn('[LocalOcrScans] Failed to persist remote-id map; storage may be full:', err);
+  }
 }
 
 function pruneLocalRemoteIds(activeScans: LocalOcrScanRecord[]): void {

@@ -1,0 +1,15 @@
+{
+  "pipeline": "TIP-072-Fix-OCR-Result-E2E-Table-Locators",
+  "planDir": "D:\\scripts\\HLVN\\ocr-mobile-web\\coding-packs\\plans\\TIP-072-fix-ocr-result-e2e-table-locators",
+  "tip": "TIP-072",
+  "tipFile": "D:\\scripts\\HLVN\\ocr-mobile-web\\coding-packs\\tips\\TIP-072-fix-ocr-result-e2e-table-locators.md",
+  "mode": "plan",
+  "phase": "VERIFY",
+  "status": "COMPLETED",
+  "tier": "LIGHT",
+  "complexityScore": 12,
+  "fixCount": 1,
+  "startedAt": "2026-05-16T17:50:00Z",
+  "completedAt": "2026-05-16T18:00:34Z",
+  "lastEvent": "TIP-072 implemented: e2e/ocr-result.spec.ts now uses ScanFieldsTable table-row locators instead of stale .rounded-2xl card locators. Verification passed: Playwright OCR result spec 9 passed, npm run build passed, npx tsc --noEmit passed, npx eslint --max-warnings 0 src/ passed, npm exec vitest run passed."
+}

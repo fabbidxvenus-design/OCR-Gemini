@@ -3,9 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import Layout from '@/components/layout/Layout';
 import { useScan } from '@/hooks/useScans';
 import { useShare } from '@/hooks/useShare';
-import { Toast, PrimaryButton, SkeletonLine, SkeletonBlock } from '@/components/ui';
-import ErrorMessage from '@/components/ui/ErrorMessage';
-import ScanFieldsTable from '@/components/ui/ScanFieldsTable';
+import { Toast, PrimaryButton, SkeletonLine, SkeletonBlock, ErrorMessage, ScanFieldsTable } from '@/components/ui';
 import { Edit, Copy, Share2, FileText, AlertTriangle, CheckCircle2, Camera } from 'lucide-react';
 import { categorizeFields, groupSizeQuantityFields } from '@/lib/fieldCategories';
 import scanDisplayName from '@/lib/scanDisplayName';
@@ -13,9 +11,18 @@ import scanDisplayName from '@/lib/scanDisplayName';
 export default function OCRResultPage() {
   const { scanId } = useParams<{ scanId: string }>();
   const navigate = useNavigate();
-  const { scan, isPendingMissing } = useScan(scanId);
+  const { scan, isPendingMissing, error } = useScan(scanId);
   const { isSharing, isCopying, shareOCR, copyOCR } = useShare();
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
+
+  const categorizedFields = useMemo(() => {
+    const fields = groupSizeQuantityFields(scan?.ocrStructured?.fields || []);
+    const withCategories = categorizeFields(fields);
+    return {
+      main: withCategories.filter(f => f.category === 'main'),
+      other: withCategories.filter(f => f.category === 'other'),
+    };
+  }, [scan]);
 
   if (isPendingMissing) {
     return (
@@ -60,14 +67,18 @@ export default function OCRResultPage() {
     );
   }
 
-  const categorizedFields = useMemo(() => {
-    const fields = groupSizeQuantityFields(scan.ocrStructured?.fields || []);
-    const withCategories = categorizeFields(fields);
-    return {
-      main: withCategories.filter(f => f.category === 'main'),
-      other: withCategories.filter(f => f.category === 'other'),
-    };
-  }, [scan]);
+  if (error) {
+    return (
+      <Layout title="Không thể tải kết quả">
+        <ErrorMessage
+          title="Không thể tải kết quả OCR"
+          message={error}
+          onRetry={() => window.location.reload()}
+          autoFocus
+        />
+      </Layout>
+    );
+  }
 
   const handleEdit = () => navigate(`/edit/${scanId}`);
   const handleRetake = () => navigate('/camera');
@@ -154,10 +165,23 @@ export default function OCRResultPage() {
           </div>
         </section>
 
-        <ScanFieldsTable
-          fields={groupedFields}
-          editable={false}
-        />
+        <section aria-labelledby="main-fields-heading" className="card-production animate-fade-in p-4">
+          <h3 id="main-fields-heading" className="mb-3 font-display text-heading-sm text-text-primary">Thông tin chính</h3>
+          <ScanFieldsTable
+            fields={categorizedFields.main}
+            editable={false}
+          />
+        </section>
+
+        {categorizedFields.other.length > 0 && (
+          <section aria-labelledby="other-fields-heading" className="card-production animate-fade-in p-4">
+            <h3 id="other-fields-heading" className="mb-3 font-display text-heading-sm text-text-primary">Thông tin khác</h3>
+            <ScanFieldsTable
+              fields={categorizedFields.other}
+              editable={false}
+            />
+          </section>
+        )}
 
         {notes.length > 0 && (
           <section className="card-production p-4">
@@ -174,7 +198,7 @@ export default function OCRResultPage() {
         )}
       </div>
 
-      <div className="fixed bottom-bottom-nav left-0 right-0 border-t border-card-border bg-surface/95 p-screen safe-area-bottom backdrop-blur-xl md:left-sidebar">
+      <div className="fixed bottom-bottom-nav left-0 right-0 border-t border-card-border bg-surface/95 px-4 safe-area-bottom backdrop-blur-xl z-50 md:px-6 md:left-sidebar">
         <div className="mx-auto grid max-w-content grid-cols-4 gap-2">
           <PrimaryButton variant="secondary" className="px-2" onClick={handleRetake}>
             <Camera className="mr-1.5 h-5 w-5" />

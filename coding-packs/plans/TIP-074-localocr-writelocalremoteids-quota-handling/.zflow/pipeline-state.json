@@ -1,0 +1,15 @@
+{
+  "pipeline": "TIP-074-localOcr-writeLocalRemoteIds-Quota",
+  "planDir": "D:\\scripts\\HLVN\\ocr-mobile-web\\coding-packs\\plans\\TIP-074-localocr-writelocalremoteids-quota-handling",
+  "tip": "TIP-074",
+  "tipFile": "D:\\scripts\\HLVN\\ocr-mobile-web\\coding-packs\\tips\\TIP-074-localocr-writelocalremoteids-quota-handling.md",
+  "mode": "plan",
+  "phase": "VERIFY",
+  "status": "PASS",
+  "tier": "LIGHT",
+  "complexityScore": 6,
+  "fixCount": 1,
+  "startedAt": "2026-05-16T18:20:00Z",
+  "completedAt": "2026-05-16T11:22:19Z",
+  "lastEvent": "All verifications passed: build, tsc --noEmit, eslint, vitest 113/113."
+}

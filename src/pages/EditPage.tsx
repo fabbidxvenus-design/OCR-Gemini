@@ -1,16 +1,22 @@
-import { useEffect, useState, useMemo } from 'react';
+import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useForm, useFieldArray } from 'react-hook-form';
 import Layout from '@/components/layout/Layout';
 import { useScan, updateScan } from '@/hooks/useScans';
 import { Save, X, Plus, Trash2 } from 'lucide-react';
-import { categorizeFields } from '@/lib/fieldCategories';
+import { SCAN_FIELDS, findScanField } from '@/lib/scanFields';
 import { PrimaryButton, InputField } from '@/components/ui';
+import ErrorMessage from '@/components/ui/ErrorMessage';
 import type { OCRResponse } from '@/db/schema';
 
 interface EditFormData {
   title: string;
-  fields: Array<{ id?: string; field: string; value: string; confidence: string }>;
+  barcode: string;
+  lotNo: string;
+  productName: string;
+  quantity: string;
+  contractNo: string;
+  otherFields: Array<{ id?: string; field: string; value: string; confidence: string }>;
   sizes: Array<{ id?: string; size: string; quantity: number }>;
   raw_text: string;
 }
@@ -20,29 +26,41 @@ export default function EditPage() {
   const navigate = useNavigate();
   const { scan } = useScan(scanId);
   const [activeTab, setActiveTab] = useState<'structured' | 'rawText'>('structured');
+  const [saveError, setSaveError] = useState<string | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
 
-  const { register, control, handleSubmit, reset, watch, formState: { isDirty } } = useForm<EditFormData>();
-  const { fields: fieldArray, append: appendField, remove: removeField } = useFieldArray({ control, name: 'fields' });
+  const { register, control, handleSubmit, reset, getValues, formState: { isDirty } } = useForm<EditFormData>();
+  const { fields: otherFieldArray, append: appendOtherField, remove: removeOtherField } = useFieldArray({ control, name: 'otherFields' });
   const { fields: sizeArray, append: appendSize, remove: removeSize } = useFieldArray({ control, name: 'sizes' });
-  const fieldsWatch = watch('fields');
-  const rawText = watch('raw_text');
 
-  const categorizedIndices = useMemo(() => {
-    const main: number[] = [];
-    const other: number[] = [];
-    fieldsWatch?.forEach((field, index) => {
-      const category = categorizeFields([{ field: field.field || '' }])[0].category;
-      if (category === 'main') main.push(index);
-      else other.push(index);
-    });
-    return { main, other };
-  }, [fieldsWatch]);
 
   useEffect(() => {
     if (scan) {
+      const ocrFields = scan.ocrStructured?.fields || [];
+      // Map each SCAN_FIELDS key to its value from OCR
+      const fieldMap: Record<string, string> = {
+        barcode: '',
+        lotNo: '',
+        productName: '',
+        quantity: '',
+        contractNo: '',
+      };
+      for (const sf of SCAN_FIELDS) {
+        const matched = ocrFields.find((f) => {
+          const matched = findScanField(f.field);
+          return matched?.key === sf.key;
+        });
+        if (matched) fieldMap[sf.key] = matched.value || '';
+      }
+
       reset({
         title: scan.ocrStructured?.title || '',
-        fields: (scan.ocrStructured?.fields || []).map((f) => ({ field: f.field, value: f.value, confidence: f.confidence || 'medium' })),
+        barcode: fieldMap.barcode,
+        lotNo: fieldMap.lotNo,
+        productName: fieldMap.productName,
+        quantity: fieldMap.quantity,
+        contractNo: fieldMap.contractNo,
+        otherFields: ocrFields.filter((f) => !findScanField(f.field)).map((f) => ({ field: f.field, value: f.value || '', confidence: f.confidence || 'medium' })),
         sizes: (scan.ocrStructured?.sizes || []).map((s) => ({ size: s.size, quantity: s.quantity })),
         raw_text: scan.ocrStructured?.raw_text || '',
       });
@@ -51,14 +69,32 @@ export default function EditPage() {
 
   const onSubmit = async (data: EditFormData) => {
     if (!scanId) return;
-    const updatedOCR: OCRResponse = {
-      title: data.title,
-      fields: data.fields.map((f) => ({ field: f.field, value: f.value, confidence: f.confidence as 'high' | 'medium' | 'low' })),
-      sizes: data.sizes.map((s) => ({ size: s.size, quantity: s.quantity })),
-      raw_text: data.raw_text,
-    };
-    await updateScan(scanId, { ocrStructured: updatedOCR });
-    navigate(`/ocr-result/${scanId}`);
+    setSaveError(null);
+    setIsSaving(true);
+    try {
+      const requiredFields = SCAN_FIELDS.map((sf) => ({
+        field: sf.labelVi,
+        value: data[sf.key as 'barcode' | 'lotNo' | 'productName' | 'quantity' | 'contractNo'] || '',
+        confidence: 'high' as const,
+        category: 'main' as const,
+      }));
+      const extraFields = data.otherFields
+        .filter((f) => f.field && f.value)
+        .map((f) => ({ field: f.field, value: f.value, confidence: f.confidence as 'high' | 'medium' | 'low' }));
+
+      const updatedOCR: OCRResponse = {
+        title: data.title,
+        fields: [...requiredFields, ...extraFields],
+        sizes: data.sizes.map((s) => ({ size: s.size, quantity: s.quantity })),
+        raw_text: data.raw_text,
+      };
+      await updateScan(scanId, { ocrStructured: updatedOCR });
+      navigate(`/ocr-result/${scanId}`);
+    } catch {
+      setSaveError('Không thể lưu thay đổi. Vui lòng thử lại.');
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const handleCancel = () => {
@@ -96,7 +132,14 @@ export default function EditPage() {
           </button>
         </div>
 
-        <div className="flex-1 space-y-4 overflow-y-auto bg-surface p-screen pb-32">
+        <div className="flex-1 space-y-4 overflow-y-auto bg-surface px-4 md:px-6 pb-32">
+          {saveError && (
+            <ErrorMessage
+              message={saveError}
+              className="card-production p-4"
+              autoFocus
+            />
+          )}
           {activeTab === 'structured' ? (
             <>
               <div className="card-production p-4">
@@ -104,35 +147,49 @@ export default function EditPage() {
               </div>
 
               <section className="space-y-3">
+                <h3 className="font-display text-heading-sm text-text-primary">Thông tin chính</h3>
+                {SCAN_FIELDS.map((field) => (
+                  <div key={field.key} className="card-production p-3">
+                    <InputField
+                      label={field.labelVi}
+                      {...register(field.key)}
+                      placeholder={field.labelEn}
+                      className="font-display text-body-lg font-semibold"
+                    />
+                  </div>
+                ))}
+              </section>
+
+              <section className="space-y-3">
                 <div className="flex items-center justify-between">
-                  <h3 className="font-display text-heading-sm text-text-primary">Thông tin chính</h3>
+                  <h3 className="font-display text-heading-sm text-text-primary">Thông tin khác</h3>
                   <button
                     type="button"
-                    onClick={() => appendField({ field: '', value: '', confidence: 'medium' })}
+                    onClick={() => appendOtherField({ field: '', value: '', confidence: 'medium' })}
                     className="flex items-center gap-1.5 text-small font-semibold text-primary hover:underline"
                   >
                     <Plus className="h-4 w-4" /> Thêm
                   </button>
                 </div>
-                {categorizedIndices.main.map((index) => (
-                  <div key={fieldArray[index].id} className="card-production flex gap-2 p-3">
+                {otherFieldArray.map((field, index) => (
+                  <div key={field.id} className="card-production flex gap-2 p-3">
                     <div className="flex-1 space-y-2">
                       <input
                         type="text"
-                        {...register(`fields.${index}.field`)}
+                        {...register(`otherFields.${index}.field`)}
                         placeholder="Tên trường"
                         className="field-production w-full"
                       />
                       <input
                         type="text"
-                        {...register(`fields.${index}.value`)}
+                        {...register(`otherFields.${index}.value`)}
                         placeholder="Giá trị"
-                        className="field-production w-full font-display text-body-lg font-semibold"
+                        className="field-production w-full"
                       />
                     </div>
                     <button
                       type="button"
-                      onClick={() => removeField(index)}
+                      onClick={() => removeOtherField(index)}
                       className="touch-target flex items-center justify-center rounded-xl text-error transition-colors hover:bg-error-light"
                     >
                       <Trash2 className="h-5 w-5" />
@@ -140,37 +197,6 @@ export default function EditPage() {
                   </div>
                 ))}
               </section>
-
-              {categorizedIndices.other.length > 0 && (
-                <section className="space-y-3">
-                  <h3 className="font-display text-heading-sm text-text-primary">Thông tin khác</h3>
-                  {categorizedIndices.other.map((index) => (
-                    <div key={fieldArray[index].id} className="card-production flex gap-2 p-3">
-                      <div className="flex-1 space-y-2">
-                        <input
-                          type="text"
-                          {...register(`fields.${index}.field`)}
-                          placeholder="Tên trường"
-                          className="field-production w-full"
-                        />
-                        <input
-                          type="text"
-                          {...register(`fields.${index}.value`)}
-                          placeholder="Giá trị"
-                          className="field-production w-full"
-                        />
-                      </div>
-                      <button
-                        type="button"
-                        onClick={() => removeField(index)}
-                        className="touch-target flex items-center justify-center rounded-xl text-error transition-colors hover:bg-error-light"
-                      >
-                        <Trash2 className="h-5 w-5" />
-                      </button>
-                    </div>
-                  ))}
-                </section>
-              )}
 
               <section className="card-production p-4">
                 <div className="mb-3 flex items-center justify-between">
@@ -217,7 +243,7 @@ export default function EditPage() {
             <div className="card-production p-4">
               <div className="mb-3 flex items-center justify-between">
                 <h3 className="font-display text-heading-sm text-text-primary">Văn bản gốc</h3>
-                <span className="text-caption text-text-muted">{rawText?.length || 0} ký tự</span>
+                <span className="text-caption text-text-muted">{getValues('raw_text')?.length || 0} ký tự</span>
               </div>
               <textarea
                 {...register('raw_text')}
@@ -229,12 +255,12 @@ export default function EditPage() {
           )}
         </div>
 
-        <div className="absolute bottom-0 left-0 right-0 border-t border-card-border bg-card p-screen md:left-sidebar">
+        <div className="absolute bottom-0 left-0 right-0 border-t border-card-border bg-card px-4 md:px-6 safe-area-bottom md:left-sidebar">
           <div className="mx-auto flex max-w-content gap-3">
             <PrimaryButton variant="secondary" className="flex-1" onClick={handleCancel}>
               <X className="mr-2 h-5 w-5" /> Hủy
             </PrimaryButton>
-            <PrimaryButton type="submit" className="flex-1">
+            <PrimaryButton type="submit" className="flex-1" disabled={isSaving}>
               <Save className="mr-2 h-5 w-5" /> Lưu
             </PrimaryButton>
           </div>

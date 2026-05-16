@@ -333,7 +333,7 @@ export default function HistoryPage() {
       </div>
 
       {isSelectMode && selectedIds.size > 0 ? (
-        <div className="fixed bottom-bottom-nav left-0 right-0 border-t border-card-border bg-surface/95 p-screen safe-area-bottom backdrop-blur-xl md:left-sidebar">
+        <div className="fixed bottom-bottom-nav left-0 right-0 border-t border-card-border bg-surface/95 px-4 safe-area-bottom backdrop-blur-xl md:px-6 md:left-sidebar">
           <PrimaryButton className="mx-auto w-full max-w-content shadow-elevated" onClick={handleExportSelected} disabled={isExporting}>
             <Download className="mr-2 h-5 w-5" />
             {isExporting ? 'Đang xuất...' : `Xuất ${selectedIds.size} scan`}

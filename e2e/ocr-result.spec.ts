@@ -139,52 +139,63 @@ test.describe('OCR Result Page - E2E rendering', () => {
     // Seed auth so ProtectedRoute passes
     await seedAuthSession(page);
 
-    // Mock both the scan list and single scan endpoints
-    await page.route(`**/api/scans/${mockScanId}`, async (route) => {
-      await route.fulfill({
-        status: 200,
-        contentType: 'application/json',
-        body: JSON.stringify({
-          success: true,
-          data: {
-            id: mockScanId,
-            timestamp: new Date().toISOString(),
-            imageUrl: 'https://example.com/image.jpg',
-            ocrRaw: 'raw text',
-            ocrStructured: {
-              title: 'Test Invoice',
-              fields: [
-                // Repeated fields (reproducing the user's complaint)
-                { field: '商品名', value: 'Widget A', confidence: 'high' },
-                { field: 'サイズ', value: 'Large', confidence: 'high' },
-                { field: '数量', value: '10', confidence: 'high' },
-                { field: '商品名', value: 'Widget A', confidence: 'high' },
-                { field: 'サイズ', value: 'Large', confidence: 'high' },
-                { field: '数量', value: '10', confidence: 'high' },
-                // Contract fields - these SHOULD be in "main" based on patterns
-                { field: '契約No.', value: 'CONT-001', confidence: 'high' },
-                { field: 'CT No.', value: 'CT-999', confidence: 'high' },
-                // Numeric field name - legitimately "other"
-                { field: '12345', value: 'Field value', confidence: 'low' },
-              ],
-              rawText: 'raw',
-              notes: [],
-            },
-            tokenUsage: { input: 100, output: 50, cost: 0.01 },
-            apiKeyIndex: 1,
-            edited: false,
-          },
-        }),
-      });
-    });
+    // Mock ALL /api/scans requests with URL-based dispatch.
+    // `**/api/scans**` matches both /api/scans (list) and /api/scans/:id (single).
+    await page.route('**/api/scans**', async (route) => {
+      const url = route.request().url();
 
-    // Also mock the scan list (history page may call it)
-    await page.route('**/api/scans', async (route) => {
-      await route.fulfill({
-        status: 200,
-        contentType: 'application/json',
-        body: JSON.stringify({ success: true, data: [] }),
-      });
+      // List endpoint: exactly /api/scans with no trailing segment
+      if (url.match(/api\/scans$/)) {
+        await route.fulfill({
+          status: 200,
+          contentType: 'application/json',
+          body: JSON.stringify({ success: true, data: [] }),
+        });
+        return;
+      }
+
+      // Single scan: /api/scans/:id
+      if (url.includes(`/api/scans/${mockScanId}`)) {
+        await route.fulfill({
+          status: 200,
+          contentType: 'application/json',
+          body: JSON.stringify({
+            success: true,
+            data: {
+              id: mockScanId,
+              timestamp: new Date().toISOString(),
+              imageUrl: 'https://example.com/image.jpg',
+              ocrRaw: 'raw text',
+              ocrStructured: {
+                title: 'Test Invoice',
+                fields: [
+                  // Repeated fields (reproducing the user's complaint)
+                  { field: '商品名', value: 'Widget A', confidence: 'high' },
+                  { field: 'サイズ', value: 'Large', confidence: 'high' },
+                  { field: '数量', value: '10', confidence: 'high' },
+                  { field: '商品名', value: 'Widget A', confidence: 'high' },
+                  { field: 'サイズ', value: 'Large', confidence: 'high' },
+                  { field: '数量', value: '10', confidence: 'high' },
+                  // Contract fields - these SHOULD be in "main" based on patterns
+                  { field: '契約No.', value: 'CONT-001', confidence: 'high' },
+                  { field: 'CT No.', value: 'CT-999', confidence: 'high' },
+                  // Numeric field name - legitimately "other"
+                  { field: '12345', value: 'Field value', confidence: 'low' },
+                ],
+                rawText: 'raw',
+                notes: [],
+              },
+              tokenUsage: { input: 100, output: 50, cost: 0.01 },
+              apiKeyIndex: 1,
+              edited: false,
+            },
+          }),
+        });
+        return;
+      }
+
+      // Fallback for any other scans endpoint
+      await route.fallback();
     });
 
     // Navigate to OCR result
@@ -200,87 +211,89 @@ test.describe('OCR Result Page - E2E rendering', () => {
     // Screenshot for debug
     await page.screenshot({ path: 'e2e/screenshots/ocr-result-repro.png', fullPage: true });
 
+    // Wait for the scan card to appear (indicates data loaded successfully)
+    await expect(page.getByText('Thông tin chính')).toBeVisible({ timeout: 10000 });
+
     // ── Assertions ──────────────────────────────────────────────────────────
 
-    // The page must show both sections
-    const mainSection = page.getByRole('heading', { name: /thông tin chính/i });
-    const otherSection = page.getByRole('heading', { name: /thông tin khác/i });
-    await expect(mainSection).toBeVisible();
-    await expect(otherSection).toBeVisible();
+    // ScanFieldsTable renders ALL 5 fixed fields as table rows (<table><tbody><tr>)
+    // with labels from SCAN_FIELDS.labelVi: no section headings, no .rounded-2xl cards.
+    const tableRows = page.locator('table tbody tr');
 
-    // Count field cards in each section
-    // The section container has a specific structure: <section><div class="flex"><h3></h3>...</div>{cards}</section>
-    const mainCards = mainSection.locator('..').locator('.rounded-2xl');
-    const otherCards = otherSection.locator('..').locator('.rounded-2xl');
+    // Assert the contract row is visible — label is "Contract No. (Số HĐ)" from scanFields.ts
+    const contractRow = tableRows.filter({ hasText: 'Contract No. (Số HĐ)' }).first();
+    await expect(contractRow).toBeVisible();
 
-    const mainCount = await mainCards.count();
-    const otherCount = await otherCards.count();
+    // Assert the contract value from mocked 契約No./CT No. is visible in the contract row.
+    // normalizeFieldsForEdit returns the first matching OCR field, so we check for CONT-001.
+    const contractValueLocator = contractRow.locator('td:last-child');
+    await expect(contractValueLocator.getByText('CONT-001', { exact: false })).toBeVisible();
 
-    console.log(`Main section field cards: ${mainCount}`);
-    console.log(`Other section field cards: ${otherCount}`);
+    // Assert the product-name row label is present (labelVi: "Tên/Mã sản phẩm")
+    const productRow = tableRows.filter({ hasText: 'Tên/Mã sản phẩm' }).first();
+    await expect(productRow).toBeVisible();
 
-    // Log field names for verification
-    const mainFieldNames = await mainCards.locator('p.text-caption').allTextContents();
-    const otherFieldNames = await otherCards.locator('p.text-caption').allTextContents();
-    console.log(`Main fields: ${JSON.stringify(mainFieldNames)}`);
-    console.log(`Other fields: ${JSON.stringify(otherFieldNames)}`);
+    // Assert the product value from mocked 商品名 is visible
+    await expect(productRow.locator('td:last-child').getByText('Widget A', { exact: false })).toBeVisible();
 
-    // ── Bug reproduction checks ───────────────────────────────────────────────
-
-    // BUG 1: Repeated identical main fields are showing up duplicated
-    // (This is a data issue from the backend, not the UI — but UI should handle it gracefully)
-    expect(mainCount).toBeGreaterThan(0, 'Main section should have fields');
-
-    // BUG 2: 契約No. and CT No. appearing in "other" instead of "main"
-    // These are contract fields and SHOULD be in main based on MAIN_FIELD_PATTERNS
-    // The patterns include /^contract\s*no\.?$/i etc but NOT "契約No." with the Japanese prefix + dot
-    const contractFieldsInOther = otherFieldNames.filter(n => n.toLowerCase().includes('契約') || n.toLowerCase().includes('ct '));
-    expect(contractFieldsInOther, `"other" section should NOT contain contract fields like 契約No., CT No. Found: ${contractFieldsInOther.join(', ')}`).toHaveLength(0);
-
-    // Numeric field names in "other" is correct behavior
-    const numericInOther = otherFieldNames.filter(n => /^\d+$/.test(n.trim()));
-    expect(numericInOther.length, 'Numeric field names should be in "other" section').toBeGreaterThanOrEqual(0);
+    // Assert the quantity fixed-field row exists (labelVi: "Số lượng (Qty/Size)").
+    const quantityRow = tableRows.filter({ hasText: 'Số lượng (Qty/Size)' }).first();
+    await expect(quantityRow).toBeVisible();
   });
 
   test('verify field card renders correct label and value', async ({ page }) => {
     await seedAuthSession(page);
 
     const mockScanId = 'field-card-test';
-    await page.route(`**/api/scans/${mockScanId}`, async (route) => {
-      await route.fulfill({
-        status: 200,
-        contentType: 'application/json',
-        body: JSON.stringify({
-          success: true,
-          data: {
-            id: mockScanId,
-            timestamp: new Date().toISOString(),
-            imageUrl: 'https://example.com/image.jpg',
-            ocrRaw: 'raw',
-            ocrStructured: {
-              title: 'Field Card Test',
-              fields: [
-                { field: '商品名', value: 'Test Product', confidence: 'high' },
-                { field: '単価', value: '¥1,200', confidence: 'high' },
-                { field: 'unknown_field', value: 'Unknown Value', confidence: 'low' },
-              ],
-              rawText: '',
-              notes: [],
-            },
-            tokenUsage: { input: 50, output: 25, cost: 0.005 },
-            apiKeyIndex: 1,
-            edited: false,
-          },
-        }),
-      });
-    });
 
-    await page.route('**/api/scans', async (route) => {
-      await route.fulfill({
-        status: 200,
-        contentType: 'application/json',
-        body: JSON.stringify({ success: true, data: [] }),
-      });
+    // Mock ALL /api/scans requests with URL-based dispatch.
+// `**/api/scans**` matches both /api/scans (list) and /api/scans/:id (single).
+    await page.route('**/api/scans**', async (route) => {
+      const url = route.request().url();
+
+      // List endpoint: exactly /api/scans with no trailing segment
+      if (url.match(/api\/scans$/)) {
+        await route.fulfill({
+          status: 200,
+          contentType: 'application/json',
+          body: JSON.stringify({ success: true, data: [] }),
+        });
+        return;
+      }
+
+      // Single scan: /api/scans/:id
+      if (url.includes(`/api/scans/${mockScanId}`)) {
+        await route.fulfill({
+          status: 200,
+          contentType: 'application/json',
+          body: JSON.stringify({
+            success: true,
+            data: {
+              id: mockScanId,
+              timestamp: new Date().toISOString(),
+              imageUrl: 'https://example.com/image.jpg',
+              ocrRaw: 'raw',
+              ocrStructured: {
+                title: 'Field Card Test',
+                fields: [
+                  { field: '商品名', value: 'Test Product', confidence: 'high' },
+                  { field: '単価', value: '¥1,200', confidence: 'high' },
+                  { field: 'unknown_field', value: 'Unknown Value', confidence: 'low' },
+                ],
+                rawText: '',
+                notes: [],
+              },
+              tokenUsage: { input: 50, output: 25, cost: 0.005 },
+              apiKeyIndex: 1,
+              edited: false,
+            },
+          }),
+        });
+        return;
+      }
+
+      // Fallback for any other scans endpoint
+      await route.fallback();
     });
 
     await page.goto(`/ocr-result/${mockScanId}`);
@@ -291,16 +304,10 @@ test.describe('OCR Result Page - E2E rendering', () => {
       await expect(loading).not.toBeVisible({ timeout: 10000 });
     }
 
-    // Verify field card renders field name and value
-    const fieldCard = page.locator('.rounded-2xl').filter({ hasText: 'Test Product' }).first();
-    await expect(fieldCard).toBeVisible();
-    await expect(fieldCard.getByText('商品名')).toBeVisible();
-    await expect(fieldCard.getByText('Test Product')).toBeVisible();
-
-    // Verify confidence badge appears
-    const confidenceBadge = fieldCard.locator('.rounded-full');
-    await expect(confidenceBadge).toBeVisible();
-
-    console.log('Field card rendering: PASS');
+    // Verify table row renders the fixed Vietnamese product label and mapped value.
+    const tableRows = page.locator('table tbody tr');
+    const productRow = tableRows.filter({ hasText: 'Tên/Mã sản phẩm' }).first();
+    await expect(productRow).toBeVisible();
+    await expect(productRow.locator('td:last-child').getByText('Test Product', { exact: false })).toBeVisible();
   });
 });

@@ -28,8 +28,8 @@ vi.mock('react-router-dom', async () => {
   };
 });
 
-function mockUseScan(scan: ScanRecord | undefined, isPendingMissing: boolean) {
-  return { scan, isPendingMissing, isLoading: false };
+function mockUseScan(scan: ScanRecord | undefined, isPendingMissing: boolean, error?: string | null) {
+  return { scan, isPendingMissing, isLoading: false, error: error ?? null };
 }
 
 function buildScan(overrides: Partial<ScanRecord> = {}): ScanRecord {

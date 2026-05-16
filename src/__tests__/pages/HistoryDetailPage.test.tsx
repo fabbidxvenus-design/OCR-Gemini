@@ -17,8 +17,8 @@ vi.mock('@/hooks/useExport', () => ({
   }),
 }));
 
-function mockUseScan(scan: ScanRecord | undefined, isPendingMissing: boolean, isLoading: boolean) {
-  return { scan, isPendingMissing, isLoading };
+function mockUseScan(scan: ScanRecord | undefined, isPendingMissing: boolean, isLoading: boolean, error: string | null = null) {
+  return { scan, isPendingMissing, isLoading, error };
 }
 
 function buildScan(overrides: Partial<ScanRecord> = {}): ScanRecord {

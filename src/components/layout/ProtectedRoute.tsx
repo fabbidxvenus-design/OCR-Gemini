@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 import { useAuthStore } from '@/store/authStore';
 
@@ -8,13 +8,19 @@ interface ProtectedRouteProps {
 
 export default function ProtectedRoute({ children }: ProtectedRouteProps) {
   const location = useLocation();
-  const { isAuthenticated, expiresAt } = useAuthStore();
+  useAuthStore();
   const [hasHydrated, setHasHydrated] = useState(useAuthStore.persist.hasHydrated());
 
+  // Set up hydration listener only once
   useEffect(() => {
-    const unsubscribe = useAuthStore.persist.onFinishHydration(() => setHasHydrated(true));
-    return unsubscribe;
-  }, []);
+    if (!hasHydrated) {
+      const unsubscribe = useAuthStore.persist.onFinishHydration(() => setHasHydrated(true));
+      return unsubscribe;
+    }
+  }, [hasHydrated]);
+
+  // Pure function to check session validity (no state modification)
+  const isSessionValid = useAuthStore().checkSession();
 
   if (!hasHydrated) {
     return (
@@ -24,10 +30,7 @@ export default function ProtectedRoute({ children }: ProtectedRouteProps) {
     );
   }
 
-  const expiryTime = expiresAt ? Date.parse(expiresAt) : NaN;
-  const isValidSession = Boolean(isAuthenticated && Number.isFinite(expiryTime) && Date.now() < expiryTime);
-
-  if (!isValidSession) {
+  if (!isSessionValid) {
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 

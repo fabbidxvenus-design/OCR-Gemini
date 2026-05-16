@@ -1,0 +1,766 @@
+{
+  "config": {
+    "configFile": "D:\\scripts\\HLVN\\ocr-mobile-web\\playwright.config.ts",
+    "rootDir": "D:/scripts/HLVN/ocr-mobile-web/e2e",
+    "forbidOnly": false,
+    "fullyParallel": false,
+    "globalSetup": null,
+    "globalTeardown": null,
+    "globalTimeout": 0,
+    "grep": {},
+    "grepInvert": null,
+    "maxFailures": 0,
+    "metadata": {
+      "actualWorkers": 1
+    },
+    "preserveOutput": "always",
+    "projects": [
+      {
+        "outputDir": "D:/scripts/HLVN/ocr-mobile-web/test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "id": "mobile",
+        "name": "mobile",
+        "testDir": "D:/scripts/HLVN/ocr-mobile-web/e2e",
+        "testIgnore": [],
+        "testMatch": [
+          "**/*.@(spec|test).?(c|m)[jt]s?(x)"
+        ],
+        "timeout": 30000
+      },
+      {
+        "outputDir": "D:/scripts/HLVN/ocr-mobile-web/test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "id": "tablet",
+        "name": "tablet",
+        "testDir": "D:/scripts/HLVN/ocr-mobile-web/e2e",
+        "testIgnore": [],
+        "testMatch": [
+          "**/*.@(spec|test).?(c|m)[jt]s?(x)"
+        ],
+        "timeout": 30000
+      },
+      {
+        "outputDir": "D:/scripts/HLVN/ocr-mobile-web/test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "id": "desktop",
+        "name": "desktop",
+        "testDir": "D:/scripts/HLVN/ocr-mobile-web/e2e",
+        "testIgnore": [],
+        "testMatch": [
+          "**/*.@(spec|test).?(c|m)[jt]s?(x)"
+        ],
+        "timeout": 30000
+      }
+    ],
+    "quiet": false,
+    "reporter": [
+      [
+        "json"
+      ]
+    ],
+    "reportSlowTests": {
+      "max": 5,
+      "threshold": 300000
+    },
+    "shard": null,
+    "tags": [],
+    "updateSnapshots": "missing",
+    "updateSourceMethod": "patch",
+    "version": "1.59.1",
+    "workers": 1,
+    "webServer": null
+  },
+  "suites": [
+    {
+      "title": "ocr-result.spec.ts",
+      "file": "ocr-result.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "OCR Result Page - Unit-level categorization",
+          "file": "ocr-result.spec.ts",
+          "line": 36,
+          "column": 6,
+          "specs": [
+            {
+              "title": "categorizeField: Japanese main fields match \"main\" category",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "mobile",
+                  "projectName": "mobile",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 2062,
+                      "errors": [],
+                      "stdout": [
+                        {
+                          "text": "Field categorization results:\n"
+                        },
+                        {
+                          "text": "  \"商品名\" => main (expected main) PASS\n"
+                        },
+                        {
+                          "text": "  \"サイズ\" => main (expected main) PASS\n"
+                        },
+                        {
+                          "text": "  \"数量\" => main (expected main) PASS\n"
+                        },
+                        {
+                          "text": "  \"契約No.\" => main (expected main) PASS\n"
+                        },
+                        {
+                          "text": "  \"CT No.\" => main (expected main) PASS\n"
+                        },
+                        {
+                          "text": "  \"ct_no\" => main (expected main) PASS\n"
+                        },
+                        {
+                          "text": "  \"契約No\" => main (expected main) PASS\n"
+                        },
+                        {
+                          "text": "  \"CT No\" => main (expected main) PASS\n"
+                        },
+                        {
+                          "text": "  \"12345\" => other (expected other) PASS\n"
+                        },
+                        {
+                          "text": "  \"単価\" => main (expected main) PASS\n"
+                        },
+                        {
+                          "text": "  \"price\" => main (expected main) PASS\n"
+                        },
+                        {
+                          "text": "  \"giá\" => main (expected main) PASS\n"
+                        }
+                      ],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-05-16T10:36:29.206Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "dd670ecbd4ea2b0aeae1-0dbcf42c3534b21c1ee6",
+              "file": "ocr-result.spec.ts",
+              "line": 38,
+              "column": 3
+            },
+            {
+              "title": "categorizeField: Japanese main fields match \"main\" category",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "tablet",
+                  "projectName": "tablet",
+                  "results": [
+                    {
+                      "workerIndex": 2,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 2059,
+                      "errors": [],
+                      "stdout": [
+                        {
+                          "text": "Field categorization results:\n"
+                        },
+                        {
+                          "text": "  \"商品名\" => main (expected main) PASS\n"
+                        },
+                        {
+                          "text": "  \"サイズ\" => main (expected main) PASS\n"
+                        },
+                        {
+                          "text": "  \"数量\" => main (expected main) PASS\n"
+                        },
+                        {
+                          "text": "  \"契約No.\" => main (expected main) PASS\n"
+                        },
+                        {
+                          "text": "  \"CT No.\" => main (expected main) PASS\n"
+                        },
+                        {
+                          "text": "  \"ct_no\" => main (expected main) PASS\n"
+                        },
+                        {
+                          "text": "  \"契約No\" => main (expected main) PASS\n"
+                        },
+                        {
+                          "text": "  \"CT No\" => main (expected main) PASS\n"
+                        },
+                        {
+                          "text": "  \"12345\" => other (expected other) PASS\n"
+                        },
+                        {
+                          "text": "  \"単価\" => main (expected main) PASS\n"
+                        },
+                        {
+                          "text": "  \"price\" => main (expected main) PASS\n"
+                        },
+                        {
+                          "text": "  \"giá\" => main (expected main) PASS\n"
+                        }
+                      ],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-05-16T10:36:45.503Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "dd670ecbd4ea2b0aeae1-d3b988d947d73bc687eb",
+              "file": "ocr-result.spec.ts",
+              "line": 38,
+              "column": 3
+            },
+            {
+              "title": "categorizeField: Japanese main fields match \"main\" category",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "desktop",
+                  "projectName": "desktop",
+                  "results": [
+                    {
+                      "workerIndex": 4,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 1600,
+                      "errors": [],
+                      "stdout": [
+                        {
+                          "text": "Field categorization results:\n"
+                        },
+                        {
+                          "text": "  \"商品名\" => main (expected main) PASS\n"
+                        },
+                        {
+                          "text": "  \"サイズ\" => main (expected main) PASS\n"
+                        },
+                        {
+                          "text": "  \"数量\" => main (expected main) PASS\n"
+                        },
+                        {
+                          "text": "  \"契約No.\" => main (expected main) PASS\n"
+                        },
+                        {
+                          "text": "  \"CT No.\" => main (expected main) PASS\n"
+                        },
+                        {
+                          "text": "  \"ct_no\" => main (expected main) PASS\n"
+                        },
+                        {
+                          "text": "  \"契約No\" => main (expected main) PASS\n"
+                        },
+                        {
+                          "text": "  \"CT No\" => main (expected main) PASS\n"
+                        },
+                        {
+                          "text": "  \"12345\" => other (expected other) PASS\n"
+                        },
+                        {
+                          "text": "  \"単価\" => main (expected main) PASS\n"
+                        },
+                        {
+                          "text": "  \"price\" => main (expected main) PASS\n"
+                        },
+                        {
+                          "text": "  \"giá\" => main (expected main) PASS\n"
+                        }
+                      ],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-05-16T10:37:01.759Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "dd670ecbd4ea2b0aeae1-7b9f9a64726a6c115394",
+              "file": "ocr-result.spec.ts",
+              "line": 38,
+              "column": 3
+            }
+          ]
+        },
+        {
+          "title": "OCR Result Page - E2E rendering",
+          "file": "ocr-result.spec.ts",
+          "line": 135,
+          "column": 6,
+          "specs": [
+            {
+              "title": "renders fields and verifies \"契約No.\" and \"CT No.\" are NOT misplaced in \"other\"",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "mobile",
+                  "projectName": "mobile",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "failed",
+                      "duration": 3705,
+                      "error": {
+                        "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBeGreaterThan\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m\n\nExpected: > \u001b[32m0\u001b[39m\nReceived:   \u001b[31m0\u001b[39m",
+                        "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBeGreaterThan\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m\n\nExpected: > \u001b[32m0\u001b[39m\nReceived:   \u001b[31m0\u001b[39m\n    at D:\\scripts\\HLVN\\ocr-mobile-web\\e2e\\ocr-result.spec.ts:232:23",
+                        "location": {
+                          "file": "D:\\scripts\\HLVN\\ocr-mobile-web\\e2e\\ocr-result.spec.ts",
+                          "column": 23,
+                          "line": 232
+                        },
+                        "snippet": "\u001b[0m \u001b[90m 230 |\u001b[39m     \u001b[90m// BUG 1: Repeated identical main fields are showing up duplicated\u001b[39m\n \u001b[90m 231 |\u001b[39m     \u001b[90m// (This is a data issue from the backend, not the UI — but UI should handle it gracefully)\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 232 |\u001b[39m     expect(mainCount)\u001b[33m.\u001b[39mtoBeGreaterThan(\u001b[35m0\u001b[39m\u001b[33m,\u001b[39m \u001b[32m'Main section should have fields'\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m     |\u001b[39m                       \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 233 |\u001b[39m\n \u001b[90m 234 |\u001b[39m     \u001b[90m// BUG 2: 契約No. and CT No. appearing in \"other\" instead of \"main\"\u001b[39m\n \u001b[90m 235 |\u001b[39m     \u001b[90m// These are contract fields and SHOULD be in main based on MAIN_FIELD_PATTERNS\u001b[39m\u001b[0m"
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "D:\\scripts\\HLVN\\ocr-mobile-web\\e2e\\ocr-result.spec.ts",
+                            "column": 23,
+                            "line": 232
+                          },
+                          "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBeGreaterThan\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m\n\nExpected: > \u001b[32m0\u001b[39m\nReceived:   \u001b[31m0\u001b[39m\n\n  230 |     // BUG 1: Repeated identical main fields are showing up duplicated\n  231 |     // (This is a data issue from the backend, not the UI — but UI should handle it gracefully)\n> 232 |     expect(mainCount).toBeGreaterThan(0, 'Main section should have fields');\n      |                       ^\n  233 |\n  234 |     // BUG 2: 契約No. and CT No. appearing in \"other\" instead of \"main\"\n  235 |     // These are contract fields and SHOULD be in main based on MAIN_FIELD_PATTERNS\n    at D:\\scripts\\HLVN\\ocr-mobile-web\\e2e\\ocr-result.spec.ts:232:23"
+                        }
+                      ],
+                      "stdout": [
+                        {
+                          "text": "Main section field cards: 0\n"
+                        },
+                        {
+                          "text": "Other section field cards: 0\n"
+                        },
+                        {
+                          "text": "Main fields: []\n"
+                        },
+                        {
+                          "text": "Other fields: []\n"
+                        }
+                      ],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-05-16T10:36:31.446Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "error-context",
+                          "contentType": "text/markdown",
+                          "path": "D:\\scripts\\HLVN\\ocr-mobile-web\\test-results\\ocr-result-OCR-Result-Page-dacad-are-NOT-misplaced-in-other--mobile\\error-context.md"
+                        }
+                      ],
+                      "errorLocation": {
+                        "file": "D:\\scripts\\HLVN\\ocr-mobile-web\\e2e\\ocr-result.spec.ts",
+                        "column": 23,
+                        "line": 232
+                      }
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "dd670ecbd4ea2b0aeae1-59f97b5d9a817922ed5a",
+              "file": "ocr-result.spec.ts",
+              "line": 136,
+              "column": 3
+            },
+            {
+              "title": "verify field card renders correct label and value",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "mobile",
+                  "projectName": "mobile",
+                  "results": [
+                    {
+                      "workerIndex": 1,
+                      "parallelIndex": 0,
+                      "status": "failed",
+                      "duration": 8552,
+                      "error": {
+                        "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: locator('.rounded-2xl').filter({ hasText: 'Test Product' }).first()\nExpected: visible\nTimeout: 5000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" with timeout 5000ms\u001b[22m\n\u001b[2m  - waiting for locator('.rounded-2xl').filter({ hasText: 'Test Product' }).first()\u001b[22m\n",
+                        "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: locator('.rounded-2xl').filter({ hasText: 'Test Product' }).first()\nExpected: visible\nTimeout: 5000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" with timeout 5000ms\u001b[22m\n\u001b[2m  - waiting for locator('.rounded-2xl').filter({ hasText: 'Test Product' }).first()\u001b[22m\n\n    at D:\\scripts\\HLVN\\ocr-mobile-web\\e2e\\ocr-result.spec.ts:296:29",
+                        "location": {
+                          "file": "D:\\scripts\\HLVN\\ocr-mobile-web\\e2e\\ocr-result.spec.ts",
+                          "column": 29,
+                          "line": 296
+                        },
+                        "snippet": "\u001b[0m \u001b[90m 294 |\u001b[39m     \u001b[90m// Verify field card renders field name and value\u001b[39m\n \u001b[90m 295 |\u001b[39m     \u001b[36mconst\u001b[39m fieldCard \u001b[33m=\u001b[39m page\u001b[33m.\u001b[39mlocator(\u001b[32m'.rounded-2xl'\u001b[39m)\u001b[33m.\u001b[39mfilter({ hasText\u001b[33m:\u001b[39m \u001b[32m'Test Product'\u001b[39m })\u001b[33m.\u001b[39mfirst()\u001b[33m;\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 296 |\u001b[39m     \u001b[36mawait\u001b[39m expect(fieldCard)\u001b[33m.\u001b[39mtoBeVisible()\u001b[33m;\u001b[39m\n \u001b[90m     |\u001b[39m                             \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 297 |\u001b[39m     \u001b[36mawait\u001b[39m expect(fieldCard\u001b[33m.\u001b[39mgetByText(\u001b[32m'商品名'\u001b[39m))\u001b[33m.\u001b[39mtoBeVisible()\u001b[33m;\u001b[39m\n \u001b[90m 298 |\u001b[39m     \u001b[36mawait\u001b[39m expect(fieldCard\u001b[33m.\u001b[39mgetByText(\u001b[32m'Test Product'\u001b[39m))\u001b[33m.\u001b[39mtoBeVisible()\u001b[33m;\u001b[39m\n \u001b[90m 299 |\u001b[39m\u001b[0m"
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "D:\\scripts\\HLVN\\ocr-mobile-web\\e2e\\ocr-result.spec.ts",
+                            "column": 29,
+                            "line": 296
+                          },
+                          "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: locator('.rounded-2xl').filter({ hasText: 'Test Product' }).first()\nExpected: visible\nTimeout: 5000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" with timeout 5000ms\u001b[22m\n\u001b[2m  - waiting for locator('.rounded-2xl').filter({ hasText: 'Test Product' }).first()\u001b[22m\n\n\n  294 |     // Verify field card renders field name and value\n  295 |     const fieldCard = page.locator('.rounded-2xl').filter({ hasText: 'Test Product' }).first();\n> 296 |     await expect(fieldCard).toBeVisible();\n      |                             ^\n  297 |     await expect(fieldCard.getByText('商品名')).toBeVisible();\n  298 |     await expect(fieldCard.getByText('Test Product')).toBeVisible();\n  299 |\n    at D:\\scripts\\HLVN\\ocr-mobile-web\\e2e\\ocr-result.spec.ts:296:29"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-05-16T10:36:35.991Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "error-context",
+                          "contentType": "text/markdown",
+                          "path": "D:\\scripts\\HLVN\\ocr-mobile-web\\test-results\\ocr-result-OCR-Result-Page-60fb7-ers-correct-label-and-value-mobile\\error-context.md"
+                        }
+                      ],
+                      "errorLocation": {
+                        "file": "D:\\scripts\\HLVN\\ocr-mobile-web\\e2e\\ocr-result.spec.ts",
+                        "column": 29,
+                        "line": 296
+                      }
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "dd670ecbd4ea2b0aeae1-3ec4d84afe62c7e68cc8",
+              "file": "ocr-result.spec.ts",
+              "line": 245,
+              "column": 3
+            },
+            {
+              "title": "renders fields and verifies \"契約No.\" and \"CT No.\" are NOT misplaced in \"other\"",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "tablet",
+                  "projectName": "tablet",
+                  "results": [
+                    {
+                      "workerIndex": 2,
+                      "parallelIndex": 0,
+                      "status": "failed",
+                      "duration": 3715,
+                      "error": {
+                        "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBeGreaterThan\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m\n\nExpected: > \u001b[32m0\u001b[39m\nReceived:   \u001b[31m0\u001b[39m",
+                        "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBeGreaterThan\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m\n\nExpected: > \u001b[32m0\u001b[39m\nReceived:   \u001b[31m0\u001b[39m\n    at D:\\scripts\\HLVN\\ocr-mobile-web\\e2e\\ocr-result.spec.ts:232:23",
+                        "location": {
+                          "file": "D:\\scripts\\HLVN\\ocr-mobile-web\\e2e\\ocr-result.spec.ts",
+                          "column": 23,
+                          "line": 232
+                        },
+                        "snippet": "\u001b[0m \u001b[90m 230 |\u001b[39m     \u001b[90m// BUG 1: Repeated identical main fields are showing up duplicated\u001b[39m\n \u001b[90m 231 |\u001b[39m     \u001b[90m// (This is a data issue from the backend, not the UI — but UI should handle it gracefully)\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 232 |\u001b[39m     expect(mainCount)\u001b[33m.\u001b[39mtoBeGreaterThan(\u001b[35m0\u001b[39m\u001b[33m,\u001b[39m \u001b[32m'Main section should have fields'\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m     |\u001b[39m                       \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 233 |\u001b[39m\n \u001b[90m 234 |\u001b[39m     \u001b[90m// BUG 2: 契約No. and CT No. appearing in \"other\" instead of \"main\"\u001b[39m\n \u001b[90m 235 |\u001b[39m     \u001b[90m// These are contract fields and SHOULD be in main based on MAIN_FIELD_PATTERNS\u001b[39m\u001b[0m"
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "D:\\scripts\\HLVN\\ocr-mobile-web\\e2e\\ocr-result.spec.ts",
+                            "column": 23,
+                            "line": 232
+                          },
+                          "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBeGreaterThan\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m\n\nExpected: > \u001b[32m0\u001b[39m\nReceived:   \u001b[31m0\u001b[39m\n\n  230 |     // BUG 1: Repeated identical main fields are showing up duplicated\n  231 |     // (This is a data issue from the backend, not the UI — but UI should handle it gracefully)\n> 232 |     expect(mainCount).toBeGreaterThan(0, 'Main section should have fields');\n      |                       ^\n  233 |\n  234 |     // BUG 2: 契約No. and CT No. appearing in \"other\" instead of \"main\"\n  235 |     // These are contract fields and SHOULD be in main based on MAIN_FIELD_PATTERNS\n    at D:\\scripts\\HLVN\\ocr-mobile-web\\e2e\\ocr-result.spec.ts:232:23"
+                        }
+                      ],
+                      "stdout": [
+                        {
+                          "text": "Main section field cards: 0\n"
+                        },
+                        {
+                          "text": "Other section field cards: 0\n"
+                        },
+                        {
+                          "text": "Main fields: []\n"
+                        },
+                        {
+                          "text": "Other fields: []\n"
+                        }
+                      ],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-05-16T10:36:47.758Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "error-context",
+                          "contentType": "text/markdown",
+                          "path": "D:\\scripts\\HLVN\\ocr-mobile-web\\test-results\\ocr-result-OCR-Result-Page-dacad-are-NOT-misplaced-in-other--tablet\\error-context.md"
+                        }
+                      ],
+                      "errorLocation": {
+                        "file": "D:\\scripts\\HLVN\\ocr-mobile-web\\e2e\\ocr-result.spec.ts",
+                        "column": 23,
+                        "line": 232
+                      }
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "dd670ecbd4ea2b0aeae1-39ced81dd4a80c9226e0",
+              "file": "ocr-result.spec.ts",
+              "line": 136,
+              "column": 3
+            },
+            {
+              "title": "verify field card renders correct label and value",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "tablet",
+                  "projectName": "tablet",
+                  "results": [
+                    {
+                      "workerIndex": 3,
+                      "parallelIndex": 0,
+                      "status": "failed",
+                      "duration": 8508,
+                      "error": {
+                        "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: locator('.rounded-2xl').filter({ hasText: 'Test Product' }).first()\nExpected: visible\nTimeout: 5000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" with timeout 5000ms\u001b[22m\n\u001b[2m  - waiting for locator('.rounded-2xl').filter({ hasText: 'Test Product' }).first()\u001b[22m\n",
+                        "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: locator('.rounded-2xl').filter({ hasText: 'Test Product' }).first()\nExpected: visible\nTimeout: 5000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" with timeout 5000ms\u001b[22m\n\u001b[2m  - waiting for locator('.rounded-2xl').filter({ hasText: 'Test Product' }).first()\u001b[22m\n\n    at D:\\scripts\\HLVN\\ocr-mobile-web\\e2e\\ocr-result.spec.ts:296:29",
+                        "location": {
+                          "file": "D:\\scripts\\HLVN\\ocr-mobile-web\\e2e\\ocr-result.spec.ts",
+                          "column": 29,
+                          "line": 296
+                        },
+                        "snippet": "\u001b[0m \u001b[90m 294 |\u001b[39m     \u001b[90m// Verify field card renders field name and value\u001b[39m\n \u001b[90m 295 |\u001b[39m     \u001b[36mconst\u001b[39m fieldCard \u001b[33m=\u001b[39m page\u001b[33m.\u001b[39mlocator(\u001b[32m'.rounded-2xl'\u001b[39m)\u001b[33m.\u001b[39mfilter({ hasText\u001b[33m:\u001b[39m \u001b[32m'Test Product'\u001b[39m })\u001b[33m.\u001b[39mfirst()\u001b[33m;\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 296 |\u001b[39m     \u001b[36mawait\u001b[39m expect(fieldCard)\u001b[33m.\u001b[39mtoBeVisible()\u001b[33m;\u001b[39m\n \u001b[90m     |\u001b[39m                             \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 297 |\u001b[39m     \u001b[36mawait\u001b[39m expect(fieldCard\u001b[33m.\u001b[39mgetByText(\u001b[32m'商品名'\u001b[39m))\u001b[33m.\u001b[39mtoBeVisible()\u001b[33m;\u001b[39m\n \u001b[90m 298 |\u001b[39m     \u001b[36mawait\u001b[39m expect(fieldCard\u001b[33m.\u001b[39mgetByText(\u001b[32m'Test Product'\u001b[39m))\u001b[33m.\u001b[39mtoBeVisible()\u001b[33m;\u001b[39m\n \u001b[90m 299 |\u001b[39m\u001b[0m"
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "D:\\scripts\\HLVN\\ocr-mobile-web\\e2e\\ocr-result.spec.ts",
+                            "column": 29,
+                            "line": 296
+                          },
+                          "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: locator('.rounded-2xl').filter({ hasText: 'Test Product' }).first()\nExpected: visible\nTimeout: 5000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" with timeout 5000ms\u001b[22m\n\u001b[2m  - waiting for locator('.rounded-2xl').filter({ hasText: 'Test Product' }).first()\u001b[22m\n\n\n  294 |     // Verify field card renders field name and value\n  295 |     const fieldCard = page.locator('.rounded-2xl').filter({ hasText: 'Test Product' }).first();\n> 296 |     await expect(fieldCard).toBeVisible();\n      |                             ^\n  297 |     await expect(fieldCard.getByText('商品名')).toBeVisible();\n  298 |     await expect(fieldCard.getByText('Test Product')).toBeVisible();\n  299 |\n    at D:\\scripts\\HLVN\\ocr-mobile-web\\e2e\\ocr-result.spec.ts:296:29"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-05-16T10:36:52.290Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "error-context",
+                          "contentType": "text/markdown",
+                          "path": "D:\\scripts\\HLVN\\ocr-mobile-web\\test-results\\ocr-result-OCR-Result-Page-60fb7-ers-correct-label-and-value-tablet\\error-context.md"
+                        }
+                      ],
+                      "errorLocation": {
+                        "file": "D:\\scripts\\HLVN\\ocr-mobile-web\\e2e\\ocr-result.spec.ts",
+                        "column": 29,
+                        "line": 296
+                      }
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "dd670ecbd4ea2b0aeae1-d91ac0b77de415fdf136",
+              "file": "ocr-result.spec.ts",
+              "line": 245,
+              "column": 3
+            },
+            {
+              "title": "renders fields and verifies \"契約No.\" and \"CT No.\" are NOT misplaced in \"other\"",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "desktop",
+                  "projectName": "desktop",
+                  "results": [
+                    {
+                      "workerIndex": 4,
+                      "parallelIndex": 0,
+                      "status": "failed",
+                      "duration": 2663,
+                      "error": {
+                        "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBeGreaterThan\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m\n\nExpected: > \u001b[32m0\u001b[39m\nReceived:   \u001b[31m0\u001b[39m",
+                        "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBeGreaterThan\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m\n\nExpected: > \u001b[32m0\u001b[39m\nReceived:   \u001b[31m0\u001b[39m\n    at D:\\scripts\\HLVN\\ocr-mobile-web\\e2e\\ocr-result.spec.ts:232:23",
+                        "location": {
+                          "file": "D:\\scripts\\HLVN\\ocr-mobile-web\\e2e\\ocr-result.spec.ts",
+                          "column": 23,
+                          "line": 232
+                        },
+                        "snippet": "\u001b[0m \u001b[90m 230 |\u001b[39m     \u001b[90m// BUG 1: Repeated identical main fields are showing up duplicated\u001b[39m\n \u001b[90m 231 |\u001b[39m     \u001b[90m// (This is a data issue from the backend, not the UI — but UI should handle it gracefully)\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 232 |\u001b[39m     expect(mainCount)\u001b[33m.\u001b[39mtoBeGreaterThan(\u001b[35m0\u001b[39m\u001b[33m,\u001b[39m \u001b[32m'Main section should have fields'\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m     |\u001b[39m                       \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 233 |\u001b[39m\n \u001b[90m 234 |\u001b[39m     \u001b[90m// BUG 2: 契約No. and CT No. appearing in \"other\" instead of \"main\"\u001b[39m\n \u001b[90m 235 |\u001b[39m     \u001b[90m// These are contract fields and SHOULD be in main based on MAIN_FIELD_PATTERNS\u001b[39m\u001b[0m"
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "D:\\scripts\\HLVN\\ocr-mobile-web\\e2e\\ocr-result.spec.ts",
+                            "column": 23,
+                            "line": 232
+                          },
+                          "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBeGreaterThan\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m\n\nExpected: > \u001b[32m0\u001b[39m\nReceived:   \u001b[31m0\u001b[39m\n\n  230 |     // BUG 1: Repeated identical main fields are showing up duplicated\n  231 |     // (This is a data issue from the backend, not the UI — but UI should handle it gracefully)\n> 232 |     expect(mainCount).toBeGreaterThan(0, 'Main section should have fields');\n      |                       ^\n  233 |\n  234 |     // BUG 2: 契約No. and CT No. appearing in \"other\" instead of \"main\"\n  235 |     // These are contract fields and SHOULD be in main based on MAIN_FIELD_PATTERNS\n    at D:\\scripts\\HLVN\\ocr-mobile-web\\e2e\\ocr-result.spec.ts:232:23"
+                        }
+                      ],
+                      "stdout": [
+                        {
+                          "text": "Main section field cards: 0\n"
+                        },
+                        {
+                          "text": "Other section field cards: 0\n"
+                        },
+                        {
+                          "text": "Main fields: []\n"
+                        },
+                        {
+                          "text": "Other fields: []\n"
+                        }
+                      ],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-05-16T10:37:03.451Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "error-context",
+                          "contentType": "text/markdown",
+                          "path": "D:\\scripts\\HLVN\\ocr-mobile-web\\test-results\\ocr-result-OCR-Result-Page-dacad-are-NOT-misplaced-in-other--desktop\\error-context.md"
+                        }
+                      ],
+                      "errorLocation": {
+                        "file": "D:\\scripts\\HLVN\\ocr-mobile-web\\e2e\\ocr-result.spec.ts",
+                        "column": 23,
+                        "line": 232
+                      }
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "dd670ecbd4ea2b0aeae1-aebe8cfc34e411e435d5",
+              "file": "ocr-result.spec.ts",
+              "line": 136,
+              "column": 3
+            },
+            {
+              "title": "verify field card renders correct label and value",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "desktop",
+                  "projectName": "desktop",
+                  "results": [
+                    {
+                      "workerIndex": 5,
+                      "parallelIndex": 0,
+                      "status": "failed",
+                      "duration": 7522,
+                      "error": {
+                        "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: locator('.rounded-2xl').filter({ hasText: 'Test Product' }).first()\nExpected: visible\nTimeout: 5000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" with timeout 5000ms\u001b[22m\n\u001b[2m  - waiting for locator('.rounded-2xl').filter({ hasText: 'Test Product' }).first()\u001b[22m\n",
+                        "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: locator('.rounded-2xl').filter({ hasText: 'Test Product' }).first()\nExpected: visible\nTimeout: 5000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" with timeout 5000ms\u001b[22m\n\u001b[2m  - waiting for locator('.rounded-2xl').filter({ hasText: 'Test Product' }).first()\u001b[22m\n\n    at D:\\scripts\\HLVN\\ocr-mobile-web\\e2e\\ocr-result.spec.ts:296:29",
+                        "location": {
+                          "file": "D:\\scripts\\HLVN\\ocr-mobile-web\\e2e\\ocr-result.spec.ts",
+                          "column": 29,
+                          "line": 296
+                        },
+                        "snippet": "\u001b[0m \u001b[90m 294 |\u001b[39m     \u001b[90m// Verify field card renders field name and value\u001b[39m\n \u001b[90m 295 |\u001b[39m     \u001b[36mconst\u001b[39m fieldCard \u001b[33m=\u001b[39m page\u001b[33m.\u001b[39mlocator(\u001b[32m'.rounded-2xl'\u001b[39m)\u001b[33m.\u001b[39mfilter({ hasText\u001b[33m:\u001b[39m \u001b[32m'Test Product'\u001b[39m })\u001b[33m.\u001b[39mfirst()\u001b[33m;\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 296 |\u001b[39m     \u001b[36mawait\u001b[39m expect(fieldCard)\u001b[33m.\u001b[39mtoBeVisible()\u001b[33m;\u001b[39m\n \u001b[90m     |\u001b[39m                             \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 297 |\u001b[39m     \u001b[36mawait\u001b[39m expect(fieldCard\u001b[33m.\u001b[39mgetByText(\u001b[32m'商品名'\u001b[39m))\u001b[33m.\u001b[39mtoBeVisible()\u001b[33m;\u001b[39m\n \u001b[90m 298 |\u001b[39m     \u001b[36mawait\u001b[39m expect(fieldCard\u001b[33m.\u001b[39mgetByText(\u001b[32m'Test Product'\u001b[39m))\u001b[33m.\u001b[39mtoBeVisible()\u001b[33m;\u001b[39m\n \u001b[90m 299 |\u001b[39m\u001b[0m"
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "D:\\scripts\\HLVN\\ocr-mobile-web\\e2e\\ocr-result.spec.ts",
+                            "column": 29,
+                            "line": 296
+                          },
+                          "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: locator('.rounded-2xl').filter({ hasText: 'Test Product' }).first()\nExpected: visible\nTimeout: 5000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" with timeout 5000ms\u001b[22m\n\u001b[2m  - waiting for locator('.rounded-2xl').filter({ hasText: 'Test Product' }).first()\u001b[22m\n\n\n  294 |     // Verify field card renders field name and value\n  295 |     const fieldCard = page.locator('.rounded-2xl').filter({ hasText: 'Test Product' }).first();\n> 296 |     await expect(fieldCard).toBeVisible();\n      |                             ^\n  297 |     await expect(fieldCard.getByText('商品名')).toBeVisible();\n  298 |     await expect(fieldCard.getByText('Test Product')).toBeVisible();\n  299 |\n    at D:\\scripts\\HLVN\\ocr-mobile-web\\e2e\\ocr-result.spec.ts:296:29"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-05-16T10:37:07.066Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "error-context",
+                          "contentType": "text/markdown",
+                          "path": "D:\\scripts\\HLVN\\ocr-mobile-web\\test-results\\ocr-result-OCR-Result-Page-60fb7-ers-correct-label-and-value-desktop\\error-context.md"
+                        }
+                      ],
+                      "errorLocation": {
+                        "file": "D:\\scripts\\HLVN\\ocr-mobile-web\\e2e\\ocr-result.spec.ts",
+                        "column": 29,
+                        "line": 296
+                      }
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "dd670ecbd4ea2b0aeae1-ae19999cee39e332703b",
+              "file": "ocr-result.spec.ts",
+              "line": 245,
+              "column": 3
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "errors": [],
+  "stats": {
+    "startTime": "2026-05-16T10:36:28.475Z",
+    "duration": 46267.444,
+    "expected": 3,
+    "skipped": 0,
+    "unexpected": 6,
+    "flaky": 0
+  }
+}

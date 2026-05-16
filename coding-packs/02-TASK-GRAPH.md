@@ -169,6 +169,19 @@ Week 5: Polish & Testing
 | TIP-065 | User Profile Page and Header Entry | TIP-064 | P1 | 3-4 | 10 | READY |
 | TIP-066 | User Profile Validation and Automated Tests | TIP-063, TIP-064, TIP-065 | P1 | 3-4 | 10 | READY |
 | TIP-067 | User Profile E2E, Accessibility, and Polish | TIP-066 | P1 | 2 | 10 | READY |
+| TIP-068 | Manual Edit OCR Result Fields After Failed Recognition | TIP-009, TIP-010, TIP-038, TIP-041 | P0 | 2 | 10 | READY |
+| TIP-080 | Fix E2E Test Quality Issues (scrollWidth/imageDataUrl/empty-state) | - | P0 | 2 | 11 | READY |
+| TIP-079 | Fix Remaining PHASE 1 Lint Errors | TIP-078 | P0 | S | 11 | DONE |
+| TIP-078 | Fix Conditional React Hooks Lint | TIP-017, TIP-069, TIP-076, TIP-077 | P0 | S | 11 | DONE |
+| TIP-077 | OCR Result E2E Table Locators | TIP-009, TIP-038, TIP-070, TIP-072, TIP-076 | P0 | S | 11 | DONE |
+| TIP-076 | Mobile Action Bars Visible | TIP-009, TIP-014, TIP-016, TIP-049 | P0 | S | 11 | DONE |
+| TIP-075 | Remove Duplicate OCR Result Error Branch | TIP-071 | P1 | S | 11 | DONE |
+| TIP-074 | localOcrScans Remote ID Quota Handling | TIP-057 | P0 | S | 11 | DONE |
+| TIP-073 | Edit Page Save Error Feedback | TIP-071 | P0 | S | 11 | DONE |
+| TIP-072 | Fix OCR Result E2E Table Locators | TIP-070, TIP-071 | P0 | S | 11 | DONE |
+| TIP-071 | Single Scan Error State Handling | TIP-017, TIP-069 | P0 | S | 11 | READY |
+| TIP-070 | Fix Japanese Field Categorization (契約No/CT No.) | TIP-038 | P0 | S | 11 | DONE |
+| TIP-069 | Phase 1 Critical Bugfixes (Lint/Silent Failures/E2E Headings) | TIP-017, TIP-038, TIP-068 | P0 | 1 | 10 | DONE |
 
 **Legend**:
 - **TBD**: To be done

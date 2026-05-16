@@ -4,6 +4,10 @@ import { exportApi } from '@/lib/exportApi';
 import { saveOrShareFile } from '@/lib/fileSave';
 import type { ScanRecord } from '@/db/schema';
 
+function getErrorMessage(err: unknown): string {
+  return err instanceof Error ? err.message : 'Không thể xuất file Excel. Vui lòng thử lại.';
+}
+
 interface UseExportReturn {
   isExporting: boolean;
   error: string | null;
@@ -33,9 +37,9 @@ export function useExport(): UseExportReturn {
     try {
       const blob = await exportApi.exportSingle(accessToken, scan.id);
       await saveOrShareFile(blob, generateFilename(1));
-    } catch (err: any) {
+    } catch (err) {
       console.error('[Export] Error:', err);
-      setError(err.message || 'Không thể xuất file Excel. Vui lòng thử lại.');
+      setError(getErrorMessage(err));
     } finally {
       setIsExporting(false);
     }
@@ -55,9 +59,9 @@ export function useExport(): UseExportReturn {
       const ids = scans.map((s) => s.id);
       const blob = await exportApi.exportMultiple(accessToken, ids);
       await saveOrShareFile(blob, generateFilename(scans.length));
-    } catch (err: any) {
+    } catch (err) {
       console.error('[Export] Error:', err);
-      setError(err.message || 'Không thể xuất file Excel. Vui lòng thử lại.');
+      setError(getErrorMessage(err));
     } finally {
       setIsExporting(false);
     }

@@ -110,7 +110,8 @@ export function useScansState(options?: { limit?: number; order?: 'asc' | 'desc'
           setScans(ordered);
           setError(null);
         }
-      } catch (err) {
+      } catch (_err) {
+        console.error('Failed to load scans:', _err);
         if (!cancelled) {
           setScans([]);
           setError('Không thể tải lịch sử. Vui lòng thử lại.');
@@ -139,6 +140,7 @@ export interface UseScanResult {
   scan: ScanRecord | undefined;
   isPendingMissing: boolean;
   isLoading: boolean;
+  error: string | null;
 }
 
 export function useScan(scanId?: string): UseScanResult {
@@ -146,15 +148,18 @@ export function useScan(scanId?: string): UseScanResult {
   const [scan, setScan] = useState<ScanRecord | undefined>();
   const [isPendingMissing, setIsPendingMissing] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     queueMicrotask(() => {
       setIsPendingMissing(false);
+      setError(null);
     });
 
     if (!scanId) {
       queueMicrotask(() => {
         setScan(undefined);
+        setError(null);
       });
       return;
     }
@@ -165,6 +170,7 @@ export function useScan(scanId?: string): UseScanResult {
       queueMicrotask(() => {
         setScan(localScan);
         setIsPendingMissing(!localScan);
+        setError(null);
       });
       return;
     }
@@ -174,6 +180,7 @@ export function useScan(scanId?: string): UseScanResult {
       queueMicrotask(() => {
         setScan(pendingScan);
         setIsPendingMissing(!pendingScan);
+        setError(null);
       });
       return;
     }
@@ -181,21 +188,31 @@ export function useScan(scanId?: string): UseScanResult {
     if (!accessToken) {
       queueMicrotask(() => {
         setScan(undefined);
+        setError(null);
       });
       return;
     }
 
     let cancelled = false;
-    queueMicrotask(() => setIsLoading(true));
+    queueMicrotask(() => {
+      setIsLoading(true);
+      setError(null);
+    });
 
     async function loadScan() {
       if (!accessToken || !scanId) return;
       try {
         const data = await scansApi.getScan(accessToken, scanId);
-        if (!cancelled) setScan(toMobileScan(data));
+        if (!cancelled) {
+          setScan(toMobileScan(data));
+          setError(null);
+        }
       } catch (err) {
         console.error('Failed to load scan:', err);
-        if (!cancelled) setScan(undefined);
+        if (!cancelled) {
+          setScan(undefined);
+          setError('Không thể tải chi tiết scan. Vui lòng thử lại.');
+        }
       } finally {
         if (!cancelled) setIsLoading(false);
       }
@@ -208,7 +225,7 @@ export function useScan(scanId?: string): UseScanResult {
     };
   }, [accessToken, scanId]);
 
-  return { scan, isPendingMissing, isLoading };
+  return { scan, isPendingMissing, isLoading, error };
 }
 
 export function useSearchScans(query: string): ScanRecord[] | undefined {

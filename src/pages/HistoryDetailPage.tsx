@@ -5,14 +5,13 @@ import { useScan, deleteScan } from '@/hooks/useScans';
 import { useExport } from '@/hooks/useExport';
 import { Edit, Trash2, FileText, AlertTriangle, Download, Loader2, CheckCircle2 } from 'lucide-react';
 import scanDisplayName from '@/lib/scanDisplayName';
-import { PrimaryButton, Toast, SkeletonLine, SkeletonBlock } from '@/components/ui';
-import ScanFieldsTable from '@/components/ui/ScanFieldsTable';
+import { PrimaryButton, Toast, SkeletonLine, SkeletonBlock, ErrorMessage, ScanFieldsTable } from '@/components/ui';
 import { categorizeFields, groupSizeQuantityFields } from '@/lib/fieldCategories';
 
 export default function HistoryDetailPage() {
   const { scanId } = useParams<{ scanId: string }>();
   const navigate = useNavigate();
-  const { scan, isLoading } = useScan(scanId);
+  const { scan, isLoading, error } = useScan(scanId);
   const { isExporting, exportScan } = useExport();
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
 
@@ -52,6 +51,19 @@ export default function HistoryDetailPage() {
             ))}
           </div>
         </div>
+      </Layout>
+    );
+  }
+
+  if (error) {
+    return (
+      <Layout title="Chi tiết scan" showBack>
+        <ErrorMessage
+          title="Không thể tải chi tiết scan"
+          message={error}
+          onRetry={() => window.location.reload()}
+          autoFocus
+        />
       </Layout>
     );
   }
@@ -165,7 +177,7 @@ export default function HistoryDetailPage() {
         </section>
       </div>
 
-      <div className="fixed bottom-bottom-nav left-0 right-0 border-t border-card-border bg-surface/95 p-screen safe-area-bottom backdrop-blur-xl md:left-sidebar">
+      <div className="fixed bottom-bottom-nav left-0 right-0 z-50 border-t border-card-border bg-surface/95 px-4 safe-area-bottom backdrop-blur-xl md:px-6 md:left-sidebar">
         <div className="mx-auto grid max-w-content grid-cols-3 gap-2">
           <PrimaryButton variant="secondary" onClick={handleEdit}>
             <Edit className="mr-2 h-5 w-5" /> Sửa

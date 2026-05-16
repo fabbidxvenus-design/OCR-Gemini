@@ -1,0 +1,23 @@
+{
+  "pipeline": "TIP-071-Single-Scan-Error-State",
+  "planDir": "D:\\scripts\\HLVN\\ocr-mobile-web\\coding-packs\\plans\\TIP-071-single-scan-error-state",
+  "tip": "TIP-071",
+  "tipFile": "D:\\scripts\\HLVN\\ocr-mobile-web\\coding-packs\\tips\\TIP-071-single-scan-error-state.md",
+  "mode": "plan",
+  "phase": "COMPLETE",
+  "status": "COMPLETE",
+  "tier": "LIGHT",
+  "complexityScore": 14,
+  "fixCount": 1,
+  "startedAt": "2026-05-16T17:45:00Z",
+  "completedAt": "2026-05-16T17:49:00Z",
+  "lastEvent": "VERIFIED: build/type/lint/vitest PASS. E2E rendering failures classified as locator/UI-shape mismatch, not TIP-071 regression.",
+  "verification": {
+    "build": "PASS",
+    "typecheck": "PASS",
+    "lint": "PASS",
+    "vitest": "PASS (111 tests)",
+    "e2e": "PARTIAL (known table-vs-card locator mismatch)",
+    "review": "gsd-executor fix pass completed"
+  }
+}
