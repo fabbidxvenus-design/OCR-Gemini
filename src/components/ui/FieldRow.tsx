@@ -45,9 +45,9 @@ export default function FieldRow({
       <td className="py-3 pl-0 align-top">
         <div className="flex items-center gap-1.5">
           {showWarning ? (
-            <AlertTriangle className="h-4 w-4 text-warning flex-shrink-0" />
+            <AlertTriangle aria-hidden="true" className="h-4 w-4 text-warning flex-shrink-0" />
           ) : hasValue ? (
-            <CheckCircle2 className="h-4 w-4 text-success flex-shrink-0" />
+            <CheckCircle2 aria-hidden="true" className="h-4 w-4 text-success flex-shrink-0" />
           ) : null}
           <span className="text-small font-medium text-text-primary">
             {scanField.labelVi}

@@ -31,29 +31,49 @@ export function useCamera(): UseCameraReturn {
   const [hasMultipleCameras, setHasMultipleCameras] = useState(false);
   const [currentFacingMode, setCurrentFacingMode] = useState<'user' | 'environment'>('environment');
 
+  // Use ref to track current stream - avoids stale closure issues
+  const streamRef = useRef<MediaStream | null>(null);
+  const objectUrlsRef = useRef<string[]>([]);
+
   useEffect(() => {
     // Check for multiple cameras
     navigator.mediaDevices.enumerateDevices().then((devices) => {
       const videoDevices = devices.filter((device) => device.kind === 'videoinput');
       setHasMultipleCameras(videoDevices.length > 1);
+    }).catch((err) => {
+      console.warn('Could not enumerate devices:', err);
+      // Continue without knowing if multiple cameras are available
     });
   }, []);
 
+  // Cleanup function to revoke all object URLs
+  const revokeAllObjectUrls = useCallback(() => {
+    objectUrlsRef.current.forEach((url) => URL.revokeObjectURL(url));
+    objectUrlsRef.current = [];
+  }, []);
+
   useEffect(() => {
+    // Cleanup stream on unmount
     return () => {
-      if (stream) {
-        stream.getTracks().forEach((track) => track.stop());
+      if (streamRef.current) {
+        streamRef.current.getTracks().forEach((track) => track.stop());
       }
+      revokeAllObjectUrls();
     };
+  }, [revokeAllObjectUrls]);
+
+  // Update ref when stream changes
+  useEffect(() => {
+    streamRef.current = stream;
   }, [stream]);
 
   const startCamera = useCallback(async (facingMode: 'user' | 'environment' = 'environment') => {
     try {
       setError(null);
 
-      // Stop existing stream
-      if (stream) {
-        stream.getTracks().forEach((track) => track.stop());
+      // Stop existing stream using ref to avoid stale closure
+      if (streamRef.current) {
+        streamRef.current.getTracks().forEach((track) => track.stop());
       }
 
       const constraints: MediaStreamConstraints = {
@@ -66,6 +86,7 @@ export function useCamera(): UseCameraReturn {
       };
 
       const mediaStream = await navigator.mediaDevices.getUserMedia(constraints);
+      streamRef.current = mediaStream;
       setStream(mediaStream);
       setCurrentFacingMode(facingMode);
 
@@ -73,7 +94,8 @@ export function useCamera(): UseCameraReturn {
         videoRef.current.srcObject = mediaStream;
       }
     } catch (err) {
-      console.error('Camera error:', err);
+      const errorMessage = err instanceof Error ? err.message : 'Unknown error';
+      console.error('Camera error:', errorMessage);
       if (err instanceof Error) {
         if (err.name === 'NotAllowedError') {
           setError('Quyền truy cập camera bị từ chối. Vui lòng cho phép truy cập camera.');
@@ -84,17 +106,19 @@ export function useCamera(): UseCameraReturn {
         }
       }
     }
-  }, [stream]);
+  }, []);
 
   const stopCamera = useCallback(() => {
-    if (stream) {
-      stream.getTracks().forEach((track) => track.stop());
-      setStream(null);
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach((track) => track.stop());
+      streamRef.current = null;
     }
+    setStream(null);
+    revokeAllObjectUrls();
     if (videoRef.current) {
       videoRef.current.srcObject = null;
     }
-  }, [stream]);
+  }, [revokeAllObjectUrls]);
 
   const captureImage = useCallback(async (): Promise<{ blob: Blob; dataUrl: string } | null> => {
     if (!videoRef.current || !canvasRef.current) return null;
@@ -102,14 +126,24 @@ export function useCamera(): UseCameraReturn {
     const video = videoRef.current;
     const canvas = canvasRef.current;
     const context = canvas.getContext('2d');
-    if (!context) return null;
+    if (!context) {
+      console.error('Canvas 2D context not available');
+      return null;
+    }
 
     canvas.width = video.videoWidth || 1280;
     canvas.height = video.videoHeight || 720;
     context.drawImage(video, 0, 0, canvas.width, canvas.height);
 
-    const blob = await canvasToJpegBlob(canvas);
-    return { blob, dataUrl: URL.createObjectURL(blob) };
+    try {
+      const blob = await canvasToJpegBlob(canvas);
+      const dataUrl = URL.createObjectURL(blob);
+      objectUrlsRef.current.push(dataUrl);
+      return { blob, dataUrl };
+    } catch (err) {
+      console.error('Failed to capture image:', err instanceof Error ? err.message : 'Unknown error');
+      return null;
+    }
   }, []);
 
   const switchCamera = useCallback(async () => {

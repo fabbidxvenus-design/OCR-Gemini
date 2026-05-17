@@ -20,7 +20,12 @@ export default function AnalyticsPage() {
   const [apiStats, setApiStats] = useState<{ key1Count: number; key2Count: number; key1Cost: number; key2Cost: number } | null>(null);
 
   useEffect(() => {
-    getApiKeyUsageStats().then(setApiStats).catch(() => setApiStats(null));
+    getApiKeyUsageStats()
+      .then(setApiStats)
+      .catch((err) => {
+        console.error('Failed to load API stats:', err);
+        setApiStats(null);
+      });
   }, []);
 
   const isLoading = allScans === undefined;

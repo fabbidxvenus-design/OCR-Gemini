@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Layout from '@/components/layout/Layout';
 import { useScansState } from '@/hooks/useScans';
@@ -136,6 +136,42 @@ export default function HistoryPage() {
   const [activeFilter, setActiveFilter] = useState<FilterType>('all');
   const [sortBy, setSortBy] = useState<SortOption>('date_desc');
   const [showSortMenu, setShowSortMenu] = useState(false);
+  const sortMenuRef = useRef<HTMLDivElement>(null);
+  const sortMenuTriggerRef = useRef<HTMLButtonElement>(null);
+
+  // Focus trap for sort menu modal
+  useEffect(() => {
+    if (!showSortMenu || !sortMenuRef.current) return;
+    const menu = sortMenuRef.current;
+    const focusableElements = menu.querySelectorAll<HTMLElement>(
+      'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+    );
+    const firstElement = focusableElements[0];
+    const lastElement = focusableElements[focusableElements.length - 1];
+
+    firstElement?.focus();
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setShowSortMenu(false);
+        sortMenuTriggerRef.current?.focus();
+        return;
+      }
+      if (e.key === 'Tab') {
+        if (e.shiftKey && document.activeElement === firstElement) {
+          e.preventDefault();
+          lastElement?.focus();
+        } else if (!e.shiftKey && document.activeElement === lastElement) {
+          e.preventDefault();
+          firstElement?.focus();
+        }
+      }
+    };
+
+    menu.addEventListener('keydown', handleKeyDown);
+    return () => menu.removeEventListener('keydown', handleKeyDown);
+  }, [showSortMenu]);
+
   const [isSelectMode, setIsSelectMode] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
@@ -235,6 +271,7 @@ export default function HistoryPage() {
         <div className="-mx-screen overflow-x-auto px-screen pb-2">
           <div className="flex min-w-max items-center gap-2.5 pr-screen">
             <button
+              ref={sortMenuTriggerRef}
               onClick={() => setShowSortMenu(true)}
               className="flex flex-shrink-0 items-center gap-1.5 rounded-full border border-card-border bg-card px-4 py-2 text-small font-semibold text-text-primary shadow-card focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
             >
@@ -310,9 +347,18 @@ export default function HistoryPage() {
         )}
 
         {showSortMenu && (
-          <div className="fixed inset-0 z-50 flex items-end justify-center bg-ink/50 p-4 backdrop-blur-sm animate-fade-in sm:items-center" onClick={() => setShowSortMenu(false)}>
-            <div className="w-full max-w-sm rounded-3xl bg-card p-4 shadow-elevated animate-slide-up" onClick={e => e.stopPropagation()}>
-              <h3 className="mb-4 px-2 text-caption font-semibold uppercase tracking-[0.14em] text-text-muted">Sắp xếp theo</h3>
+          <div className="fixed inset-0 z-50 flex items-end justify-center bg-ink/50 p-4 backdrop-blur-sm animate-fade-in sm:items-center" onClick={() => setShowSortMenu(false)} role="dialog" aria-modal="true" aria-label="Sắp xếp danh sách">
+            <div ref={sortMenuRef} className="w-full max-w-sm rounded-3xl bg-card p-4 shadow-elevated animate-slide-up" onClick={e => e.stopPropagation()}>
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="px-2 text-caption font-semibold uppercase tracking-[0.14em] text-text-muted">Sắp xếp theo</h3>
+                <button
+                  onClick={() => setShowSortMenu(false)}
+                  aria-label="Đóng"
+                  className="flex h-10 w-10 items-center justify-center rounded-xl text-text-muted hover:bg-surface hover:text-text-primary transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+                >
+                  <X className="h-5 w-5" />
+                </button>
+              </div>
               <div className="space-y-1">
                 {SORT_OPTIONS.map(option => (
                   <button
@@ -320,6 +366,7 @@ export default function HistoryPage() {
                     onClick={() => {
                       setSortBy(option.value);
                       setShowSortMenu(false);
+                      sortMenuTriggerRef.current?.focus();
                     }}
                     className={`w-full rounded-xl p-4 text-left font-medium transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 ${sortBy === option.value ? 'bg-primary-light text-primary' : 'text-text-primary hover:bg-surface'}`}
                   >

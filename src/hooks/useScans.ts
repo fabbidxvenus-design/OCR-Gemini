@@ -6,17 +6,18 @@ import type { BackendScanRecord } from '@/lib/apiTypes';
 import { cleanupExpiredLocalOcrScans, createLocalOcrScan, getLocalOcrScan, getLocalOcrScanRemoteId, updateLocalOcrScan } from '@/lib/localOcrScans';
 
 function toMobileScan(scan: BackendScanRecord): ScanRecord {
+  const ocrStructured = scan.ocrStructured;
   return {
     id: scan.id,
     timestamp: new Date(scan.timestamp),
     imageDataUrl: scan.imageUrl ?? '',
     ocrRaw: scan.ocrRaw,
     ocrStructured: {
-      title: scan.ocrStructured.title,
-      fields: scan.ocrStructured.fields || [],
-      sizes: scan.ocrStructured.sizes || [],
-      raw_text: scan.ocrStructured.rawText ?? scan.ocrRaw,
-      notes: scan.ocrStructured.notes || [],
+      title: ocrStructured?.title ?? (scan.ocrRaw.substring(0, 50) || 'Untitled'),
+      fields: ocrStructured?.fields || [],
+      sizes: ocrStructured?.sizes || [],
+      raw_text: ocrStructured?.rawText ?? scan.ocrRaw ?? '',
+      notes: ocrStructured?.notes || [],
     },
     edited: scan.edited,
     tokenUsage: scan.tokenUsage,
@@ -269,21 +270,31 @@ export async function getApiKeyUsageStats(): Promise<{ key1Count: number; key2Co
 export async function updateScan(scanId: string, updates: Partial<ScanRecord>): Promise<void> {
   if (!updates.ocrStructured) return;
 
-  if (scanId.startsWith('local-')) {
-    const remoteScanId = getLocalOcrScanRemoteId(scanId);
-    updateLocalOcrScan(scanId, {
-      ocrStructured: updates.ocrStructured,
-      edited: true,
-    });
-    if (!remoteScanId) return;
-    scanId = remoteScanId;
-  }
+  try {
+    if (scanId.startsWith('local-')) {
+      const remoteScanId = getLocalOcrScanRemoteId(scanId);
+      updateLocalOcrScan(scanId, {
+        ocrStructured: updates.ocrStructured,
+        edited: true,
+      });
+      if (!remoteScanId) return;
+      scanId = remoteScanId;
+    }
 
-  await scansApi.updateScan(getAccessToken(), scanId, {
-    ocrStructured: toBackendOCR(updates.ocrStructured),
-  });
+    await scansApi.updateScan(getAccessToken(), scanId, {
+      ocrStructured: toBackendOCR(updates.ocrStructured),
+    });
+  } catch (err) {
+    console.error('Failed to update scan:', err);
+    throw new Error('Không thể cập nhật scan. Vui lòng thử lại.');
+  }
 }
 
 export async function deleteScan(scanId: string): Promise<void> {
-  await scansApi.deleteScan(getAccessToken(), scanId);
+  try {
+    await scansApi.deleteScan(getAccessToken(), scanId);
+  } catch (err) {
+    console.error('Failed to delete scan:', err);
+    throw new Error('Không thể xóa scan. Vui lòng thử lại.');
+  }
 }
