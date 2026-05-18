@@ -31,7 +31,8 @@ export default function CameraView({ onCapture }: CameraViewProps) {
         onCapture(result.blob, result.dataUrl);
         stopCamera();
       }
-    } catch {
+    } catch (err) {
+      console.warn('[CameraView] capture failed:', err instanceof Error ? err.message : err);
       stopCamera();
       await startCamera();
     }
@@ -52,13 +53,13 @@ export default function CameraView({ onCapture }: CameraViewProps) {
   if (error) {
     return (
       <div className="flex h-full flex-col items-center justify-center rounded-3xl bg-ink p-5 text-center">
-        <div className="mb-5 rounded-2xl border border-warning/30 bg-warning-light px-4 py-3 text-small font-medium text-warning">
+        <div className="mb-5 rounded-2xl border border-warning/30 bg-warning-light px-4 py-3 text-small font-medium text-warning" role="alert" aria-live="polite">
           {error}
         </div>
         <label className="btn-touch cursor-pointer bg-primary text-white shadow-camera-control hover:bg-primary-hover">
           <Upload className="mr-2 h-5 w-5" />
           Tải ảnh lên
-          <input type="file" accept="image/*" aria-label="Tải ảnh từ thư viện" onChange={handleFileUpload} className="hidden" />
+          <input type="file" accept="image/*" aria-label="Tải ảnh từ thư viện khi camera không khả dụng" onChange={handleFileUpload} className="hidden" />
         </label>
       </div>
     );
@@ -71,6 +72,7 @@ export default function CameraView({ onCapture }: CameraViewProps) {
         autoPlay
         playsInline
         muted
+        aria-label="Camera preview - live video feed showing document to scan"
         className="h-full w-full object-cover"
       />
 
@@ -124,14 +126,14 @@ export default function CameraView({ onCapture }: CameraViewProps) {
         <div className="mx-auto flex max-w-[300px] items-center justify-center gap-8">
           <label className="touch-target flex cursor-pointer items-center justify-center rounded-full bg-white/15 text-white shadow-camera-control backdrop-blur-md transition-colors hover:bg-white/25 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2">
             <Upload className="h-5 w-5" />
-            <input type="file" accept="image/*" aria-label="Tải ảnh từ thư viện" onChange={handleFileUpload} className="hidden" />
+            <input type="file" accept="image/*" aria-label="Tải ảnh tài liệu từ thư viện để quét OCR" onChange={handleFileUpload} className="hidden" />
           </label>
 
           <button
             onClick={handleCapture}
             disabled={!stream}
             className="flex h-20 w-20 items-center justify-center rounded-full border-4 border-primary bg-white/10 shadow-camera-control backdrop-blur-md transition-all active:scale-95 disabled:cursor-not-allowed disabled:opacity-50"
-            aria-label="Chụp ảnh"
+            aria-label="Chụp ảnh tài liệu để quét OCR"
           >
             <div className="h-14 w-14 rounded-full bg-white" />
           </button>
