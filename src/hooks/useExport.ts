@@ -1,10 +1,12 @@
 import { useState } from 'react';
 import { useAuthStore } from '@/store/authStore';
-import { exportApi } from '@/lib/exportApi';
 import { saveOrShareFile } from '@/lib/fileSave';
 import type { ScanRecord } from '@/db/schema';
 
 function getErrorMessage(err: unknown): string {
+  if (err instanceof Error && err.message.includes('Failed to fetch dynamically imported module')) {
+    return 'Không thể tải chức năng xuất Excel. Vui lòng kiểm tra kết nối mạng.';
+  }
   return err instanceof Error ? err.message : 'Không thể xuất file Excel. Vui lòng thử lại.';
 }
 
@@ -25,6 +27,11 @@ export function useExport(): UseExportReturn {
     return count > 1 ? `OCR_${count}scans_${timestamp}.xlsx` : `OCR_${timestamp}.xlsx`;
   };
 
+  const getExcelApi = async () => {
+    const module = await import('@/lib/excel');
+    return module.excel;
+  };
+
   const exportScan = async (scan: ScanRecord) => {
     if (!accessToken) {
       setError('Bạn cần đăng nhập để xuất dữ liệu');
@@ -35,7 +42,8 @@ export function useExport(): UseExportReturn {
     setError(null);
 
     try {
-      const blob = await exportApi.exportSingle(accessToken, scan.id);
+      const excelApi = await getExcelApi();
+      const blob = await excelApi.exportSingle(accessToken, scan.id);
       await saveOrShareFile(blob, generateFilename(1));
     } catch (err) {
       console.error('[Export] Error:', err);
@@ -57,7 +65,8 @@ export function useExport(): UseExportReturn {
 
     try {
       const ids = scans.map((s) => s.id);
-      const blob = await exportApi.exportMultiple(accessToken, ids);
+      const excelApi = await getExcelApi();
+      const blob = await excelApi.exportMultiple(accessToken, ids);
       await saveOrShareFile(blob, generateFilename(scans.length));
     } catch (err) {
       console.error('[Export] Error:', err);
