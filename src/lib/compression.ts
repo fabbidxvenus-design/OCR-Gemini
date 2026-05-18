@@ -28,7 +28,9 @@ export async function compressImage(
     });
 
     return compressedBlob;
-  } catch {
+  } catch (err) {
+    console.warn('[compression] compressImage failed:', err instanceof Error ? err.message : err);
+    // eslint-disable-next-line preserve-caught-error
     throw new Error('Không thể nén ảnh. Vui lòng thử lại.');
   }
 }
@@ -51,7 +53,8 @@ export async function compressImageForOCR(
     });
 
     return compressedBlob;
-  } catch {
+  } catch (err) {
+    console.warn('[compression] fast compression failed, using heavy fallback:', err instanceof Error ? err.message : err);
     return compressImage(fileOrBlob, { maxWidthOrHeight: 480, maxSizeMB: 0.05 });
   }
 }

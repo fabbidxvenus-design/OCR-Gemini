@@ -177,7 +177,7 @@ test.describe('FLOW 1 — /camera capture/upload states', () => {
   });
 
   test('capture button (shutter) is present and has accessible label', async ({ page }) => {
-    const shutter = page.getByRole('button', { name: /chụp ảnh/i });
+    const shutter = page.getByRole('button', { name: /chụp ảnh tài liệu để quét OCR/i });
     await expect(shutter).toBeVisible();
   });
 

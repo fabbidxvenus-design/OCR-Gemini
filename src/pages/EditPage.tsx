@@ -119,6 +119,8 @@ export default function EditPage() {
           <button
             type="button"
             onClick={() => setActiveTab('structured')}
+            aria-pressed={activeTab === 'structured'}
+            aria-label={activeTab === 'structured' ? "Đang ở tab Thông tin" : undefined}
             className={`h-12 flex-1 text-small font-semibold transition-colors ${activeTab === 'structured' ? 'border-b-2 border-primary text-primary' : 'text-text-secondary hover:text-text-primary'}`}
           >
             Thông tin
@@ -126,6 +128,8 @@ export default function EditPage() {
           <button
             type="button"
             onClick={() => setActiveTab('rawText')}
+            aria-pressed={activeTab === 'rawText'}
+            aria-label={activeTab === 'rawText' ? "Đang ở tab Văn bản gốc" : undefined}
             className={`h-12 flex-1 text-small font-semibold transition-colors ${activeTab === 'rawText' ? 'border-b-2 border-primary text-primary' : 'text-text-secondary hover:text-text-primary'}`}
           >
             Văn bản gốc
