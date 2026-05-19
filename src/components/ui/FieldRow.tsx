@@ -7,6 +7,7 @@ interface FieldRowProps {
   value: string;
   confidence?: 'high' | 'medium' | 'low';
   editable?: boolean;
+  isSaving?: boolean;
   onChange?: (value: string) => void;
 }
 
