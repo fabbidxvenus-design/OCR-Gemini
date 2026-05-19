@@ -19,6 +19,7 @@ export default function FieldRow({
   value,
   confidence,
   editable = false,
+  isSaving = false,
   onChange,
 }: FieldRowProps) {
   const [isEditing, setIsEditing] = useState(false);
@@ -72,6 +73,7 @@ export default function FieldRow({
               onClick={handleSave}
               className="btn-icon btn-icon-sm text-success"
               aria-label="Lưu"
+              disabled={isSaving}
             >
               <Save className="h-4 w-4" />
             </button>
@@ -79,6 +81,7 @@ export default function FieldRow({
               onClick={handleCancel}
               className="btn-icon btn-icon-sm text-text-muted"
               aria-label="Hủy"
+              disabled={isSaving}
             >
               <X className="h-4 w-4" />
             </button>
@@ -99,6 +102,7 @@ export default function FieldRow({
                 onClick={() => setIsEditing(true)}
                 className="btn-icon btn-icon-sm text-text-muted"
                 aria-label="Sửa trường này"
+                disabled={isSaving}
               >
                 <Edit2 className="h-3.5 w-3.5" />
               </button>
