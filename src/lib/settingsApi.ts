@@ -18,9 +18,14 @@ export const settingsApi = {
       schema: AppSettingsSchema,
     }),
 
-  updateSettings: (accessToken: string, updates: Partial<AppSettings>) =>
-    apiClient.patch<AppSettings>('/api/settings', updates, {
+  updateSettings: async (accessToken: string, updates: Partial<AppSettings>): Promise<AppSettings> => {
+    const result = await apiClient.patch<AppSettings>('/api/settings', updates, {
       accessToken,
       schema: AppSettingsSchema,
-    }),
+    });
+    if (!result) {
+      throw Object.assign(new Error('Không thể cập nhật cài đặt'), { cause: null });
+    }
+    return result;
+  },
 };

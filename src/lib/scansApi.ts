@@ -61,17 +61,19 @@ export const scansApi = {
     });
   },
 
-  getScans: (accessToken: string, options?: { limit?: number; order?: 'asc' | 'desc' }) =>
+  getScans: (accessToken: string, options?: { limit?: number; order?: 'asc' | 'desc'; signal?: AbortSignal }) =>
     apiClient.get<BackendScanRecord[]>('/api/scans', {
       accessToken,
       schema: BackendScanListSchema,
-      params: options,
+      params: { limit: options?.limit, order: options?.order },
+      signal: options?.signal,
     }),
 
-  getScan: (accessToken: string, id: string) =>
+  getScan: (accessToken: string, id: string, options?: { signal?: AbortSignal }) =>
     apiClient.get<BackendScanRecord>(`/api/scans/${id}`, {
       accessToken,
-      schema: BackendScanSchema
+      schema: BackendScanSchema,
+      signal: options?.signal,
     }),
 
   createScan: async (accessToken: string, data: CreateScanPayload): Promise<{ id: string }> => {
@@ -79,6 +81,9 @@ export const scansApi = {
       accessToken,
       schema: BackendScanSchema,
     });
+    if (!created) {
+      throw Object.assign(new Error('Không thể tạo scan mới'), { cause: null });
+    }
     return { id: created.id };
   },
 

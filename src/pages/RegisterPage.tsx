@@ -4,6 +4,7 @@ import { Camera, UserPlus, ShieldCheck, Sparkles } from 'lucide-react';
 import { PrimaryButton, InputField, PasswordInput, Checkbox } from '@/components/ui';
 import { authApi } from '@/lib/authApi';
 import { useAuthStore } from '@/store/authStore';
+import { extractApiErrorMessage } from '@/lib/errorUtils';
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const MIN_PASSWORD_LENGTH = 8;
@@ -71,10 +72,13 @@ export default function RegisterPage() {
 
     try {
       const session = await authApi.register(email, password);
+      if (!session) {
+        throw Object.assign(new Error('Dữ liệu phiên đăng ký bị thiếu'), { cause: null });
+      }
       useAuthStore.getState().setSession(session);
       navigate('/camera');
-    } catch {
-      setErrors({ email: 'Đã xảy ra lỗi khi đăng ký. Vui lòng thử lại.' });
+    } catch (err) {
+      setErrors({ email: extractApiErrorMessage(err) });
     } finally {
       setLoading(false);
     }

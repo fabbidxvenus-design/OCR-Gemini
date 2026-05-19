@@ -71,9 +71,14 @@ export const authApi = {
   getSession: (accessToken: string) =>
     apiClient.get<UserProfile>('/api/auth/me', { accessToken, schema: UserProfileSchema }),
 
-  updateProfile: (payload: ProfileUpdatePayload, accessToken: string) =>
-    apiClient.patch<UserProfile, ProfileUpdatePayload>('/api/auth/me', normalizeProfileUpdatePayload(payload), {
+  updateProfile: async (payload: ProfileUpdatePayload, accessToken: string): Promise<UserProfile> => {
+    const result = await apiClient.patch<UserProfile, ProfileUpdatePayload>('/api/auth/me', normalizeProfileUpdatePayload(payload), {
       accessToken,
       schema: UserProfileSchema,
-    }),
+    });
+    if (!result) {
+      throw Object.assign(new Error('Không thể cập nhật hồ sơ người dùng'), { cause: null });
+    }
+    return result;
+  },
 };

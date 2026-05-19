@@ -8,6 +8,13 @@ import {
   type UserProfile,
 } from '@/lib/authApi';
 import { clearLocalOcrScans } from '@/lib/localOcrScans';
+import { cachedInvalidate, cachedInvalidateAllScanDetails, CACHE_KEYS } from '@/lib/cachedStore';
+
+function clearAllCaches(): void {
+  cachedInvalidate(CACHE_KEYS.settings);
+  cachedInvalidate(CACHE_KEYS.scansList);
+  cachedInvalidateAllScanDetails();
+}
 
 interface AuthStore {
   isAuthenticated: boolean;
@@ -39,7 +46,11 @@ export const useAuthStore = create<AuthStore>()(
         set({ isLoading: true, error: null });
         try {
           const session = await authApi.login(email, pin);
+          if (!session) {
+            throw Object.assign(new Error('Dữ liệu phiên đăng nhập bị thiếu'), { cause: null });
+          }
           clearLocalOcrScans();
+          clearAllCaches();
           set({
             isAuthenticated: true,
             user: session.user,
@@ -60,6 +71,7 @@ export const useAuthStore = create<AuthStore>()(
 
       setSession: (session) => {
         clearLocalOcrScans();
+        clearAllCaches();
         set({
           isAuthenticated: true,
           user: session.user,
@@ -97,6 +109,7 @@ export const useAuthStore = create<AuthStore>()(
         }
 
         clearLocalOcrScans();
+        clearAllCaches();
         set({
           isAuthenticated: false,
           user: null,
